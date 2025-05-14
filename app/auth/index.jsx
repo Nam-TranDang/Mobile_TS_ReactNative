@@ -1,18 +1,19 @@
-/* eslint-disable react/jsx-no-comment-textnodes */
+import { Ionicons } from "@expo/vector-icons";
+import { Link } from "expo-router";
+import { useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
-  Image,
-  Alert,
+  View
 } from "react-native";
 import styles from "../../assets/styles/login.styles";
-import { useState } from "react";
-import { Ionicons } from "@expo/vector-icons";
-import { Link } from "expo-router";
-import { COLORS } from "../../constants/theme";
+import COLORS from "../../constants/colors";
 import { useAuthStore } from "./../../store/authStore";
 
 export default function Login() {
@@ -28,39 +29,45 @@ export default function Login() {
   };
 
   return (
-    
+    <KeyboardAvoidingView
+      style={{flex: 1}}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
       <View style={styles.container}>
         {/* illusration */}
-        // eslint-disable-next-line react/jsx-no-undef
-        <Image
-          source={require("../assets/react-logo.png")}
-          style={styles.topIllustration}
-          resizeMode="contain"
-        />
-      </View>
-      <View style={styles.card}>
-        <View style={styles.formContainer}>
-          {/*Email */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email</Text>
-            <View style={styles.inputContainer}>
-              <Ionicons
-                name="mail-outline"
-                size={20}
-                color={COLORS.primary}
-                style={styles.inputIcon}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Enter your email"
-                placeholderTextColor={COLORS.placeholderText}
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
+        <View>
+          <Image
+            source={require("../../assets/images/Reading_glasses.png")}
+            style={styles.illustrationImage}
+            resizeMode="contain"
+          />
+        </View>
+
+        <View style={styles.card}>
+          <View style={styles.formContainer}>
+            
+            {/*Email */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Email</Text>
+              <View style={styles.inputContainer}>
+                <Ionicons
+                  name="mail-outline"
+                  size={20}
+                  color={COLORS.primary}
+                  style={styles.inputIcon}
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter your email"
+                  placeholderTextColor={COLORS.placeholderText}
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+              </View>
             </View>
-          </View>
+
           {/*Password */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Password</Text>
@@ -93,6 +100,7 @@ export default function Login() {
               </TouchableOpacity>
             </View>
           </View>
+          
           <TouchableOpacity
             style={styles.button}
             onPress={handleLogin}
@@ -104,6 +112,7 @@ export default function Login() {
               <Text style={styles.buttonText}>Login</Text>
             )}
           </TouchableOpacity>
+          
           {/*Footer */}
           <View style={styles.footer}>
             <Text style={styles.footerText}>Do not have account?</Text>
@@ -114,6 +123,8 @@ export default function Login() {
             </Link>
           </View>
         </View>
+      </View>
     </View>
+  </KeyboardAvoidingView>
   );
 }

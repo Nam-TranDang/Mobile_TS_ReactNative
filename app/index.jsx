@@ -1,10 +1,10 @@
 import { Link } from "expo-router";
+import { useEffect } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useAuthStore } from "../store/authStore";
-import { useEffect } from "react";
 
 export default function Index() {
-  const [user, token, checkAuth, logout] = useAuthStore();
+  const {user, token, checkAuth, logout} = useAuthStore();
 
   console.log(user, token);
 
@@ -20,8 +20,8 @@ export default function Index() {
         <Text>Log out</Text>
       </TouchableOpacity>
 
-      <Link href="./auth/signup.jsx">Sign Up</Link>
-      <Link href="./auth/login.jsx">Login</Link>
+      <Link href="./auth/signup">Sign Up</Link>
+      <Link href="./auth">Login</Link>
     </View>
   );
 }
