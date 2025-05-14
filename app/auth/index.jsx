@@ -93,7 +93,7 @@ export default function Login() {
                 style={styles.eyeIcon}
               >
                 <Ionicons
-                  name={showPassword ? "eye-off-outline" : "eye-outline"}
+                  name={showPassword ? "eye-outline":"eye-off-outline"}
                   size={20}
                   color={COLORS.primary}
                 />
@@ -115,8 +115,8 @@ export default function Login() {
           
           {/*Footer */}
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Do not have account?</Text>
-            <Link href="./signup" asChild>
+            <Text style={styles.footerText}>Don&apos;t have an account?</Text>
+            <Link href="../auth/signup" asChild>
               <TouchableOpacity>
                 <Text style={styles.link}>Sign Up</Text>
               </TouchableOpacity>
