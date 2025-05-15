@@ -11,6 +11,7 @@ export default function Index() {
   useEffect(() => {
     checkAuth();
   }, []);
+  
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Hello {user?.username}</Text>
