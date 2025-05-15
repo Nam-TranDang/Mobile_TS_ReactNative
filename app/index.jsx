@@ -21,8 +21,8 @@ export default function Index() {
         <Text>Log out</Text>
       </TouchableOpacity>
 
-      <Link href="/auth/signup">Sign Up</Link>
-      <Link href="/auth">Login</Link>
+      <Link href="/(auth)/signup">Sign Up</Link>
+      <Link href="/(auth)">Login</Link>
     </View>
   );
 }

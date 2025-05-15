@@ -18,21 +18,19 @@ export default function RootLayout() {
 
   //handle navigation based on auth state
   useEffect(() => {
-    const inAuthScreen = segments[0] === "/app/auth";
+    const inAuthScreen = segments[0] === "(auth)";
     const isSignedIn = user && token;
 
-    if(!isSignedIn && !inAuthScreen) router.replace("../app/auth");
-    else if(!isSignedIn && !inAuthScreen) router.replace("../app/(tabs)");
-  },[user,token,segments]);
-
-  
+    if(!isSignedIn && !inAuthScreen) router.replace("/(auth)");
+    else if(isSignedIn && inAuthScreen) router.replace("/(tabs)");
+  }, [user, token, segments]);
 
   return (
     <SafeAreaProvider>
       <SafeScreen>
         <Stack screenOptions={{headerShown:false}}>
           <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="auth" />
+          <Stack.Screen name="(auth)" />
         </Stack>
       </SafeScreen>
       <StatusBar style="dark"/>
