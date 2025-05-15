@@ -21,7 +21,7 @@ export default function RootLayout() {
     const inAuthScreen = segments[0] === "(auth)";
     const isSignedIn = user && token;
 
-    if(!isSignedIn && !inAuthScreen) router.replace("/(auth)");
+    if(!isSignedIn && !inAuthScreen) router.replace("/(tabs)");
     else if(isSignedIn && inAuthScreen) router.replace("/(tabs)");
   }, [user, token, segments]);
 
@@ -29,8 +29,8 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <SafeScreen>
         <Stack screenOptions={{headerShown:false}}>
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="(auth)" />
+          <Stack.Screen name="/app/(tabs)" />
+          <Stack.Screen name="/app/(auth)" />
         </Stack>
       </SafeScreen>
       <StatusBar style="dark"/>
