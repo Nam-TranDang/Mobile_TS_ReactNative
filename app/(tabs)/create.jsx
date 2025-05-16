@@ -8,6 +8,9 @@ import COLORS from '../../constants/colors';
 import * as FileSystem from "expo-file-system"; // npx expo install expo-file-system 
 import * as ImagePicker from "expo-image-picker"; // npx expo install expo-image-picker
 import { ActivityIndicator } from 'react-native-web';
+import { API_URL } from '../../constants/api';
+import { useAuthStore } from '../../store/authStore';
+
 
 
 
@@ -20,6 +23,7 @@ export default function Create() {
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
+  const { token } = useAuthStore ();
   
   const pickImage = async () => {
     try {
@@ -59,11 +63,49 @@ export default function Create() {
   };
 
   const handleSubmit = async () => {
-    if (!title || !caption || !imageBase64) {
+    if (!title || !caption || !imageBase64 || !rating) {
       Alert.alert("Please fill in all fields and select an image");
       return;
     }
-    
+    try {
+      setLoading(true);
+      // get file extension from URI or default to jpeg
+      const uriParts = image.split(".");
+      const fileType = uriParts[uriParts.length - 1] ;
+      const imageType = fileType ? `image/${fileType.toLowerCase()}` : "image/jpeg";
+
+      const imageDataUrl = `data:${imageType};base64,${imageBase64}`;
+      const response = await fetch(`${API_URL}/books`,{
+        method: "POST",
+        header:{
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title,
+          caption,
+          rating,
+          image: imageDataUrl,
+        }),
+      })
+      const data = await response.json();
+      if (!response.ok) 
+        throw new Error(data.message || "Something went wrong");
+      Alert.alert("Success", "Book recommendation submitted successfully");
+      setTitle("");
+      setCaption("");
+      setImage(null);
+      setImageBase64(null);
+      setRating(3);
+      router.push("/");
+
+      
+    } catch (error) {
+      console.error("Error submitting form: ", error);
+      Alert.alert("Error", error.message || "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const renderRatingPicker = () => { 
