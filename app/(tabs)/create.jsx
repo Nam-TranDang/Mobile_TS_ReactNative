@@ -5,8 +5,8 @@ import { Alert, Image, KeyboardAvoidingView, Platform, ScrollView, Text, TextInp
 import style from '../../assets/styles/create.styles';
 import COLORS from '../../constants/colors';
 
-import * as FileSystem from "expo-file-system";
-import * as imagePicker from "expo-image-picker";
+import * as FileSystem from "expo-file-system"; // npx expo install expo-file-system 
+import * as ImagePicker from "expo-image-picker"; // npx expo install expo-image-picker
 import { ActivityIndicator } from 'react-native-web';
 
 
@@ -23,14 +23,14 @@ export default function Create() {
   
   const pickImage = async () => {
     try {
-      if (Platform.OS === "web") {
-        const { status } = await imagePicker.requestMediaLibaryPermissionsAsync();
+      if (Platform.OS !== "web") {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== "granted") {
           Alert.alert("Permission to access camera roll is required!");
           return;
         }
       }
-      const result = await imagePicker.launchImageLibraryAsync({
+      const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: "images",
         allowsEditing: true,
         aspect: [4, 3],
@@ -59,6 +59,10 @@ export default function Create() {
   };
 
   const handleSubmit = async () => {
+    if (!title || !caption || !imageBase64) {
+      Alert.alert("Please fill in all fields and select an image");
+      return;
+    }
     
   };
 
@@ -162,7 +166,6 @@ export default function Create() {
       </View>
 
       </ScrollView>
-      <Text>Create tab</Text>
     </KeyboardAvoidingView>
   )
 } 
