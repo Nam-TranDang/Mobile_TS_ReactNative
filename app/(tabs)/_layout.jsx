@@ -22,7 +22,7 @@ export default function TabLayout() {
               backgroundColor: COLORS.cardBackground,
               borderTopWidth: 1,
               borderTopColor: COLORS.border,
-              paddingBottom: 5,
+              paddingTop: 5,
               paddingBottom: inset.bottom,
               height: 60 + inset.bottom,
             },

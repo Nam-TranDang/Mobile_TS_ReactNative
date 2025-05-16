@@ -51,9 +51,9 @@ export default function Create() {
           // otherwise, convert the image to base64
           const base64 = await FileSystem.readAsStringAsync(result.assets[0].uri, {
             encoding: FileSystem.EncodingType.Base64,
-          });
+          });        
+          setImageBase64(base64);
         }
-        setImageBase64(base64);
       }
     }catch (error) 
     {
