@@ -3,6 +3,11 @@ import User from "../models/user.js";
 import jwt from "jsonwebtoken";
 
 const router = express.Router();
+
+// Create JWT within 15days - Access token (this case exist for 15 days) 
+// jwt.sign() create header - payload - signature 
+// header: implicitly defined by jwt.sign + payload: use the user_id + signature: use the private key from Server.
+// token --> use for authentication purpose only
 const generateToken = (userId) => {
     return jwt.sign({userId}, process.env.JWT_SECRET, {expiresIn: "15d"});
 };
