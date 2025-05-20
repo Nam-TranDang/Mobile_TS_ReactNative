@@ -50,6 +50,7 @@ export default function Home() {
 
     } catch (error) {
       console.log("Error fetching books:", error);
+    } finally {
       if (refresh) {
         await sleep(800); //make the refresh animation (at the top, when scroll down) last for 0.8 sec, increasing the user experience
         setRefreshing(false);
