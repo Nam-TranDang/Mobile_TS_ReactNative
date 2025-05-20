@@ -1,0 +1,41 @@
+How to init and download project (Window) 
+
+Note: honestly, authRoute is combines both "Controller and Route" --> Must split to other folder.  
+
+1. Install npm (Locally || Globally)  
+npm install -g npm@latest 
+
+2. Change to backend folder: cd backend folder
+
+3. Initial the package JSON: npm init -y 
+
+4. npm i express mongoose dotenv jsonwebtoken cloudinary bcryptjs cors
+npm i nodemon -D
+
+- Express = simple framework for JS 
+- mongoose = Object Data Modeling (ODM) -> use for schema definition, data modeling (create table for mongo)
+- dotenv = lib for .env file
+- jsonwebtoken = jwt for authentication during sending req to server. 
+- cloudinary = store image on 3rd party
+- cors = Cross-Origin Resource Sharing. 
+- bcryptjs = hash and add "random salt" + compare password   
+- nodemon: auto re-run backend server (as dev development)
+
+Note:
+a. remember but .env file to .gitignore.
+b. npm i: will create the "isolated library" & independences lib for project. Not install globally. 
+
+5. Setup package.json file: 
+a. Below keyword --> "type": "module",
+b. Inside "scripts", to run the nodemon --> remove the "test" and alternate to "dev": "nodemon src/index.js"
+
+6. Run the server: npm run dev (cd backend)
+
+
+
+--------
+Run Backend Server:
+
+1. cd backend 
+
+2. npm run dev 
