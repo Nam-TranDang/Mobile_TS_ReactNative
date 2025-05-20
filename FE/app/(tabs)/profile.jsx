@@ -113,6 +113,7 @@ export default function Profile() {
         <Text style={styles.bookDate}>
           {new Date(item.createdAt).toLocaleDateString()}
         </Text>
+      </View>
         <TouchableOpacity
           style={styles.deleteButton}
           onPress={() => confirmDelete(item._id)}
@@ -123,7 +124,6 @@ export default function Profile() {
             <Ionicons name="trash-outline" size={20} color={COLORS.primary} />
           )}
         </TouchableOpacity>
-      </View>
     </View>
   );
 
