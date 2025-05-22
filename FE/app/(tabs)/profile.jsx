@@ -39,18 +39,17 @@ export default function Profile() {
       });
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "Failed to fetch user books");
+      if (!response.ok)
+        throw new Error(data.message || "Failed to fetch user books");
 
       setBooks(data);
-    } 
-    catch (error) {
+    } catch (error) {
       console.error("Error fetching data:", error);
       Alert.alert(
         "Error",
         "Failed to load profile data. Pull down to refresh."
       );
-    } 
-    finally {
+    } finally {
       setIsLoading(false);
     }
   };
@@ -114,16 +113,16 @@ export default function Profile() {
           {new Date(item.createdAt).toLocaleDateString()}
         </Text>
       </View>
-        <TouchableOpacity
-          style={styles.deleteButton}
-          onPress={() => confirmDelete(item._id)}
-        >
-          {deleteBookId === item._id ? (
-            <ActivityIndicator size="small" color={COLORS.primary} />
-          ) : (
-            <Ionicons name="trash-outline" size={20} color={COLORS.primary} />
-          )}
-        </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.deleteButton}
+        onPress={() => confirmDelete(item._id)}
+      >
+        {deleteBookId === item._id ? (
+          <ActivityIndicator size="small" color={COLORS.primary} />
+        ) : (
+          <Ionicons name="trash-outline" size={20} color={COLORS.primary} />
+        )}
+      </TouchableOpacity>
     </View>
   );
 
@@ -162,14 +161,13 @@ export default function Profile() {
         <Text style={styles.booksTitle}>Your Recommendations</Text>
         <Text style={styles.booksCount}>{books.length} books</Text>
       </View>
-      
+
       <FlatList
         data={books}
         renderItem={renderBookItem}
         keyExtractor={(item) => item._id}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.booksList}
-        
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -178,7 +176,6 @@ export default function Profile() {
             tintColor={COLORS.primary}
           />
         }
-
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Ionicons
