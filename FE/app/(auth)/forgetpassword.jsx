@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import styles from "../../assets/styles/forgetpassword.styles";
 import COLORS from "../../constants/colors";
+import { API_URL } from "../../constants/api";
 
 export default function ForgetPassword() {
   const [email, setEmail] = useState("");
@@ -21,82 +22,109 @@ export default function ForgetPassword() {
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSendingCode, setIsSendingCode] = useState(false);
+  const [codeSent, setCodeSent] = useState(false);
   const router = useRouter();
 
+  // Function to handle resetting password
   const handleSend = async () => {
+    // Validation
     if (!email.trim()) {
-      Alert.alert("Lỗi", "Vui lòng nhập email!");
+      Alert.alert("Error", "Please enter your email!");
       return;
     }
-    // Kiểm tra định dạng email đơn giản
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      Alert.alert("Lỗi", "Email không hợp lệ!");
+      Alert.alert("Error", "Invalid email format!");
       return;
     }
-    // Kiểm tra mật khẩu mới và nhập lại mật khẩu
-    if (!newPassword || !confirmNewPassword) {
-      Alert.alert("Lỗi", "Vui lòng nhập đầy đủ mật khẩu mới!");
+
+    if (!verifyCode || !newPassword || !confirmNewPassword) {
+      Alert.alert("Error", "Please enter verification code and new password!");
       return;
     }
+
     if (newPassword !== confirmNewPassword) {
-      Alert.alert("Lỗi", "Mật khẩu nhập lại không khớp!");
+      Alert.alert("Error", "Passwords don't match!");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      Alert.alert("Error", "Password must be at least 6 characters!");
       return;
     }
 
     setIsLoading(true);
     try {
-      const response = await fetch(
-        "http://192.168.100.184:3000/api/auth/forgot-password",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email }),
-        }
-      );
+      // Call the reset-password API endpoint
+      const response = await fetch(`${API_URL}/auth/reset-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          code: verifyCode,
+          newPassword,
+        }),
+      });
+
       const data = await response.json();
-      setIsLoading(false);
 
       if (response.ok) {
-        Alert.alert(
-          "Thành công",
-          "Nếu email tồn tại, hướng dẫn đặt lại mật khẩu đã được gửi tới email của bạn."
-        );
-        router.back();
+        Alert.alert("Success", "Your password has been successfully changed!", [
+          {
+            text: "Login",
+            onPress: () => router.back(),
+          },
+        ]);
       } else {
-        Alert.alert("Lỗi", data.message || "Email không hợp lệ!");
+        Alert.alert("Error", data.message || "Failed to reset password!");
       }
     } catch (error) {
+      console.error("Reset password error:", error);
+      Alert.alert("Error", "Something went wrong. Please try again later!");
+    } finally {
       setIsLoading(false);
-      Alert.alert("Lỗi", "Có lỗi xảy ra. Vui lòng thử lại sau!");
     }
   };
 
+  // Function to send verification code
   const handleSendVerifyCode = async () => {
     if (!email.trim()) {
-      Alert.alert("Lỗi", "Vui lòng nhập email trước!");
+      Alert.alert("Error", "Please enter your email first!");
       return;
     }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      Alert.alert("Error", "Invalid email format!");
+      return;
+    }
+
     setIsSendingCode(true);
     try {
-      const response = await fetch(
-        "http://<YOUR_BACKEND_URL>/api/auth/send-verify-code",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email }),
-        }
-      );
+      // Call the forgot-password API endpoint
+      const response = await fetch(`${API_URL}/auth/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
       const data = await response.json();
-      setIsSendingCode(false);
+
       if (response.ok) {
-        Alert.alert("Thành công", "Mã xác thực đã được gửi về email của bạn!");
+        setCodeSent(true);
+        Alert.alert(
+          "Success",
+          "If your email exists in our system, a verification code has been sent to your email."
+        );
       } else {
-        Alert.alert("Lỗi", data.message || "Không thể gửi mã xác thực!");
+        Alert.alert("Error", data.message || "Could not send verification code!");
       }
     } catch (error) {
+      console.error("Send code error:", error);
+      Alert.alert("Error", "Something went wrong. Please try again later!");
+    } finally {
       setIsSendingCode(false);
-      Alert.alert("Lỗi", "Có lỗi xảy ra. Vui lòng thử lại sau!");
     }
   };
 
@@ -109,9 +137,9 @@ export default function ForgetPassword() {
         <View style={styles.card}>
           {/* HEADER */}
           <View style={styles.header}>
-            <Text style={styles.title}>Forget Password</Text>
+            <Text style={styles.title}>Forgot Password</Text>
             <Text style={styles.subtitle}>
-              Please enter your email to search for your account.
+              Enter your email to receive a verification code
             </Text>
           </View>
           {/* FORM */}
@@ -134,6 +162,7 @@ export default function ForgetPassword() {
                   onChangeText={setEmail}
                   keyboardType="email-address"
                   autoCapitalize="none"
+                  editable={!codeSent}
                 />
               </View>
             </View>
@@ -201,7 +230,7 @@ export default function ForgetPassword() {
 
             {/* CONFIRM NEW PASSWORD INPUT */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Enter new password</Text>
+              <Text style={styles.label}>Confirm new password</Text>
               <View style={styles.inputContainer}>
                 <Ionicons
                   name="lock-closed-outline"
@@ -221,22 +250,28 @@ export default function ForgetPassword() {
               </View>
             </View>
 
-            {/* SEND BUTTON */}
+            {/* RESET PASSWORD BUTTON */}
             <TouchableOpacity
               style={styles.button}
               onPress={handleSend}
-              disabled={isLoading || !email}
+              disabled={
+                isLoading ||
+                !email ||
+                !verifyCode ||
+                !newPassword ||
+                !confirmNewPassword
+              }
             >
               {isLoading ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.buttonText}>Change Password</Text>
+                <Text style={styles.buttonText}>Reset Password</Text>
               )}
             </TouchableOpacity>
 
             {/* FOOTER */}
             <View style={styles.footer}>
-              <Text style={styles.footerText}>Remembered Password?</Text>
+              <Text style={styles.footerText}>Remember your password?</Text>
               <TouchableOpacity onPress={() => router.back()}>
                 <Text style={styles.link}>Login</Text>
               </TouchableOpacity>
