@@ -1,6 +1,8 @@
 import express from "express";
 import User from "../models/user.js";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
+import sendEmail from "../utils/sendEmail.js";
 
 const router = express.Router();
 
@@ -84,6 +86,102 @@ router.post("/login", async (req,res) => {
     catch(error){
         console.log("error in login route", error);
         res.status(500).json({message: "Internal server error"});
+    }
+});
+router.post("/forgot-password", async (req, res) => {
+    const { email } = req.body;
+
+    if (!email) {
+        return res.status(400).json({ success: false, message: 'Vui lòng cung cấp email' });
+    }
+
+    try {
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            console.warn(`Yêu cầu reset mật khẩu cho email không tồn tại: ${email}`);
+            return res.status(200).json({ success: true, message: 'Nếu email của bạn tồn tại, một mã xác nhận sẽ được gửi.' });
+        }
+        const resetCode = user.getResetPasswordCode(); 
+        await user.save({ validateBeforeSave: false });
+
+        const message = `
+            Bạn nhận được email này vì bạn (hoặc ai đó) đã yêu cầu đặt lại mật khẩu cho tài khoản của bạn.
+            Mã xác nhận của bạn là: ${resetCode}
+            \n\n
+            Mã này sẽ hết hạn sau 10 phút.
+            Nếu bạn không yêu cầu điều này, vui lòng bỏ qua email này.
+        `;
+        const emailSent = await sendEmail({
+            email: user.email,
+            subject: 'Mã xác nhận đặt lại mật khẩu',
+            message,
+        });
+
+        if (emailSent) {
+            res.status(200).json({ success: true, message: 'Mã xác nhận đã được gửi tới email của bạn.' });
+        } else {
+            user.resetPasswordToken = undefined;
+            user.resetPasswordExpires = undefined;
+            await user.save({ validateBeforeSave: false });
+            res.status(500).json({ success: false, message: 'Lỗi gửi email. Vui lòng thử lại.' });
+        }
+
+    } catch (error) {
+        console.error('Lỗi /forgot-password:', error);
+        res.status(500).json({ success: false, message: 'Lỗi máy chủ nội bộ' });
+    }
+});
+router.post("/reset-password", async (req, res) => {
+    const { email, code, newPassword } = req.body;
+
+    if (!email || !code || !newPassword) {
+        return res.status(400).json({ success: false, message: 'Vui lòng cung cấp email, mã xác nhận và mật khẩu mới.' });
+    }
+
+    if (newPassword.length < 6) {
+        return res.status(400).json({ success: false, message: 'Mật khẩu mới phải có ít nhất 6 ký tự.' });
+    }
+
+
+
+    try {
+        const user = await User.findOne({
+            email,
+            resetPasswordExpires: { $gt: Date.now() }, //*$ gt la toan tu >= dc su dung trong Mongodb 
+        });
+
+        if (!user) {
+            return res.status(400).json({ success: false, message: 'Email không tồn tại hoặc mã xác nhận đã hết hạn.' });
+        }
+
+
+
+        
+        const hashedCode = crypto
+            .createHash('sha256')
+            .update(code)
+            .digest('hex');
+
+        if (user.resetPasswordToken !== hashedCode) {
+            return res.status(400).json({ success: false, message: 'Mã xác nhận không đúng.' });
+        }
+        user.password = newPassword;
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpires = undefined;
+        await user.save();
+        const confirmationMessage = `Mật khẩu cho tài khoản ${user.email} của bạn vừa được thay đổi thành công.`;
+        await sendEmail({
+            email: user.email,
+            subject: 'Mật khẩu đã được thay đổi',
+            message: confirmationMessage,
+        });
+
+        res.status(200).json({ success: true, message: 'Mật khẩu đã được đặt lại thành công.' });
+
+    } catch (error) {
+        console.error('Lỗi /reset-password:', error);
+        res.status(500).json({ success: false, message: 'Lỗi máy chủ nội bộ' });
     }
 });
 
