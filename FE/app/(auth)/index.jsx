@@ -39,7 +39,7 @@ export default function Login() {
     >
       <View style={styles.container}>
         {/* illusration */}
-        <View>
+        <View style={styles.topIllustration}>
           <Image
             source={require("../../assets/images/Reading_glasses.png")}
             style={styles.illustrationImage}
