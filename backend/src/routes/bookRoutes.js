@@ -17,8 +17,10 @@ router.post("/", protectRoute, async(req, res) => {
         }
 
         // Upload image to Cloudinary
-        const uploadResponse = await cloudinary.uploader.upload(image);
-        
+        const uploadResponse = await cloudinary.uploader.upload(image, {
+            folder: "Book_Forum/Book_Review" 
+        })
+
         // Link Upload to Cloudinary
         const imageUrl = uploadResponse.secure_url;
 
@@ -80,6 +82,45 @@ router.get("/user", protectRoute, async (req, res) => {
     }
 });
 
+// Update (về bản chất - Put update toàn bộ, Patch update 1 phần)
+router.patch("/:id", protectRoute, async(req, res) => {
+    try {    
+        const { title, caption, rating, image } = req.body; 
+
+        const book = await Book.findById(req.params.id);
+        if (!book) return res.status(404).json({ message: "Book not found" });
+
+        // protectRoute để kiểm Authorization - xác minh người dùngdùng
+        // Check người xóa có phải người viết Sách không - Check Ủy quyền cho phép chỉnh sửa 
+        // Ví dụ token User A -> được xác thực. Nhưng User A muốn sửa bài viết của User B -> không được phép
+        
+        if (book.user.toString() !== req.user._id.toString()){
+            return res.status(401). json({ message: "Unauthorized" });
+        }
+
+         // Conditionally update fields if they are provided in the request body
+       if (title !== undefined) book.title = title; 
+        if (caption !== undefined) book.caption = caption; 
+        if (rating !== undefined) book.rating = rating; 
+
+        if (image !== undefined) { // Use 'image' from req.body {
+            // If a new image is provided, upload it to Cloudinary - Vì đây là patch (CẦN TEST XEM PUT LÊN CÓ CẬP NHẬT ẢNH KHÔNGKHÔNG)
+            const uploadResponse = await cloudinary.uploader.upload(image, {
+                folder: "Book_Forum/Book_Review"
+            });
+            book.image = uploadResponse.secure_url;
+        }
+
+        await book.save();
+        res.status(200).json({ message: "Book updated successfully", updatedBook: book });
+    }
+    catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+// Delete spec book
 router.delete("/:id", protectRoute,async(req, res) => {
     try {
         const book = await Book.findById(req.params.id);
@@ -97,7 +138,7 @@ router.delete("/:id", protectRoute,async(req, res) => {
         if (book.image && book.image.includes("cloudinary") ) {
             try {
                 const publicId = book.image.split("/").pop().split(".")[0]; //tách đường link lấy qyup61vejflxxw8igvi0.png --> và lấy vị trí [0] tức lấy ảnh
-                await cloudinary. uploader.destroy(publicId);
+                await cloudinary.ploader.destroy(publicId);
             } catch (deleteError) {
                 console.log("Error deleting image from cloudinary", deleteError);
             }
