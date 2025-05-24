@@ -15,7 +15,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: COLORS.background,
   },
-  profileHeader: {
+   profileHeader: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: COLORS.cardBackground,
@@ -29,6 +29,23 @@ const styles = StyleSheet.create({
     elevation: 3,
     borderWidth: 1,
     borderColor: COLORS.border,
+    position: 'relative', // Thêm dòng này
+  },
+   editButton: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    backgroundColor: COLORS.primary,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
   },
   profileImage: {
     width: 80,

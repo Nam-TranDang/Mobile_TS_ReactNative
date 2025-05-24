@@ -3,7 +3,6 @@ import { Tabs } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import COLORS from '../../constants/colors';
 
-
 export default function TabLayout() {
   const inset = useSafeAreaInsets();
 
@@ -53,6 +52,12 @@ export default function TabLayout() {
              ),
         }}
        />
+       <Tabs.Screen
+        name="editprofile"
+        options={{
+          href: null, // Ẩn tab này khỏi bottom navigation
+        }}
+      />
     </Tabs>
   );
   
