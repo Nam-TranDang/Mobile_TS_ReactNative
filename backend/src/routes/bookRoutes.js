@@ -1,5 +1,6 @@
 import express from "express";
 import cloudinary from "../lib/cloudinary.js";
+import Comment from "../models/comment.js";
 import Book from "../models/book.js";
 import protectRoute from "../middleware/auth.middleware.js";
 
@@ -101,7 +102,7 @@ router.delete("/:id", protectRoute,async(req, res) => {
                 console.log("Error deleting image from cloudinary", deleteError);
             }
         }
-
+        await Comment.deleteMany({ book: req.params.id });
         // Nếu đó là user đã review sách -> thực hiện xóa trên MongoDB
         await book.deleteOne();
 
@@ -112,5 +113,129 @@ router.delete("/:id", protectRoute,async(req, res) => {
         res.status(500).json({ message: "Internal server error" });
     } 
 });
+router.post("/:bookId/comments", protectRoute, async (req, res) => {
+    try {
+    const { text } = req.body;
+    const { bookId } = req.params;
+    if (!text || text.trim() === "") {
+            return res.status(400).json({ message: "Comment text cannot be empty." });
+        }
+    
+        const book = await Book.findById(bookId);
+        if (!book) {
+            return res.status(404).json({ message: "Book not found." });
+        }
+    
+        const newComment = new Comment({
+            text,
+            user: req.user._id, 
+            book: bookId,
+        });
+    
+        await newComment.save();
+        
+        const populatedComment = await Comment.findById(newComment._id).populate("user", "username profileImage");
+    
+        res.status(201).json(populatedComment);
+    } catch (error) {
+        console.error("Create comment error:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+router.get("/:bookId/comments", protectRoute, async (req, res) => { 
+try {
+const { bookId } = req.params;
+const page = parseInt(req.query.page) || 1;
+const limit = parseInt(req.query.limit) || 10; 
+const skip = (page - 1) * limit;
+const book = await Book.findById(bookId);
+    if (!book) {
+        return res.status(404).json({ message: "Book not found." });
+    }
+
+    const comments = await Comment.find({ book: bookId })
+        .sort({ createdAt: -1 }) 
+        .skip(skip)
+        .limit(limit)
+        .populate("user", "username profileImage");
+
+    const totalComments = await Comment.countDocuments({ book: bookId });
+
+    res.json({
+        comments,
+        currentPage: page,
+        totalComments,
+        totalPages: Math.ceil(totalComments / limit),
+    });
+} catch (error) {
+    console.error("Get comments error:", error);
+    res.status(500).json({ message: "Internal server error" });
+}});
+
+router.put("/:bookId/comments/:commentId", protectRoute, async (req, res) => {
+    try {
+        const { text } = req.body;
+        const { bookId, commentId } = req.params;
+
+        if (!text || text.trim() === "") {
+            return res.status(400).json({ message: "Comment text cannot be empty." });
+        }
+
+        const comment = await Comment.findById(commentId);
+
+        if (!comment) {
+            return res.status(404).json({ message: "Comment not found." });
+        }
+        if (comment.user.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ message: "Forbidden: You are not authorized to edit this comment." });
+        }
+        if (comment.book.toString() !== bookId) {
+            return res.status(400).json({ message: "Bad request: Comment does not belong to this book." });
+        }
+
+        comment.text = text;
+        await comment.save();
+
+        const populatedComment = await Comment.findById(comment._id).populate("user", "username profileImage");
+        res.json(populatedComment);
+
+    } catch (error) {
+        console.error("Update comment error:", error);
+        if (error.kind === 'ObjectId') { 
+            return res.status(404).json({ message: "Comment not found or invalid ID." });
+        }
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+router.delete("/:bookId/comments/:commentId", protectRoute, async (req, res) => {
+    try {
+        const { bookId, commentId } = req.params; 
+        const comment = await Comment.findById(commentId);
+
+        if (!comment) {
+            return res.status(404).json({ message: "Comment not found." });
+        }
+        if (comment.user.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ message: "Forbidden: You are not authorized to delete this comment." });
+        }
+        if (comment.book.toString() !== bookId) {
+             return res.status(400).json({ message: "Bad request: Comment does not belong to this book." });
+        }
+
+        await Comment.findByIdAndDelete(commentId);
+
+        res.json({ message: "Comment deleted successfully." });
+
+    } catch (error) {
+        console.error("Delete comment error:", error);
+        if (error.kind === 'ObjectId') { 
+            return res.status(404).json({ message: "Comment not found or invalid ID." });
+        }
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
+
 
 export default router;

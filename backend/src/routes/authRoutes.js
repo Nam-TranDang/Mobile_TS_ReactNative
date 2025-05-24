@@ -94,7 +94,6 @@ router.post("/forgot-password", async (req, res) => {
     if (!email) {
         return res.status(400).json({ success: false, message: 'Vui lòng cung cấp email' });
     }
-
     try {
         const user = await User.findOne({ email });
 
@@ -104,7 +103,6 @@ router.post("/forgot-password", async (req, res) => {
         }
         const resetCode = user.getResetPasswordCode(); 
         await user.save({ validateBeforeSave: false });
-
         const message = `
             Bạn nhận được email này vì bạn (hoặc ai đó) đã yêu cầu đặt lại mật khẩu cho tài khoản của bạn.
             Mã xác nhận của bạn là: ${resetCode}
@@ -116,8 +114,7 @@ router.post("/forgot-password", async (req, res) => {
             email: user.email,
             subject: 'Mã xác nhận đặt lại mật khẩu',
             message,
-        });
-
+});
         if (emailSent) {
             res.status(200).json({ success: true, message: 'Mã xác nhận đã được gửi tới email của bạn.' });
         } else {
