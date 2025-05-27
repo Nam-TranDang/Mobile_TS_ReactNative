@@ -89,156 +89,96 @@ export default function EditProfile() {
   };
 
 const handleUpdateProfile = async () => {
-    if (!username.trim()) {
-      Alert.alert("Error", "Username cannot be empty");
+  if (!username.trim()) {
+    Alert.alert("Error", "Username cannot be empty");
+    return;
+  }
+
+    if (showPasswordSection) {
+    if (!currentPassword) {
+      Alert.alert("Error", "Current password is required");
       return;
     }
+    if (!password) {
+      Alert.alert("Error", "New password is required");
+      return;
+    }
+    if (!confirmPassword) {
+      Alert.alert("Error", "Confirm new password is required");
+      return;
+    }
+    if (password !== confirmPassword) {
+      Alert.alert("Error", "New password and confirmation password do not match");
+      return;
+    }
+    //Tránh chờ BE phản hồi lỗi này, giảm tải server
+    if (password.length < 6) {
+      Alert.alert("Error", "Password must be at least 6 characters");
+      return;
+    }
+  }
 
-    // Validate password if user wants to change it
-    if (password || confirmPassword) {
-      if (password !== confirmPassword) {
-        Alert.alert("Error", "Passwords do not match");
-        return;
-      }
-      if (password.length < 6) {
-        Alert.alert("Error", "Password must be at least 6 characters");
-        return;
-      }
+  try {
+    setIsLoading(true);
+    
+    let imageDataUrl = null;
+    if (imageBase64) {
+      const uriParts = image.split(".");
+      const fileType = uriParts[uriParts.length - 1];
+      const imageType = fileType
+        ? `image/${fileType.toLowerCase()}`
+        : "image/jpeg";
+      imageDataUrl = `data:${imageType};base64,${imageBase64}`;
     }
 
-    try {
-      setIsLoading(true);
-      
-      let imageDataUrl = null;
-      if (imageBase64) {
-        const uriParts = image.split(".");
-        const fileType = uriParts[uriParts.length - 1];
-        const imageType = fileType
-          ? `image/${fileType.toLowerCase()}`
-          : "image/jpeg";
-        imageDataUrl = `data:${imageType};base64,${imageBase64}`;
-      }
+    const userId = user.id;
+    if (!userId) {
+      throw new Error("User ID not found");
+    }
 
-      const response = await fetch(`${API_URL}/users/${user.id}`, {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username,
-          password: password || undefined,
-          profileImage: imageDataUrl || undefined,
-        }),
-      });
+    const requestBody = {
+      username,
+      ...(showPasswordSection && {
+        currentPassword,
+        password
+      }),
+      ...(imageDataUrl && { profileImage: imageDataUrl })
+    };
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to update profile");
-      }
+    const response = await fetch(`${API_URL}/users/${userId}`, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(requestBody)
+    });
 
-      Alert.alert(
-        "Success", 
-        "Profile updated successfully. You will be logged out for security reasons.",
-        [
-          {
-            text: "OK",
-            onPress: async () => {
-              await useAuthStore.getState().logout();
-              router.replace("/(auth)");
-            }
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || "Failed to update profile");
+    }
+
+    Alert.alert(
+      "Success", 
+      "Profile updated successfully. You will be logged out for security reasons.",
+      [
+        {
+          text: "OK",
+          onPress: async () => {
+            await useAuthStore.getState().logout();
+            router.replace("/(auth)");
           }
-        ]
-      );
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      Alert.alert("Error", error.message || "Something went wrong");
-    } finally {
-      setIsLoading(false);
-    }
+        }
+      ]
+    );
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    Alert.alert("Error", error.message || "Something went wrong");
+  } finally {
+    setIsLoading(false);
+  }
 };
-//HÀM CHỜ CẬP NHẬT BE XÁC NHẬN MẬT KHẨU CŨ
-// const handleUpdateProfile = async () => {
-//   if (!username.trim()) {
-//     Alert.alert("Error", "Username cannot be empty");
-//     return;
-//   }
-
-//   // Validate password if user wants to change it
-//   if (showPasswordSection) {
-//     if (!currentPassword) {
-//       Alert.alert("Error", "Current password is required");
-//       return;
-//     }
-//     if (!password) {
-//       Alert.alert("Error", "New password is required");
-//       return;
-//     }
-//     if (password !== confirmPassword) {
-//       Alert.alert("Error", "Passwords do not match");
-//       return;
-//     }
-//     if (password.length < 6) {
-//       Alert.alert("Error", "Password must be at least 6 characters");
-//       return;
-//     }
-//   }
-
-//   try {
-//     setIsLoading(true);
-    
-//     let imageDataUrl = null;
-//     if (imageBase64) {
-//       const uriParts = image.split(".");
-//       const fileType = uriParts[uriParts.length - 1];
-//       const imageType = fileType
-//         ? `image/${fileType.toLowerCase()}`
-//         : "image/jpeg";
-//       imageDataUrl = `data:${imageType};base64,${imageBase64}`;
-//     }
-
-//     // Sửa lại API endpoint cho khớp với backend
-//     const response = await fetch(`${API_URL}/users/${user._id}`, {
-//       method: "PATCH",  // Giữ nguyên method PATCH
-//       headers: {
-//         Authorization: `Bearer ${token}`,
-//         "Content-Type": "application/json",
-//       },
-//       body: JSON.stringify({
-//         username,
-//         currentPassword: showPasswordSection ? currentPassword : undefined,
-//         password: showPasswordSection ? password : undefined,
-//         profileImage: imageDataUrl || undefined,
-//       }),
-//     });
-
-//     const data = await response.json();
-//     if (!response.ok) {
-//       throw new Error(data.message || "Failed to update profile");
-//     }
-
-//     // Re-login to update user data in store
-//     await login(user.email, null, data.user, data.token);
-    
-//     // Reset password fields
-//     setShowPasswordSection(false);
-//     setCurrentPassword("");
-//     setPassword("");
-//     setConfirmPassword("");
-    
-//     Alert.alert("Success", "Profile updated successfully", [
-//       {
-//         text: "OK",
-//         onPress: () => router.back(),
-//       },
-//     ]);
-//   } catch (error) {
-//     console.error("Error updating profile:", error);
-//     Alert.alert("Error", error.message || "Something went wrong");
-//   } finally {
-//     setIsLoading(false);
-//   }
-// };
 
   const togglePasswordSection = () => {
       setShowPasswordSection(!showPasswordSection);
