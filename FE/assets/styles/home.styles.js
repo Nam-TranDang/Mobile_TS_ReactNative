@@ -3,6 +3,7 @@ import { StyleSheet } from "react-native";
 import COLORS from "../../constants/colors";
 
 const styles = StyleSheet.create({
+  // Container chính
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
@@ -16,7 +17,10 @@ const styles = StyleSheet.create({
   listContainer: {
     padding: 16,
     paddingBottom: 80, 
+    paddingTop: 8, // Giảm padding top vì đã có search bar
   },
+  
+  // Header components
   header: {
     marginBottom: 20,
     alignItems: "center",
@@ -33,6 +37,8 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     textAlign: "center",
   },
+  
+  // Book card và các thành phần
   bookCard: {
     backgroundColor: COLORS.cardBackground,
     borderRadius: 16,
@@ -102,6 +108,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.textSecondary,
   },
+  
+  // Empty state
   emptyContainer: {
     alignItems: "center",
     justifyContent: "center",
@@ -122,6 +130,171 @@ const styles = StyleSheet.create({
   },
   footerLoader: {
     marginVertical: 20,
+  },
+  
+  // Search bar
+  searchContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: COLORS.background,
+    alignItems: 'center',
+    zIndex: 1,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  searchInputContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.cardBackground,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    marginRight: 10,
+  },
+  searchIcon: {
+    marginLeft: 12,
+  },
+  searchInput: {
+    flex: 1,
+    height: 40,
+    paddingHorizontal: 10,
+    color: COLORS.textPrimary,
+  },
+  clearButton: {
+    padding: 8,
+  },
+  sortButton: {
+    backgroundColor: COLORS.primary,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  
+  // Modal overlay
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  
+  // Filter panel
+  filterPanelContent: {
+    backgroundColor: COLORS.cardBackground,
+    borderRadius: 8,
+    padding: 16,
+    margin: 16,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    width: '90%',
+    alignSelf: 'center',
+  },
+  filterPanelTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: COLORS.textPrimary,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  filterSection: {
+    marginBottom: 16,
+    position: 'relative',
+  },
+  filterSectionLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: COLORS.textPrimary,
+    marginBottom: 8,
+  },
+  
+  // Dropdowns
+  dropdown: {
+    height: 36,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 4,
+    paddingHorizontal: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: COLORS.background,
+  },
+  dropdownText: {
+    fontSize: 14,
+    color: COLORS.textPrimary,
+  },
+  sortByRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  sortDropdown: {
+    flex: 1,
+    marginHorizontal: 2,
+  },
+  dropdownMenu: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    backgroundColor: COLORS.cardBackground,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 4,
+    zIndex: 100,
+    maxHeight: 200,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  sortDropdownMenu: {
+    left: 0,
+    width: '48%',
+  },
+  sortDirectionDropdownMenu: {
+    right: 0,
+    left: 'auto',
+    width: '48%',
+  },
+  dropdownItem: {
+    padding: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  dropdownItemText: {
+    fontSize: 14,
+    color: COLORS.textPrimary,
+  },
+  dropdownItemTextSelected: {
+    color: COLORS.primary,
+    fontWeight: '500',
+  },
+  
+  // Buttons
+  filterButton: {
+    backgroundColor: COLORS.primary,
+    height: 40,
+    borderRadius: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  filterButtonText: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: '500',
   },
 });
 
