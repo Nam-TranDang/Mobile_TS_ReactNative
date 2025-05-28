@@ -5,6 +5,7 @@ import cors from "cors";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import bookRoutes from "./routes/bookRoutes.js";
+import reportRoutes from "./routes/reportRoutes.js";
 
 import { connectDB } from "./lib/db.js";
 
@@ -18,6 +19,7 @@ app.use(cors()); // cho phép tất cả các domain truy cập vào API Port 30
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/books", bookRoutes);
+app.use("/api/reports", reportRoutes);
 
 app.listen(PORT,() => {
   console.log(`server started on port ${PORT}`);

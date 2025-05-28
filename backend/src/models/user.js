@@ -13,6 +13,11 @@ const userSchema = new mongoose.Schema({
         required: true,
         unique: true,
     },
+    role: {
+        type: String,
+        enum: ["user", "admin"], // Các vai trò có thể có
+        default: "user",       // Vai trò mặc định khi đăng ký
+    },
     password:{
         type: String,
         required: true,
