@@ -31,6 +31,8 @@ const userSchema = new mongoose.Schema({
 }, {
     timestamps: true
 });
+
+// Hook để mã hóa mật khẩu trước khi lưu vào cơ sở dữ liệu
 userSchema.pre("save",async function(next){
     if (!this.isModified("password")) {
         return next();
@@ -43,6 +45,7 @@ userSchema.pre("save",async function(next){
 userSchema.methods.comparePassword = async function(userPassword){
     return await bcrypt.compare(userPassword, this.password);
 };
+
 userSchema.methods.getResetPasswordCode = function() {
     const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
     this.resetPasswordToken = crypto
