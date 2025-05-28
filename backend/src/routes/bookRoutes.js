@@ -133,21 +133,40 @@ router.delete("/:id", protectRoute,async(req, res) => {
             return res.status(401). json({ message: "Unauthorized" });
         }
 
-        // ví dụ đường dẫn ảnh https://res.cloudinary.com/de1rm4uto/image/upload/v1741568358/qyup61vejflxxw8igvi0.png
-        // Delete ảnh của Cloudinary
-        if (book.image && book.image.includes("cloudinary") ) {
-            try {
-                const publicId = book.image.split("/").pop().split(".")[0]; //tách đường link lấy qyup61vejflxxw8igvi0.png --> và lấy vị trí [0] tức lấy ảnh
-                await cloudinary.ploader.destroy(publicId);
-            } catch (deleteError) {
-                console.log("Error deleting image from cloudinary", deleteError);
-            }
-        }
+
+
+    
+        // "https://res.cloudinary.com/de1rm4uto/image/upload/v1741568358/Book_Forum/Book_Review/your_image_unique_id.png"
+        const parts = book.image.split('/'); // cắt ra thành các phần từ dấu "/"
+    
+        const publicIdWithVersionAndExtension = parts.slice(parts.indexOf('upload') + 2).join('/'); //bắt đầu đi từ index "upload" trong đoạn parts, và bỏ 2 phần tử đầu là upload và id và nối lại các phần còn lại
+        console.log("Public ID with version and extension:", publicIdWithVersionAndExtension);    
+        // Và join laị sẽ được: "Book_Forum/Book_Review/your_image_unique_id.png"
+
+        const publicId = publicIdWithVersionAndExtension.split('.')[0];
+        // Tách ra sẽ được "Book_Forum/Book_Review/your_image_unique_id"
+
+        console.log("Extracted Public ID for Cloudinary deletion:", publicId);
+
+        await cloudinary.uploader.destroy(publicId);
+        console.log("Image deleted from Cloudinary successfully.");
+        
         await Comment.deleteMany({ book: req.params.id });
         // Nếu đó là user đã review sách -> thực hiện xóa trên MongoDB
         await book.deleteOne();
+        res.json({ message: "Book deleted successfully" });
 
-        res.json({ message: "Book deleted successfully" }) ;
+        // ví dụ đường dẫn ảnh https://res.cloudinary.com/de1rm4uto/image/upload/v1741568358/qyup61vejflxxw8igvi0.png
+        // Delete ảnh của Cloudinary
+        // if (book.image && book.image.includes("cloudinary") ) {
+        //     try {
+        //         const publicId = book.image.split("/").pop().split(".")[0]; //tách đường link lấy qyup61vejflxxw8igvi0.png --> và lấy vị trí [0] tức lấy ảnh
+        //         await cloudinary.ploader.destroy(publicId);
+        //     } catch (deleteError) { 
+        //         console.log("Error deleting image from cloudinary", deleteError);
+        //     }
+        // }
+
     } 
     catch (error) {
         console.error(error);
@@ -156,9 +175,9 @@ router.delete("/:id", protectRoute,async(req, res) => {
 });
 router.post("/:bookId/comments", protectRoute, async (req, res) => {
     try {
-    const { text } = req.body;
-    const { bookId } = req.params;
-    if (!text || text.trim() === "") {
+        const { text } = req.body;
+        const { bookId } = req.params;
+        if (!text || text.trim() === "") {
             return res.status(400).json({ message: "Comment text cannot be empty." });
         }
     

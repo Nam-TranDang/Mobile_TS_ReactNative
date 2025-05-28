@@ -48,49 +48,6 @@ export const useAuthStore = create((set) => ({
             set({isCheckingAuth: false});
         }
     },
-
-//     // Thay thế checkAuth bằng một hàm luôn xác thực
-//     checkAuth: async () => {
-//     try {
-//         // Bạn vẫn có thể kiểm tra token thực tế nếu cần
-//         const actualToken = await AsyncStorage.getItem('token');
-//         const userJson = await AsyncStorage.getItem('user');
-//         const actualUser = userJson ? JSON.parse(userJson) : null;
-        
-//         // Nhưng luôn đặt một token và user mặc định bất kể kết quả thực tế
-//         const defaultToken = "default-token-always-authenticated";
-//         const defaultUser = {
-//             id: "default-user-id",
-//             username: "DefaultUser",
-//             // các thông tin khác của user mà ứng dụng của bạn cần
-//         };
-        
-//         // Luôn đặt token và user mặc định thay vì giá trị thực tế
-//         set({
-//             token: defaultToken, 
-//             user: defaultUser,
-//             isAuthenticated: true // Thêm flag này nếu bạn đang sử dụng
-//         });
-        
-//         console.log("User is automatically authenticated with default credentials");
-//     } catch(error) {
-//         console.log("Auth check failed", error);
-        
-//         // Ngay cả khi có lỗi, vẫn đặt trạng thái đã xác thực
-//         const defaultToken = "default-token-always-authenticated";
-//         const defaultUser = {
-//             id: "default-user-id",
-//             username: "DefaultUser",
-//             // các thông tin khác của user mà ứng dụng của bạn cần
-//         };
-        
-//         set({
-//             token: defaultToken, 
-//             user: defaultUser,
-//             isAuthenticated: true
-//         });
-//     }
-// },
     
     login: async(email, password) => {
         set({isLoading: true});

@@ -20,6 +20,8 @@ export default function ForgetPassword() {
   const [verifyCode, setVerifyCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSendingCode, setIsSendingCode] = useState(false);
   const [codeSent, setCodeSent] = useState(false);
@@ -222,9 +224,19 @@ export default function ForgetPassword() {
                   placeholderTextColor={COLORS.placeholderText}
                   value={newPassword}
                   onChangeText={setNewPassword}
-                  secureTextEntry
+                  secureTextEntry={!showNewPassword}
                   autoCapitalize="none"
                 />
+                <TouchableOpacity
+                  style={styles.eyeIcon}
+                  onPress={() => setShowNewPassword(!showNewPassword)}
+                >
+                  <Ionicons
+                    name={showNewPassword ? "eye-outline" : "eye-off-outline"}
+                    size={20}
+                    color={COLORS.primary}
+                  />
+                </TouchableOpacity>
               </View>
             </View>
 
@@ -244,9 +256,19 @@ export default function ForgetPassword() {
                   placeholderTextColor={COLORS.placeholderText}
                   value={confirmNewPassword}
                   onChangeText={setConfirmNewPassword}
-                  secureTextEntry
+                  secureTextEntry={!showConfirmPassword}
                   autoCapitalize="none"
                 />
+                <TouchableOpacity
+                  style={styles.eyeIcon}
+                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  <Ionicons
+                    name={showConfirmPassword ? "eye-outline" : "eye-off-outline"}
+                    size={20}
+                    color={COLORS.primary}
+                  />
+                </TouchableOpacity>               
               </View>
             </View>
 
