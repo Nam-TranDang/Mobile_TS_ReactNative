@@ -24,6 +24,10 @@ router.post("/", protectRoute, async(req, res) => {
         // Link Upload to Cloudinary
         const imageUrl = uploadResponse.secure_url;
 
+        if(rating < 1 || rating > 5) {
+            return res.status(400).json({ message: "Rating out of scope" });
+        }
+
         // Save to database
         const newBook = new Book({
             title,
@@ -33,7 +37,7 @@ router.post("/", protectRoute, async(req, res) => {
             user: req.user._id, // Cần Token để xác định danh tính người gửi 
         });
 
-        await newBook.save();
+        await newBook.save();       //build function của  Mongoose - store data
         res.status(201).json(newBook);
 
     } catch (error) {
@@ -42,7 +46,7 @@ router.post("/", protectRoute, async(req, res) => {
     }
 });
 
-// // Pagination - phân trang: cần xem lại nếu có tính năng lấy những post dựa vào like + rate --> tính năng recommend cần xem
+// Pagination cho trang home - phân trang: cần xem lại nếu có tính năng lấy những post dựa vào like + rate --> tính năng recommend cần xem
 router.get("/", protectRoute, async(req, res) => {
     //const response = await fetch("http://localhost:3000/api/books?page=1&limit=5");
 
@@ -70,6 +74,9 @@ router.get("/", protectRoute, async(req, res) => {
         res.status(500).json({ message: "Internal server error" });    
     }
 });
+
+// Tính năng Get sách theo bookID - hiển nội dung sách 
+
 
 // Tính năng Get hết review sách của User đó - và hiển thị lên profile (giống hiển thị bài đăng)
 router.get("/user", protectRoute, async (req, res) => {
@@ -173,6 +180,8 @@ router.delete("/:id", protectRoute,async(req, res) => {
         res.status(500).json({ message: "Internal server error" });
     } 
 });
+
+// Tạo comment for a book
 router.post("/:bookId/comments", protectRoute, async (req, res) => {
     try {
         const { text } = req.body;
@@ -297,5 +306,120 @@ router.delete("/:bookId/comments/:commentId", protectRoute, async (req, res) => 
     }
 });
 
+
+// Tính năng like và dislike O day 
+// chỉ cần check authenticate là like được - make sure chỉ like hoặc dislike 
+router.put("/:id/like", protectRoute, async (req, res) => {
+    try {
+        const book = await Book.findById(req.params.id);
+        if (!book) return res.status(404).json({ message: "Book not found" });
+
+        const userId = req.user._id;
+        if (!book.likedBy.includes(userId)) {
+            book.likedBy.push(userId);
+            book.like_count += 1;
+            // If user previously disliked, remove from dislikedBy and decrement dislike_count
+            if (book.dislikedBy.includes(userId)) {
+                book.dislikedBy.pull(userId);
+                book.dislike_count -= 1;
+            }
+            await book.save();
+        }
+        res.status(200).json(book);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+// Like - tham khao PATCH
+// router.patch("/:id/like", protectRoute, async (req, res) => {
+//     try {
+//         const userId = req.user._id;
+
+//         // findOneAndUpdate là build in của Mongoose, dùng để tìm và cập nhật 1 phần trong document
+//         const book = await Book.findOneAndUpdate(
+//             { _id: req.params.id, "likedBy": { $ne: userId } },  // Bước này Query sách - và là điều kiện and = if có sách && userid not equal ở trong array likedBy --> thì cho like -> tránh case like nhiều lần.
+//             {
+//                 $push: { likedBy: userId }, // Thêm user vào array likeBy 
+//                 $inc: { like_count: 1 },    // Tăng thêm vào like_count
+//                 $pull: { dislikedBy: userId }, // Xóa user khỏi dislikedBy nếu có -> tránh trường hợp vừa like vừa dislike 
+//                 $inc: { dislike_count: -1 } // Giảm dislike_count nếu user có trong dislikedBy
+//             },
+//             { new: true } // Chắc chắn  document được updateupdate
+//         );
+
+//         if (!book) {
+//             return res.status(404).json({ message: "Book not found or already liked" });
+//         }
+
+//         res.status(200).json(book);
+//     } catch (error) {
+//         console.error(error);
+//         res.status(500).json({ message: "Internal server error" });
+//     }
+// });
+
+// Hủy nút like  
+router.put("/:id/unlike", protectRoute, async (req, res) => {
+    try {
+        const book = await Book.findById(req.params.id);
+        if (!book) return res.status(404).json({ message: "Book not found" });
+
+        const userId = req.user._id;
+        if (book.likedBy.includes(userId)) {
+            book.likedBy.pull(userId);
+            book.like_count -= 1;
+            await book.save();
+        }
+        res.status(200).json(book);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+// Dislike
+router.put("/:id/dislike", protectRoute, async (req, res) => {
+    try {
+        const book = await Book.findById(req.params.id);
+        if (!book) return res.status(404).json({ message: "Book not found" });
+
+        const userId = req.user._id;
+        if (!book.dislikedBy.includes(userId)) {
+            book.dislikedBy.push(userId);
+            book.dislike_count += 1;
+            // If user previously liked, remove from likedBy and decrement like_count
+            if (book.likedBy.includes(userId)) {
+                book.likedBy.pull(userId);
+                book.like_count -= 1;
+            }
+            await book.save();
+        }
+        res.status(200).json(book);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+// Hủy nút Dislike
+router.put("/:id/remove-dislike", protectRoute, async (req, res) => {
+    try {
+        const book = await Book.findById(req.params.id);
+        if (!book) return res.status(404).json({ message: "Book not found" });
+
+        const userId = req.user._id;
+        if (book.dislikedBy.includes(userId)) {
+            book.dislikedBy.pull(userId);
+            book.dislike_count -= 1;
+            await book.save();
+        }
+        res.status(200).json(book);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
 
 export default router;
