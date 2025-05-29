@@ -264,18 +264,14 @@ router.put("/:bookId/comments/:commentId", protectRoute, async (req, res) => {
       return res.status(404).json({ message: "Comment not found." });
     }
     if (comment.user.toString() !== req.user._id.toString()) {
-      return res
-        .status(403)
-        .json({
-          message: "Forbidden: You are not authorized to edit this comment.",
-        });
+      return res.status(403).json({
+        message: "Forbidden: You are not authorized to edit this comment.",
+      });
     }
     if (comment.book.toString() !== bookId) {
-      return res
-        .status(400)
-        .json({
-          message: "Bad request: Comment does not belong to this book.",
-        });
+      return res.status(400).json({
+        message: "Bad request: Comment does not belong to this book.",
+      });
     }
 
     comment.text = text;
@@ -309,19 +305,14 @@ router.delete(
         return res.status(404).json({ message: "Comment not found." });
       }
       if (comment.user.toString() !== req.user._id.toString()) {
-        return res
-          .status(403)
-          .json({
-            message:
-              "Forbidden: You are not authorized to delete this comment.",
-          });
+        return res.status(403).json({
+          message: "Forbidden: You are not authorized to delete this comment.",
+        });
       }
       if (comment.book.toString() !== bookId) {
-        return res
-          .status(400)
-          .json({
-            message: "Bad request: Comment does not belong to this book.",
-          });
+        return res.status(400).json({
+          message: "Bad request: Comment does not belong to this book.",
+        });
       }
 
       await Comment.findByIdAndDelete(commentId);
@@ -450,6 +441,28 @@ router.put("/:id/remove-dislike", protectRoute, async (req, res) => {
     res.status(200).json(book);
   } catch (error) {
     console.error(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// Get single book details - đặt sau route /user để tránh conflict
+router.get("/:id", protectRoute, async (req, res) => {
+  try {
+    const book = await Book.findById(req.params.id).populate(
+      "user",
+      "username profileImage createdAt"
+    );
+
+    if (!book) {
+      return res.status(404).json({ message: "Book not found" });
+    }
+
+    res.json(book);
+  } catch (error) {
+    console.error("Get book details error:", error);
+    if (error.kind === "ObjectId") {
+      return res.status(400).json({ message: "Invalid book ID format" });
+    }
     res.status(500).json({ message: "Internal server error" });
   }
 });

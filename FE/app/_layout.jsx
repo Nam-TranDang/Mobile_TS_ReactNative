@@ -69,6 +69,7 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="userprofile" />
+          <Stack.Screen name="bookdetail" />
         </Stack>
       </SafeScreen>
       <StatusBar style="dark" />
