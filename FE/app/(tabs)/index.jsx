@@ -13,6 +13,7 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
 } from 'react-native';
+import { useRouter } from 'expo-router'; // Add this import
 import styles from "../../assets/styles/home.styles";
 import Loader from '../../components/Loader';
 import { API_URL } from "../../constants/api";
@@ -24,6 +25,7 @@ export const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export default function Home() {
   const { token } = useAuthStore();
+  const router = useRouter(); // Add this line
   const [books, setBooks] = useState([]);
   const [filteredBooks, setFilteredBooks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -200,10 +202,16 @@ export default function Home() {
     <View style={styles.bookCard}>
       {/* Header of the book card */}
       <View style={styles.bookHeader}>
-        <View style={styles.userInfo}>
+        <TouchableOpacity 
+          style={styles.userInfo}
+          onPress={() => router.push({
+            pathname: "/userprofile",
+            params: { userId: item.user._id }
+          })}
+        >
           <Image source={{uri: item.user.profileImage}} style={styles.avatar} />
           <Text style={styles.username}>{item.user.username}</Text>
-        </View>
+        </TouchableOpacity>
       </View>
       {/* Book container */}
       <View style={styles.bookImageContainer}>
@@ -217,7 +225,7 @@ export default function Home() {
           {renderRatingStars(item.rating)}
         </View>
         <Text style={styles.caption}>{item.caption}</Text>
-        <Text style={styles.date}>Shared on {formatPublishDate(item.createdAt)}</Text>
+        <Text style={styles.date}>Shared on {formatPublishDate(item.createAt)}</Text>
       </View>
     </View>
   );
