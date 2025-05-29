@@ -11,7 +11,7 @@ const reportSchema = new mongoose.Schema(
         reportedItemType: { 
             type: String,
             required: true,
-            enum: ["Book", "Comment"],
+            enum: ["Book", "Comment","User"],
         },
         reportedItemId: { 
             type: mongoose.Schema.Types.ObjectId,

@@ -1,34 +1,41 @@
+// src/routes/reportRoutes.js
 import express from "express";
 import protectRoute from "../middleware/auth.middleware.js";
 import isAdmin from "../middleware/admin.middleware.js";
 import Report from "../models/report.js";
 import Book from "../models/book.js";
-import Comment from "../models/comment.js"; 
-import cloudinary from "../lib/cloudinary.js";
-import User from "../models/user.js"; 
-import sendEmail from "../lib/sendEmail.js"; 
-
-
+import Comment from "../models/comment.js";
+import cloudinary from "../lib/cloudinary.js"; 
+import User from "../models/user.js";
+import sendEmail from "../lib/sendEmail.js";
 
 const router = express.Router();
 
 router.post("/", protectRoute, async (req, res) => {
     try {
         const { reportedItemType, reportedItemId, reason, description } = req.body;
-        const reporterId = req.user._id; // Lấy từ token qua protectRoute
+        const reporterId = req.user._id;
 
         if (!reportedItemType || !reportedItemId || !reason) {
             return res.status(400).json({ message: "reportedItemType, reportedItemId, and reason are required." });
         }
 
-        if (!["Book", "Comment"].includes(reportedItemType)) {
-            return res.status(400).json({ message: "Invalid reportedItemType. Must be 'Book' or 'Comment'." });
+       
+        if (!["Book", "Comment", "User"].includes(reportedItemType)) {
+            return res.status(400).json({ message: "Invalid reportedItemType. Must be 'Book', 'Comment', or 'User'." });
         }
+        
+        if (reportedItemType === "User" && reportedItemId === reporterId.toString()) {
+            return res.status(400).json({ message: "You cannot report yourself." });
+        }
+
         let itemExists;
         if (reportedItemType === "Book") {
             itemExists = await Book.findById(reportedItemId);
         } else if (reportedItemType === "Comment") {
             itemExists = await Comment.findById(reportedItemId);
+        } else if (reportedItemType === "User") { 
+            itemExists = await User.findById(reportedItemId);
         }
 
         if (!itemExists) {
@@ -43,14 +50,14 @@ router.post("/", protectRoute, async (req, res) => {
         });
 
         await newReport.save();
-        res.status(201).json({ message: "Report submitted successfully. We will review it shortly." });
+        res.status(201).json({ message: "Report submitted successfully. We will review it shortly.", reportId: newReport._id });
 
     } catch (error) {
         console.error("Error submitting report:", error);
         if (error.name === 'ValidationError') {
             return res.status(400).json({ message: error.message });
         }
-        if (error.kind === 'ObjectId') { // Nếu reportedItemId có định dạng không hợp lệ
+        if (error.kind === 'ObjectId') {
             return res.status(400).json({ message: `Invalid ID format for ${req.body.reportedItemType || 'item'}.` });
         }
         res.status(500).json({ message: "Internal server error." });
@@ -60,24 +67,20 @@ router.post("/", protectRoute, async (req, res) => {
 router.get("/", protectRoute, isAdmin, async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 5;
-        const statusFilter = req.query.status; 
+        const limit = parseInt(req.query.limit) || 5; // Bạn có thể tăng limit này nếu muốn
+        const statusFilter = req.query.status;
         const skip = (page - 1) * limit;
-
         let queryConditions = {};
-        if (statusFilter && ["pending", "reviewed", "resolved", "rejected"].includes(statusFilter)) {
+        if (statusFilter && ["pending", "resolved", "rejected"].includes(statusFilter)) {
             queryConditions.status = statusFilter;
         }
-
         const reports = await Report.find(queryConditions)
-            .sort({ createdAt: -1 }) 
+            .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit)
-            .populate("reporter", "username email profileImage") 
+            .populate("reporter", "username email profileImage")
             .populate("reportedItemId"); 
-
         const totalReports = await Report.countDocuments(queryConditions);
-
         res.json({
             reports,
             currentPage: page,
@@ -89,6 +92,7 @@ router.get("/", protectRoute, isAdmin, async (req, res) => {
         res.status(500).json({ message: "Internal server error." });
     }
 });
+
 router.put("/:reportId", protectRoute, isAdmin, async (req, res) => {
     try {
         const { status, adminNotes, actionRequired } = req.body;
@@ -98,111 +102,143 @@ router.put("/:reportId", protectRoute, isAdmin, async (req, res) => {
             return res.status(400).json({ message: "Status is required for update." });
         }
         if (!["pending", "resolved", "rejected"].includes(status)) {
-            return res.status(400).json({ message: "Invalid status value." });
+            return res.status(400).json({ message: "Invalid status value. Must be 'pending', 'resolved', or 'rejected'." });
         }
 
         const report = await Report.findById(reportId).populate('reporter', 'email username');
         if (!report) {
             return res.status(404).json({ message: "Report not found." });
         }
-
         report.status = status;
         if (adminNotes !== undefined) {
             report.adminNotes = adminNotes.trim();
         }
         let actionMessage = "Report status updated successfully.";
-        // let ownerNotified = false; // Bỏ hoặc khai báo lại nếu bạn có dùng
-
         if (status === 'resolved' && actionRequired === true) {
             try {
-                let itemDeleted = false;
-                let ownerId = null; // Sẽ chứa object User đã populate hoặc ObjectId
-                let itemTypeForNotification = "";
-                let itemContentForNotification = "";
+                let itemAffected = false; 
+                let ownerId = null;
+                let itemTypeForNotification = report.reportedItemType.toLowerCase(); 
+                let itemContentForNotification = `ID: ${report.reportedItemId}`; 
 
                 if (report.reportedItemType === 'Book') {
-                    const bookToDelete = await Book.findById(report.reportedItemId).populate('user', 'email username');
-                    if (bookToDelete) {
-                        ownerId = bookToDelete.user;
-                        itemTypeForNotification = "sách";
-                        itemContentForNotification = `"${bookToDelete.title}"`;
+                    const bookToHandle = await Book.findById(report.reportedItemId).populate('user', 'email username'); 
+                    if (bookToHandle) {
+                        ownerId = bookToHandle.user;
+                        itemTypeForNotification = "sách"; 
+                        itemContentForNotification = `"${bookToHandle.title}"`;
 
-                        if (bookToDelete.image && bookToDelete.image.includes("cloudinary")) {
+                        if (bookToHandle.image && bookToHandle.image.includes("cloudinary")) {
                             try {
-                                const publicId = bookToDelete.image.split("/").pop().split(".")[0];
+                                const publicId = bookToHandle.image.split("/").pop().split(".")[0];
                                 await cloudinary.uploader.destroy(publicId);
-                                console.log(`Cloudinary image ${publicId} for Book ${bookToDelete._id} was deleted.`);
+                                console.log(`Cloudinary image ${publicId} for Book ${bookToHandle._id} was deleted.`);
                             } catch (deleteError) {
                                 console.error("Error deleting image from cloudinary for reported book:", deleteError);
                             }
                         }
                         await Comment.deleteMany({ book: report.reportedItemId });
                         await Book.findByIdAndDelete(report.reportedItemId);
-                        itemDeleted = true;
+                        itemAffected = true; 
                         console.log(`Book with ID ${report.reportedItemId} was deleted due to resolved report ${reportId}.`);
                         actionMessage += ` Book ${report.reportedItemId} has been deleted.`;
                     } else {
                         console.warn(`Book with ID ${report.reportedItemId} not found for deletion (report ${reportId}).`);
                     }
                 } else if (report.reportedItemType === 'Comment') {
-                    const commentFound = await Comment.findById(report.reportedItemId).populate('user', 'email username'); // Tìm và populate trước
-                    if (commentFound) {
-                        ownerId = commentFound.user; // ownerId giờ là object User (nếu user tồn tại) hoặc ObjectId
-                        itemTypeForNotification = "bình luận";
-                        itemContentForNotification = `"${commentFound.text.substring(0, 50)}${commentFound.text.length > 50 ? '...' : ''}"`;
-                        
-                        await Comment.findByIdAndDelete(report.reportedItemId); // Sau đó mới xóa
-                        itemDeleted = true;
+                    const commentToHandle = await Comment.findById(report.reportedItemId).populate('user', 'email username'); 
+                    if (commentToHandle) {
+                        ownerId = commentToHandle.user;
+                        itemTypeForNotification = "bình luận"; 
+                        itemContentForNotification = `"${commentToHandle.text.substring(0, 50)}${commentToHandle.text.length > 50 ? '...' : ''}"`;
+
+                        await Comment.findByIdAndDelete(report.reportedItemId);
+                        itemAffected = true; 
                         console.log(`Comment with ID ${report.reportedItemId} was deleted due to resolved report ${reportId}.`);
                         actionMessage += ` Comment ${report.reportedItemId} has been deleted.`;
                     } else {
                         console.warn(`Comment with ID ${report.reportedItemId} not found for deletion (report ${reportId}).`);
                     }
+                
+                } else if (report.reportedItemType === 'User') {
+                    const userToHandle = await User.findById(report.reportedItemId); 
+                    if (userToHandle) {
+                        // TODO: Quyết định hành động cụ thể với tài khoản User (ví dụ: khóa, cấm, xóa)
+                        // Ví dụ: Đánh dấu tài khoản bị tạm khóa
+                        // userToHandle.isSuspended = true;
+                        // userToHandle.suspensionReason = `Reported by admin. Reason: ${adminNotes || 'Policy violation'}`;
+                        // await userToHandle.save();
+
+                        itemAffected = true;
+                        itemTypeForNotification = "tài khoản";
+                        itemContentForNotification = `"${userToHandle.username}"`;
+                        ownerId = userToHandle._id; // User bị report chính là người nhận thông báo
+
+                        console.log(`User account ${report.reportedItemId} (${userToHandle.username}) has been handled (e.g., flagged/suspended) due to report ${reportId}.`);
+                        actionMessage += ` User account ${userToHandle.username} has been processed.`;
+                       
+                    } else {
+                        console.warn(`User with ID ${report.reportedItemId} not found for handling (report ${reportId}).`);
+                    }
                 }
 
-                if (itemDeleted && ownerId) { // ownerId có thể là object User hoặc ObjectId
+                
+                if (itemAffected && ownerId) {
                     let ownerEmail = "";
                     let ownerUsername = "Người dùng";
 
-                    if (ownerId && typeof ownerId === 'object' && ownerId.email) { // Nếu ownerId là object User đã populate
-                        ownerEmail = ownerId.email;
-                        ownerUsername = ownerId.username || "Người dùng";
-                    } else if (ownerId) { // Nếu ownerId là ObjectId, cần query lại
-                        const ownerUser = await User.findById(ownerId.toString()).select('email username'); // Chuyển sang string nếu là ObjectId
-                        if (ownerUser) {
-                            ownerEmail = ownerUser.email;
-                            ownerUsername = ownerUser.username || "Người dùng";
-                        }
+                    // Thống nhất cách lấy email và username
+                    const ownerUserInstance = await User.findById(ownerId.toString()).select('email username');
+                    if (ownerUserInstance) {
+                        ownerEmail = ownerUserInstance.email;
+                        ownerUsername = ownerUserInstance.username || "Người dùng";
                     }
+
 
                     if (ownerEmail) {
                         const appName = process.env.SENDGRID_FROM_NAME || 'Bookworm App';
-                        const emailSubject = `Thông báo: Nội dung của bạn đã bị gỡ bỏ trên ${appName}`;
-                        const emailMessage = `Chào ${ownerUsername},\n\nChúng tôi rất tiếc phải thông báo rằng ${itemTypeForNotification} của bạn (${itemContentForNotification}) đã bị gỡ bỏ khỏi ${appName} do vi phạm chính sách cộng đồng, dựa trên một báo cáo đã được xem xét.\n\nLý do được quản trị viên ghi nhận: ${adminNotes || "Vi phạm chính sách chung."}\n\nNếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi.\n\nTrân trọng,\nĐội ngũ ${appName}`;
+                        let emailSubject, emailMessage;
+
+                        if (report.reportedItemType === 'User') { // <--- THÊM MỚI: Template email cho User bị xử lý ---
+                            emailSubject = `Thông báo quan trọng về tài khoản của bạn trên ${appName}`;
+                            emailMessage =
+`Chào ${ownerUsername},
+
+Chúng tôi viết thư này để thông báo rằng ${itemTypeForNotification} của bạn (${itemContentForNotification}) trên ${appName} đã bị xử lý do vi phạm chính sách cộng đồng, dựa trên một báo cáo đã được xem xét.
+
+Hành động của quản trị viên: ${adminNotes || "Tài khoản đã được xem xét và xử lý theo chính sách."}
+
+Nếu bạn cho rằng đây là một sự nhầm lẫn hoặc muốn biết thêm chi tiết, vui lòng liên hệ với bộ phận hỗ trợ của chúng tôi.
+
+Trân trọng,
+Đội ngũ ${appName}`;
+                        } else { // Book hoặc Comment
+                            emailSubject = `Thông báo: Nội dung của bạn đã bị gỡ bỏ trên ${appName}`;
+                            emailMessage = `Chào ${ownerUsername},\n\nChúng tôi rất tiếc phải thông báo rằng ${itemTypeForNotification} của bạn (${itemContentForNotification}) đã bị gỡ bỏ khỏi ${appName} do vi phạm chính sách cộng đồng, dựa trên một báo cáo đã được xem xét.\n\nLý do được quản trị viên ghi nhận: ${adminNotes || "Vi phạm chính sách chung."}\n\nNếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi.\n\nTrân trọng,\nĐội ngũ ${appName}`;
+                        }
+
                         try {
                             await sendEmail({
                                 email: ownerEmail,
                                 subject: emailSubject,
                                 message: emailMessage,
                             });
-                            // ownerNotified = true; // Khai báo lại nếu cần
-                            actionMessage += ` Owner (${ownerEmail}) has been notified.`;
-                            console.log(`Notification email sent to ${ownerEmail} for deleted content.`);
+                            actionMessage += ` User (${ownerEmail}) associated with the item has been notified.`;
+                            console.log(`Notification email sent to ${ownerEmail}.`);
                         } catch (emailError) {
                             console.error(`Failed to send notification email to ${ownerEmail}:`, emailError);
-                            actionMessage += ` Failed to notify owner via email.`;
+                            actionMessage += ` Failed to notify user via email.`;
                         }
                     } else {
-                         console.warn(`Could not find email for owner to send deletion notification. Owner ID was: ${ownerId}`);
+                         console.warn(`Could not find email for owner/user to send notification. Owner/User ID was: ${ownerId}`);
                     }
                 }
-            } catch (deletionError) {
-                console.error(`Error during automatic deletion/notification for report ${reportId}:`, deletionError);
-                actionMessage += ` However, an error occurred during content processing: ${deletionError.message}`;
+            } catch (processingError) { 
+                console.error(`Error during content processing for report ${reportId}:`, processingError);
+                actionMessage += ` However, an error occurred during content processing: ${processingError.message}`;
             }
         }
         else if (status === 'rejected') {
-            // ... (Logic gửi email cho reporter khi rejected giữ nguyên, nó có vẻ đã ổn)
             if (report.reporter && report.reporter.email) {
                 const reporterEmail = report.reporter.email;
                 const reporterUsername = report.reporter.username || "Người dùng";
@@ -217,13 +253,17 @@ router.put("/:reportId", protectRoute, isAdmin, async (req, res) => {
                         } else if (report.reportedItemType === 'Comment') {
                             item = await Comment.findById(report.reportedItemId).select('text');
                             if (item) reportedItemInfo = `bình luận "${item.text.substring(0, 30)}..."`;
+                        // <--- THÊM MỚI: Lấy thông tin User bị báo cáo cho email từ chối ---
+                        } else if (report.reportedItemType === 'User') {
+                            item = await User.findById(report.reportedItemId).select('username');
+                            if (item) reportedItemInfo = `tài khoản người dùng "${item.username}"`;
                         }
                     }
                 } catch (itemFetchError) {
                     console.warn(`Could not fetch details for reported item ${report.reportedItemId} for rejection email:`, itemFetchError.message);
                 }
                 const emailSubject = `Cập nhật về báo cáo của bạn trên ${appName}`;
-                const emailMessage = `Chào ${reporterUsername},\n\nCảm ơn bạn đã giúp chúng tôi giữ cho cộng đồng ${appName} an toàn và thân thiện.\nChúng tôi đã xem xét báo cáo của bạn liên quan đến ${reportedItemInfo}.\n\nSau khi đánh giá, chúng tôi xác định rằng nội dung này không vi phạm chính sách cộng đồng của chúng tôi vào thời điểm này.\nGhi chú từ quản trị viên (nếu có): ${adminNotes || "Không có ghi chú bổ sung."}\n\nChúng tôi đánh giá cao sự đóng góp của bạn. Nếu bạn có thêm bất kỳ quan ngại nào, xin đừng ngần ngại báo cáo.\n\nTrân trọng,\nĐội ngũ ${appName}`;
+                const emailMessage = `Chào ${reporterUsername},\n\nCảm ơn bạn đã giúp chúng tôi giữ cho cộng đồng ${appName} an toàn và thân thiện.\nChúng tôi đã xem xét báo cáo của bạn liên quan đến ${reportedItemInfo}.\n\nSau khi đánh giá, chúng tôi xác định rằng nội dung/tài khoản này không vi phạm chính sách cộng đồng của chúng tôi vào thời điểm này, hoặc không đủ bằng chứng để xử lý.\nGhi chú từ quản trị viên (nếu có): ${adminNotes || "Không có ghi chú bổ sung."}\n\nChúng tôi đánh giá cao sự đóng góp của bạn. Nếu bạn có thêm bất kỳ quan ngại nào, xin đừng ngần ngại báo cáo.\n\nTrân trọng,\nĐội ngũ ${appName}`;
                 try {
                     await sendEmail({
                         email: reporterEmail,
@@ -243,11 +283,11 @@ router.put("/:reportId", protectRoute, isAdmin, async (req, res) => {
         }
 
         await report.save();
-        const populatedReport = await Report.findById(report._id)
+        const populatedReport = await Report.findById(report._id) 
             .populate("reporter", "username email profileImage")
             .populate("reportedItemId");
 
-        res.json({ message: actionMessage, report: populatedReport });
+        res.json({ message: actionMessage, report: populatedReport }); 
 
     } catch (error) {
         console.error("Error updating report status:", error);
