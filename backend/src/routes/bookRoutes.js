@@ -3,6 +3,7 @@ import cloudinary from "../lib/cloudinary.js";
 import Comment from "../models/comment.js";
 import Book from "../models/book.js";
 import protectRoute from "../middleware/auth.middleware.js";
+import mongoose from "mongoose"; // Import mongoose here
 
 const router = express.Router();
 
@@ -47,12 +48,15 @@ router.post("/", protectRoute, async (req, res) => {
 // Pagination cho trang home - phân trang: cần xem lại nếu có tính năng lấy những post dựa vào like + rate --> tính năng recommend cần xem
 router.get("/", protectRoute, async (req, res) => {
   try {
-    const page = req.query.page || 1; // default page = 1
-    const limit = req.query.limit || 5; // default limit = 5
+    const page = parseInt(req.query.page) || 1; // default page = 1
+    const limit = parseInt(req.query.limit) || 10; // Tăng limit để hiển thị nhiều sách hơn
     const skip = (page - 1) * limit; // tính số lượng sách đã bỏ qua
 
     // Add filter for user if provided
     const filter = req.query.user ? { user: req.query.user } : {};
+
+    console.log("Filter applied:", filter); // Debug log
+    console.log("Query params:", req.query); // Debug log
 
     const books = await Book.find(filter)
       .sort({ createdAt: -1 }) // desc
@@ -61,6 +65,10 @@ router.get("/", protectRoute, async (req, res) => {
       .populate("user", "username profileImage");
 
     const totalBooks = await Book.countDocuments(filter); // đếm tổng số sách trong DB
+
+    console.log(
+      `Found ${books.length} books for user ${req.query.user || "all"}`
+    ); // Debug log
 
     res.send({
       books,
@@ -184,56 +192,69 @@ router.delete("/:id", protectRoute, async (req, res) => {
   }
 });
 
-// Tạo comment for a book
+// Create comment for a book
 router.post("/:bookId/comments", protectRoute, async (req, res) => {
   try {
     const { text } = req.body;
     const { bookId } = req.params;
+
     if (!text || text.trim() === "") {
-      return res.status(400).json({ message: "Comment text cannot be empty." });
+      return res.status(400).json({ message: "Comment text is required" });
     }
 
+    // Validate bookId
+    if (!mongoose.Types.ObjectId.isValid(bookId)) {
+      return res.status(400).json({ message: "Invalid book ID format" });
+    }
+
+    // Check if book exists
     const book = await Book.findById(bookId);
     if (!book) {
-      return res.status(404).json({ message: "Book not found." });
+      return res.status(404).json({ message: "Book not found" });
     }
 
     const newComment = new Comment({
-      text,
+      text: text.trim(),
       user: req.user._id,
       book: bookId,
     });
 
     await newComment.save();
 
-    const populatedComment = await Comment.findById(newComment._id).populate(
-      "user",
-      "username profileImage"
-    );
+    // Populate user info before sending response
+    await newComment.populate("user", "username profileImage _id");
 
-    res.status(201).json(populatedComment);
+    res.status(201).json(newComment);
   } catch (error) {
     console.error("Create comment error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });
 
+// Get comments for a book
 router.get("/:bookId/comments", protectRoute, async (req, res) => {
   try {
     const { bookId } = req.params;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
+
+    // Validate bookId
+    if (!mongoose.Types.ObjectId.isValid(bookId)) {
+      return res.status(400).json({ message: "Invalid book ID format" });
+    }
+
+    // Check if book exists
     const book = await Book.findById(bookId);
     if (!book) {
-      return res.status(404).json({ message: "Book not found." });
+      return res.status(404).json({ message: "Book not found" });
     }
 
     const comments = await Comment.find({ book: bookId })
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
-      .populate("user", "username profileImage");
+      .populate("user", "username profileImage _id"); // Đảm bảo có _id để navigation
 
     const totalComments = await Comment.countDocuments({ book: bookId });
 

@@ -4,18 +4,19 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   RefreshControl,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import { sleep } from "./(tabs)";
-import styles from "../assets/styles/profile.styles";
 import COLORS from "../constants/colors";
 import { API_URL } from "../constants/api";
+import { formatMemberSince, formatPublishDate } from "../lib/utils";
 import { useAuthStore } from "../store/authStore";
-import { formatMemberSince } from "../lib/utils";
+import { sleep } from "../lib/helper";
+import styles from "../assets/styles/profile.styles";
 
 export default function UserProfile() {
   const { userId } = useLocalSearchParams();
@@ -75,7 +76,15 @@ export default function UserProfile() {
   };
 
   const renderBookItem = ({ item }) => (
-    <View style={styles.bookItem}>
+    <TouchableOpacity
+      style={styles.bookItem}
+      onPress={() =>
+        router.push({
+          pathname: "/bookdetail",
+          params: { bookId: item._id },
+        })
+      }
+    >
       <Image source={item.image} style={styles.bookImage} />
       <View style={styles.bookInfo}>
         <Text style={styles.bookTitle}>{item.title}</Text>
@@ -85,22 +94,22 @@ export default function UserProfile() {
         <Text style={styles.bookCaption} numberOfLines={2}>
           {item.caption}
         </Text>
-        <Text style={styles.bookDate}>
-          {new Date(item.createdAt).toLocaleDateString()}
+        <Text style={styles.publishDate}>
+          {formatPublishDate(item.createdAt)}
         </Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   const renderRatingStars = (rating) => {
     const stars = [];
-    for (let i = 0; i < 5; i++) {
+    for (let i = 1; i <= 5; i++) {
       stars.push(
         <Ionicons
           key={i}
-          name={i < rating ? "star" : "star-outline"}
-          size={14}
-          color={i < rating ? "#f4b400" : COLORS.textSecondary}
+          name={i <= rating ? "star" : "star-outline"}
+          size={16}
+          color={i <= rating ? "#f4b400" : COLORS.textSecondary}
           style={{ marginRight: 2 }}
         />
       );
@@ -164,7 +173,7 @@ export default function UserProfile() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            color={[COLORS.primary]}
+            colors={[COLORS.primary]}
             tintColor={COLORS.primary}
           />
         }

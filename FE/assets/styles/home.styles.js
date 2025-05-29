@@ -296,6 +296,53 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "500",
   },
+
+  // Thêm styles cho action buttons
+  actionContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  },
+  likeDislikeContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+  },
+  actionButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    backgroundColor: COLORS.inputBackground,
+    minWidth: 60,
+    justifyContent: "center",
+  },
+  actionButtonActive: {
+    backgroundColor: COLORS.primary + "20", // 20% opacity
+  },
+  actionText: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    marginLeft: 4,
+    fontWeight: "500",
+  },
+  actionTextActive: {
+    color: COLORS.primary,
+    fontWeight: "600",
+  },
+  commentButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    backgroundColor: COLORS.inputBackground,
+  },
 });
 
 export default styles;

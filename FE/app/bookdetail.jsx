@@ -149,13 +149,32 @@ export default function BookDetail() {
 
   const renderCommentItem = ({ item }) => (
     <View style={styles.commentItem}>
-      <Image
-        source={{ uri: item.user.profileImage }}
-        style={styles.commentAvatar}
-      />
+      <TouchableOpacity
+        onPress={() =>
+          router.push({
+            pathname: "/userprofile",
+            params: { userId: item.user._id },
+          })
+        }
+      >
+        <Image
+          source={{ uri: item.user.profileImage }}
+          style={styles.commentAvatar}
+        />
+      </TouchableOpacity>
+
       <View style={styles.commentContent}>
         <View style={styles.commentHeader}>
-          <Text style={styles.commentUsername}>{item.user.username}</Text>
+          <TouchableOpacity
+            onPress={() =>
+              router.push({
+                pathname: "/userprofile",
+                params: { userId: item.user._id },
+              })
+            }
+          >
+            <Text style={styles.commentUsername}>{item.user.username}</Text>
+          </TouchableOpacity>
           <Text style={styles.commentDate}>
             {formatPublishDate(item.createdAt)}
           </Text>

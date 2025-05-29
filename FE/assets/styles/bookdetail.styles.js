@@ -141,8 +141,9 @@ const styles = StyleSheet.create({
   commentUsername: {
     fontSize: 14,
     fontWeight: "600",
-    color: COLORS.textPrimary,
+    color: COLORS.primary,
     marginRight: 8,
+    textDecorationLine: "none",
   },
   commentDate: {
     fontSize: 12,
