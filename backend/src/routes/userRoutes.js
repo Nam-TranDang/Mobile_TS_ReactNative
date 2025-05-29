@@ -267,5 +267,23 @@ router.delete("/:id", protectRoute, async (req, res) => {
     }
 });
 
+// Thêm route để lấy tất cả người dùng (chỉ admin mới được phép)
+router.get("/", protectRoute, async (req, res) => {
+  try {
+    // Kiểm tra xem người dùng hiện tại có quyền admin không
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ message: "Không có quyền truy cập" });
+    }
+
+    // Lấy tất cả người dùng từ database, trừ trường password
+    const users = await User.find({}).select("-password");
+    
+    res.status(200).json(users);
+  } catch (error) {
+    console.error("Error fetching users:", error.message);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 
 export default router;
