@@ -48,27 +48,20 @@ router.post("/", protectRoute, async (req, res) => {
 // Pagination cho trang home - phân trang: cần xem lại nếu có tính năng lấy những post dựa vào like + rate --> tính năng recommend cần xem
 router.get("/", protectRoute, async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1; // default page = 1
-    const limit = parseInt(req.query.limit) || 10; // Tăng limit để hiển thị nhiều sách hơn
-    const skip = (page - 1) * limit; // tính số lượng sách đã bỏ qua
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
 
     // Add filter for user if provided
     const filter = req.query.user ? { user: req.query.user } : {};
 
-    console.log("Filter applied:", filter); // Debug log
-    console.log("Query params:", req.query); // Debug log
-
     const books = await Book.find(filter)
-      .sort({ createdAt: -1 }) // desc
+      .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .populate("user", "username profileImage");
 
-    const totalBooks = await Book.countDocuments(filter); // đếm tổng số sách trong DB
-
-    console.log(
-      `Found ${books.length} books for user ${req.query.user || "all"}`
-    ); // Debug log
+    const totalBooks = await Book.countDocuments(filter);
 
     res.send({
       books,
