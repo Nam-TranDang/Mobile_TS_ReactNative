@@ -200,6 +200,10 @@ const styles = StyleSheet.create({
   backButton: {
     padding: 8,
   },
+  userReportButton: {
+    marginLeft: 'auto',
+    padding: 8,
+  },
 });
 
 export default styles;
