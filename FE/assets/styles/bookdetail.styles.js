@@ -200,6 +200,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
   },
+  reportButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 4,
+  },
+  reportText: {
+    fontSize: 12,
+    color: COLORS.red,
+    marginLeft: 4,
+  },
+  commentReportButton: {
+    marginLeft: 8,
+    padding: 4,
+  },
 });
 
 export default styles;

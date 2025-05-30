@@ -58,6 +58,13 @@ export default function TabLayout() {
           href: null, // Ẩn tab này khỏi bottom navigation
         }}
       />
+      <Tabs.Screen
+        name="report"
+        options={{
+          href: null, // Ẩn tab này khỏi bottom navigation
+          title: "Báo cáo",
+        }}
+      />
     </Tabs>
   );
   

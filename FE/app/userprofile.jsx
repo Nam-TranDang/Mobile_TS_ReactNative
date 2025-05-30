@@ -166,6 +166,15 @@ export default function UserProfile() {
                 Joined {formatMemberSince(user.createdAt)}
               </Text>
             )}
+            <TouchableOpacity
+              style={styles.userReportButton}
+              onPress={() => router.push({
+                pathname: "/(tabs)/report",
+                params: { id: userId, type: 'User' }
+              })}
+            >
+              <Ionicons name="flag-outline" size={20} color={COLORS.red} />
+            </TouchableOpacity>
           </View>
         </View>
       )}

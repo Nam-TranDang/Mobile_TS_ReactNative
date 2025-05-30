@@ -178,6 +178,15 @@ export default function BookDetail() {
           <Text style={styles.commentDate}>
             {formatPublishDate(item.createdAt)}
           </Text>
+          <TouchableOpacity
+            style={styles.commentReportButton}
+            onPress={() => router.push({
+              pathname: "/(tabs)/report",
+              params: { id: item._id, type: 'Comment' }
+            })}
+          >
+            <Ionicons name="flag-outline" size={16} color={COLORS.red} />
+          </TouchableOpacity>
         </View>
         <Text style={styles.commentText}>{item.text}</Text>
       </View>
@@ -243,6 +252,16 @@ export default function BookDetail() {
             <Text style={styles.publishDate}>
               Published on {formatPublishDate(book.createdAt)}
             </Text>
+            <TouchableOpacity
+              style={styles.reportButton}
+              onPress={() => router.push({
+                pathname: "/(tabs)/report",
+                params: { id: bookId, type: 'Book' }
+              })}
+            >
+              <Ionicons name="flag-outline" size={18} color={COLORS.red} />
+              <Text style={styles.reportText}>Report</Text>
+            </TouchableOpacity>
           </View>
         )}
 

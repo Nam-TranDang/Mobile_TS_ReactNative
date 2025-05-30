@@ -15,8 +15,8 @@ const userSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ["user", "admin"], // Các vai trò có thể có
-        default: "user",       // Vai trò mặc định khi đăng ký
+        enum: ["user", "admin"],
+        default: "user",       
     },
     password:{
         type: String,
@@ -26,7 +26,21 @@ const userSchema = new mongoose.Schema({
     profileImage:{
         type: String,
         default: "",
-    }, resetPasswordToken: String, 
+    },
+    isSuspended: {
+        type: Boolean,
+        default: false,
+    },
+    suspensionEndDate: {
+        type: Date,
+        default: null, 
+    },
+    suspensionReason: {
+        type: String,
+        trim: true,
+        default: null,
+    },
+    resetPasswordToken: String, 
     resetPasswordExpires: Date,
 }, {
     timestamps: true
@@ -54,6 +68,18 @@ userSchema.methods.getResetPasswordCode = function() {
         .digest('hex');
     this.resetPasswordExpires = Date.now() + 10 * 60 * 1000;
     return resetCode; 
+};
+userSchema.methods.checkAndLiftSuspension = async function() {
+    if (this.isSuspended && this.suspensionEndDate && this.suspensionEndDate <= new Date()) {
+        this.isSuspended = false;
+        this.suspensionEndDate = null;
+        this.suspensionReason = `Suspension lifted automatically on ${new Date().toLocaleDateString()}. Was: ${this.suspensionReason || 'N/A'}`; // Ghi lại lý do gỡ
+        await this.save(); // Lưu thay đổi
+        console.log(`Suspension lifted for user ${this.username} (${this._id})`);
+       
+        return true; 
+    }
+    return false; 
 };
 
 const User = mongoose.model("User",userSchema);
