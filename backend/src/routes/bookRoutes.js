@@ -45,7 +45,7 @@ router.post("/", protectRoute, async (req, res) => {
   }
 });
 
-// Pagination cho trang home - phân trang: cần xem lại nếu có tính năng lấy những post dựa vào like + rate --> tính năng recommend cần xem
+// Pagination cho trang home - phân trang
 router.get("/", protectRoute, async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -53,15 +53,68 @@ router.get("/", protectRoute, async (req, res) => {
     const skip = (page - 1) * limit;
 
     // Add filter for user if provided
-    const filter = req.query.user ? { user: req.query.user } : {};
+    const matchFilter = req.query.user ? { user: new mongoose.Types.ObjectId(req.query.user) } : {};
 
-    const books = await Book.find(filter)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .populate("user", "username profileImage");
+    // Sử dụng aggregate để loại bỏ books có user null
+    const books = await Book.aggregate([
+      { $match: matchFilter },
+      {
+        $lookup: {
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "user"
+        }
+      },
+      {
+        $match: {
+          "user.0": { $exists: true } // Chỉ lấy books có user tồn tại
+        }
+      },
+      {
+        $unwind: "$user"
+      },
+      {
+        $project: {
+          title: 1,
+          caption: 1,
+          image: 1,
+          rating: 1,
+          like_count: 1,
+          dislike_count: 1,
+          likedBy: 1,
+          dislikedBy: 1,
+          createdAt: 1,
+          "user.username": 1,
+          "user.profileImage": 1,
+          "user._id": 1
+        }
+      },
+      { $sort: { createdAt: -1 } },
+      { $skip: skip },
+      { $limit: limit }
+    ]);
 
-    const totalBooks = await Book.countDocuments(filter);
+    // Đếm tổng số books hợp lệ
+    const totalBooksResult = await Book.aggregate([
+      { $match: matchFilter },
+      {
+        $lookup: {
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "user"
+        }
+      },
+      {
+        $match: {
+          "user.0": { $exists: true }
+        }
+      },
+      { $count: "total" }
+    ]);
+
+    const totalBooks = totalBooksResult[0]?.total || 0;
 
     res.send({
       books,
@@ -247,12 +300,18 @@ router.get("/:bookId/comments", protectRoute, async (req, res) => {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
-      .populate("user", "username profileImage _id"); // Đảm bảo có _id để navigation
+      .populate("user", "username profileImage _id");
 
-    const totalComments = await Comment.countDocuments({ book: bookId });
+    // THÊM MỚI: Filter out comments with null users (deleted users)
+    const validComments = comments.filter((comment) => comment.user !== null);
+
+    const totalComments = await Comment.countDocuments({
+      book: bookId,
+      user: { $ne: null }, // Chỉ đếm comments có user hợp lệ
+    });
 
     res.json({
-      comments,
+      comments: validComments, // Trả về comments có user hợp lệ
       currentPage: page,
       totalComments,
       totalPages: Math.ceil(totalComments / limit),

@@ -4,7 +4,6 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   RefreshControl,
   Text,
@@ -75,31 +74,45 @@ export default function UserProfile() {
     setRefreshing(false);
   };
 
-  const renderBookItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.bookItem}
-      onPress={() =>
-        router.push({
-          pathname: "/bookdetail",
-          params: { bookId: item._id },
-        })
-      }
-    >
-      <Image source={item.image} style={styles.bookImage} />
-      <View style={styles.bookInfo}>
-        <Text style={styles.bookTitle}>{item.title}</Text>
-        <View style={styles.ratingContainer}>
-          {renderRatingStars(item.rating)}
+  const renderBookItem = ({ item }) => {
+    // Kiểm tra dữ liệu trước khi render
+    if (!item || !item._id) {
+      console.warn("Book item is invalid:", item);
+      return null;
+    }
+
+    return (
+      <TouchableOpacity
+        style={styles.bookItem}
+        onPress={() =>
+          router.push({
+            pathname: "/bookdetail",
+            params: { bookId: item._id },
+          })
+        }
+      >
+        <Image
+          source={{ uri: item.image || "" }}
+          style={styles.bookImage}
+          placeholder="https://via.placeholder.com/150x200?text=No+Image"
+        />
+        <View style={styles.bookInfo}>
+          <Text style={styles.bookTitle}>{item.title || "Untitled"}</Text>
+          <View style={styles.ratingContainer}>
+            {renderRatingStars(item.rating || 0)}
+          </View>
+          <Text style={styles.bookCaption} numberOfLines={2}>
+            {item.caption || "No description available"}
+          </Text>
+          <Text style={styles.publishDate}>
+            {item.createdAt
+              ? formatPublishDate(item.createdAt)
+              : "Unknown date"}
+          </Text>
         </View>
-        <Text style={styles.bookCaption} numberOfLines={2}>
-          {item.caption}
-        </Text>
-        <Text style={styles.publishDate}>
-          {formatPublishDate(item.createdAt)}
-        </Text>
-      </View>
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   const renderRatingStars = (rating) => {
     const stars = [];

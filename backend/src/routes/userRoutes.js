@@ -231,40 +231,37 @@ router.patch("/:id", protectRoute, async (req, res) => {
 //     }
 // });
 
-// Deactivate/Self-Deletee - tự khóa và xóa accacc
+// Deactivate/Self-Delete - tự khóa và xóa acc
 router.delete("/:id", protectRoute, async (req, res) => {
-    try {
-        const userId = req.params.id;
+  try {
+    const userId = req.params.id;
 
-        if (req.user._id.toString() !== userId) {
-            return res.status(403).json({ message: "Forbidden: You can only delete your own account" });
-        }
-
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
-        
-        // OPTIONAL: Xóa user vẫn còn sáchsách (e.g., all books created by this user)
-        // This is a critical design decision. If you delete a user, what happens to their content?
-        // You might want to:
-        // 1. Delete all books owned by this user: await Book.deleteMany({ user: userId });
-        // 2. Transfer ownership of books to an 'anonymous' user.
-        // 3. Mark books as 'deleted by owner' but keep the book data.
-        // For this example, we'll just delete the user.
-
-        // OPTIONAL: Delete profile image from Cloudinary
-        // if (user.cloudinaryPublicId) {
-        //     await cloudinary.uploader.destroy(user.cloudinaryPublicId);
-        // }
-        await User.deleteOne({ _id: userId }); 
-
-        res.status(200).json({ message: "Account deactivated/deleted successfully" });
-
-    } catch (error) {
-        console.error("Error deleting user account:", error.message);
-        res.status(500).json({ message: "Internal server error" });
+    if (req.user._id.toString() !== userId) {
+      return res.status(403).json({ message: "Forbidden: You can only delete your own account" });
     }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // OPTION 1: Xóa tất cả books và comments của user
+    await Book.deleteMany({ user: userId });
+    await Comment.deleteMany({ user: userId });
+
+    // OPTION 2: Hoặc giữ lại books nhưng đánh dấu là "deleted user"
+    // await Book.updateMany(
+    //   { user: userId },
+    //   { $unset: { user: 1 } } // Xóa reference đến user
+    // );
+
+    await User.deleteOne({ _id: userId });
+
+    res.status(200).json({ message: "Account and associated data deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting user account:", error.message);
+    res.status(500).json({ message: "Internal server error" });
+  }
 });
 
 // Thêm route để lấy tất cả người dùng (chỉ admin mới được phép)
