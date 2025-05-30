@@ -95,7 +95,7 @@ router.get("/", protectRoute, isAdmin, async (req, res) => {
 
 router.put("/:reportId", protectRoute, isAdmin, async (req, res) => {
     try {
-        const { status, adminNotes, actionRequired } = req.body;
+        const { status, adminNotes, actionRequired, suspensionDurationDays } = req.body;
         const { reportId } = req.params;
 
         if (!status) {
@@ -163,19 +163,29 @@ router.put("/:reportId", protectRoute, isAdmin, async (req, res) => {
                 } else if (report.reportedItemType === 'User') {
                     const userToHandle = await User.findById(report.reportedItemId); 
                     if (userToHandle) {
-                        // TODO: Quyết định hành động cụ thể với tài khoản User (ví dụ: khóa, cấm, xóa)
-                        // Ví dụ: Đánh dấu tài khoản bị tạm khóa
-                        // userToHandle.isSuspended = true;
-                        // userToHandle.suspensionReason = `Reported by admin. Reason: ${adminNotes || 'Policy violation'}`;
-                        // await userToHandle.save();
+                        itemAffected = true; // Đánh dấu có hành động
+                        ownerId = userToHandle._id; // User bị report là người nhận thông báo
+                        itemContentForNotification = `tài khoản "${userToHandle.username}"`;
+                        let userActionDetail = "processed"; // Mô tả hành động chung
 
-                        itemAffected = true;
-                        itemTypeForNotification = "tài khoản";
-                        itemContentForNotification = `"${userToHandle.username}"`;
-                        ownerId = userToHandle._id; // User bị report chính là người nhận thông báo
 
-                        console.log(`User account ${report.reportedItemId} (${userToHandle.username}) has been handled (e.g., flagged/suspended) due to report ${reportId}.`);
-                        actionMessage += ` User account ${userToHandle.username} has been processed.`;
+                         if (suspensionDurationDays && Number.isInteger(parseInt(suspensionDurationDays)) && parseInt(suspensionDurationDays) > 0) {
+                            const duration = parseInt(suspensionDurationDays);
+                            userToHandle.isSuspended = true;
+                            const suspensionEnd = new Date();
+                            suspensionEnd.setDate(suspensionEnd.getDate() + duration);
+                            userToHandle.suspensionEndDate = suspensionEnd;
+                            userToHandle.suspensionReason = `Tài khoản bị tạm khóa ${duration} ngày. Lý do từ admin: ${adminNotes || 'Vi phạm chính sách cộng đồng.'}`;
+                            await userToHandle.save();
+                            userActionDetail = `tạm khóa ${duration} ngày`;
+                            console.log(`User account ${userToHandle._id} (${userToHandle.username}) suspended for ${duration} days until ${suspensionEnd.toISOString()}.`);
+                        } else {
+                            
+                            console.log(`User account ${userToHandle._id} (${userToHandle.username}) flagged for review by admin. Admin notes: ${adminNotes}`);
+                            userActionDetail = "được đánh dấu để xem xét thêm";
+                            
+                        }
+                        actionMessage += ` User account ${userToHandle.username} has been  ${userActionDetail}.`;
                        
                     } else {
                         console.warn(`User with ID ${report.reportedItemId} not found for handling (report ${reportId}).`);
@@ -186,9 +196,7 @@ router.put("/:reportId", protectRoute, isAdmin, async (req, res) => {
                 if (itemAffected && ownerId) {
                     let ownerEmail = "";
                     let ownerUsername = "Người dùng";
-
-                    // Thống nhất cách lấy email và username
-                    const ownerUserInstance = await User.findById(ownerId.toString()).select('email username');
+                    const ownerUserInstance = await User.findById(ownerId.toString()).select('email username isSuspended suspensionEndDate suspensionReason');
                     if (ownerUserInstance) {
                         ownerEmail = ownerUserInstance.email;
                         ownerUsername = ownerUserInstance.username || "Người dùng";
@@ -199,8 +207,8 @@ router.put("/:reportId", protectRoute, isAdmin, async (req, res) => {
                         const appName = process.env.SENDGRID_FROM_NAME || 'Bookworm App';
                         let emailSubject, emailMessage;
 
-                        if (report.reportedItemType === 'User') { // <--- THÊM MỚI: Template email cho User bị xử lý ---
-                            emailSubject = `Thông báo quan trọng về tài khoản của bạn trên ${appName}`;
+                        if (report.reportedItemType === 'User' && ownerUserInstance.isSuspended) { 
+                            emailSubject =  `Thông báo: Tài khoản của bạn đã bị tạm khóa trên ${appName}`;
                             emailMessage =
 `Chào ${ownerUsername},
 
@@ -211,8 +219,21 @@ Hành động của quản trị viên: ${adminNotes || "Tài khoản đã đư�
 Nếu bạn cho rằng đây là một sự nhầm lẫn hoặc muốn biết thêm chi tiết, vui lòng liên hệ với bộ phận hỗ trợ của chúng tôi.
 
 Trân trọng,
+Đội ngũ ${appName}`;} 
+                        else if (report.reportedItemType === 'User') { 
+                            emailSubject = `Thông báo quan trọng về tài khoản của bạn trên ${appName}`;
+                            emailMessage =
+`Chào ${ownerUsername},
+
+Chúng tôi viết thư này để thông báo rằng tài khoản của bạn (${itemContentForNotification}) trên ${appName} đã được xem xét dựa trên một báo cáo.
+Ghi chú từ quản trị viên: ${adminNotes || "Tài khoản đã được xem xét theo chính sách."}
+
+Vui lòng tuân thủ chính sách cộng đồng của chúng tôi.
+Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ với bộ phận hỗ trợ của chúng tôi.
+
+Trân trọng,
 Đội ngũ ${appName}`;
-                        } else { // Book hoặc Comment
+                       }else { 
                             emailSubject = `Thông báo: Nội dung của bạn đã bị gỡ bỏ trên ${appName}`;
                             emailMessage = `Chào ${ownerUsername},\n\nChúng tôi rất tiếc phải thông báo rằng ${itemTypeForNotification} của bạn (${itemContentForNotification}) đã bị gỡ bỏ khỏi ${appName} do vi phạm chính sách cộng đồng, dựa trên một báo cáo đã được xem xét.\n\nLý do được quản trị viên ghi nhận: ${adminNotes || "Vi phạm chính sách chung."}\n\nNếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi.\n\nTrân trọng,\nĐội ngũ ${appName}`;
                         }
@@ -253,7 +274,7 @@ Trân trọng,
                         } else if (report.reportedItemType === 'Comment') {
                             item = await Comment.findById(report.reportedItemId).select('text');
                             if (item) reportedItemInfo = `bình luận "${item.text.substring(0, 30)}..."`;
-                        // <--- THÊM MỚI: Lấy thông tin User bị báo cáo cho email từ chối ---
+             
                         } else if (report.reportedItemType === 'User') {
                             item = await User.findById(report.reportedItemId).select('username');
                             if (item) reportedItemInfo = `tài khoản người dùng "${item.username}"`;

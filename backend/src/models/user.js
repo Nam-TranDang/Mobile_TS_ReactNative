@@ -15,8 +15,8 @@ const userSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ["user", "admin"], // Các vai trò có thể có
-        default: "user",       // Vai trò mặc định khi đăng ký
+        enum: ["user", "admin"],
+        default: "user",       
     },
     password:{
         type: String,
@@ -26,7 +26,21 @@ const userSchema = new mongoose.Schema({
     profileImage:{
         type: String,
         default: "",
-    }, resetPasswordToken: String, 
+    },
+    isSuspended: {
+        type: Boolean,
+        default: false,
+    },
+    suspensionEndDate: {
+        type: Date,
+        default: null, 
+    },
+    suspensionReason: {
+        type: String,
+        trim: true,
+        default: null,
+    },
+    resetPasswordToken: String, 
     resetPasswordExpires: Date,
 }, {
     timestamps: true
@@ -54,6 +68,27 @@ userSchema.methods.getResetPasswordCode = function() {
         .digest('hex');
     this.resetPasswordExpires = Date.now() + 10 * 60 * 1000;
     return resetCode; 
+};
+userSchema.methods.checkAndLiftSuspension = async function() {
+    if (this.isSuspended && this.suspensionEndDate && this.suspensionEndDate <= new Date()) {
+        this.isSuspended = false;
+        this.suspensionEndDate = null;
+        this.suspensionReason = `Suspension lifted automatically on ${new Date().toLocaleDateString()}. Was: ${this.suspensionReason || 'N/A'}`; // Ghi lại lý do gỡ
+        await this.save(); // Lưu thay đổi
+        console.log(`Suspension lifted for user ${this.username} (${this._id})`);
+        //  Gửi email thông báo cho người dùng rằng tài khoản đã được mở lại????
+        // try {
+        //     await sendEmail({
+        //         email: this.email,
+        //         subject: "Thông báo: Tài khoản của bạn đã được mở lại",
+        //         message: `Chào ${this.username},\n\nTài khoản của bạn trên Bookworm App đã được mở lại sau thời gian tạm khóa.\n\nTrân trọng,\nĐội ngũ Bookworm App`
+        //     });
+        // } catch(emailError) {
+        //     console.error("Failed to send suspension lifted email to user:", this._id, emailError);
+        // }
+        return true; // Trả về true nếu có thay đổi
+    }
+    return false; // Trả về false nếu không có thay đổi
 };
 
 const User = mongoose.model("User",userSchema);
