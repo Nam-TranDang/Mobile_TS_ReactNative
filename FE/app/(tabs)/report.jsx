@@ -34,25 +34,25 @@ export default function ReportScreen() {
   const getReasonOptions = () => {
     if (reportedItemType === 'Book') {
       return [
-        { value: 'Nội dung không phù hợp', label: 'Nội dung không phù hợp' },
-        { value: 'Vi phạm bản quyền', label: 'Vi phạm bản quyền' },
-        { value: 'Thông tin sai lệch', label: 'Thông tin sai lệch' },
-        { value: 'Spam hoặc quảng cáo', label: 'Spam hoặc quảng cáo' },
-        { value: 'Lý do khác', label: 'Lý do khác' },
+        { value: 'Nội dung không phù hợp'},
+        { value: 'Vi phạm bản quyền'},
+        { value: 'Thông tin sai lệch'},
+        { value: 'Spam hoặc quảng cáo' },
+        { value: 'Lý do khác'},
       ];
     } else if (reportedItemType === 'Comment') {
       return [
-        { value: 'Quấy rối hoặc bắt nạt', label: 'Quấy rối hoặc bắt nạt' },
-        { value: 'Ngôn từ thù hận', label: 'Ngôn từ thù hận' },
-        { value: 'Spam hoặc quảng cáo', label: 'Spam hoặc quảng cáo' },
-        { value: 'Lý do khác', label: 'Lý do khác' },
+        { value: 'Quấy rối hoặc bắt nạt'},
+        { value: 'Ngôn từ thù hận' },
+        { value: 'Spam hoặc quảng cáo'},
+        { value: 'Lý do khác'},
       ];
     } else if (reportedItemType === 'User') {
       return [
-        { value: 'Tài khoản giả mạo', label: 'Tài khoản giả mạo' },
-        { value: 'Hành vi không phù hợp', label: 'Hành vi không phù hợp' },
-        { value: 'Spam hoặc quảng cáo', label: 'Spam hoặc quảng cáo' },
-        { value: 'Lý do khác', label: 'Lý do khác' },
+        { value: 'Tài khoản giả mạo'},
+        { value: 'Hành vi không phù hợp'},
+        { value: 'Spam hoặc quảng cáo' },
+        { value: 'Lý do khác'},
       ];
     }
     return [];
@@ -235,7 +235,7 @@ export default function ReportScreen() {
                       <View style={styles.radioButtonSelected} />
                     )}
                   </View>
-                  <Text style={styles.reasonText}>{option.label}</Text>
+                  <Text style={styles.reasonText}>{option.value}</Text>
                 </TouchableOpacity>
               ))}
             </View>
