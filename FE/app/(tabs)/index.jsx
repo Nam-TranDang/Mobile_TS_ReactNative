@@ -1,64 +1,64 @@
-import { Ionicons } from '@expo/vector-icons';
-import { Image } from 'expo-image';
-import { useEffect, useState } from 'react';
-import { 
-  ActivityIndicator, 
-  FlatList, 
-  Text, 
-  View, 
+import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
+import { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  FlatList,
+  Text,
+  View,
   RefreshControl,
   TextInput,
   TouchableOpacity,
   Modal,
   TouchableWithoutFeedback,
   Keyboard,
-} from 'react-native';
+} from "react-native";
+import { useRouter } from "expo-router"; // Add this import
 import styles from "../../assets/styles/home.styles";
-import Loader from '../../components/Loader';
+import Loader from "../../components/Loader";
 import { API_URL } from "../../constants/api";
-import COLORS from '../../constants/colors';
-import { formatPublishDate } from '../../lib/utils';
-import { useAuthStore } from '../../store/authStore';
+import COLORS from "../../constants/colors";
+import { formatPublishDate } from "../../lib/utils";
+import { useAuthStore } from "../../store/authStore";
 
 export const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export default function Home() {
   const { token } = useAuthStore();
+  const router = useRouter(); // Add this line
   const [books, setBooks] = useState([]);
   const [filteredBooks, setFilteredBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  
+
   // State for filter/search
-  const [searchText, setSearchText] = useState('');
+  const [searchText, setSearchText] = useState("");
   const [showFilterModal, setShowFilterModal] = useState(false);
 
-  const [sortOption, setSortOption] = useState('newest');
-  const [sortDirection, setSortDirection] = useState('desc');
-  const [timeFilter, setTimeFilter] = useState('Any time');
-  const [categoryFilter, setcategoryFilter] = useState('Any');
-  
+  const [sortOption, setSortOption] = useState("newest");
+  const [sortDirection, setSortDirection] = useState("desc");
+  const [timeFilter, setTimeFilter] = useState("Any time");
+  const [categoryFilter, setcategoryFilter] = useState("Any");
+
   // Dropdown state
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
   const [showSortOptionPicker, setShowSortOptionPicker] = useState(false);
   const [showSortDirectionPicker, setShowSortDirectionPicker] = useState(false);
 
-
-  const fetchBooks = async (pageNum=1, refresh=false) => {
+  const fetchBooks = async (pageNum = 1, refresh = false) => {
     try {
       if (refresh) {
         setRefreshing(true);
         resetFilters();
-      }
-      else if (pageNum === 1) {
+      } else if (pageNum === 1) {
         setLoading(true);
       }
 
       const response = await fetch(`${API_URL}/books?page=${pageNum}&limit=5`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       const data = await response.json();
@@ -69,11 +69,13 @@ export default function Home() {
       const uniqueBooks =
         refresh || pageNum === 1
           ? data.books
-          : Array.from(new Set([...books, ...data.books].map((book) => book._id))).map((id) => 
+          : Array.from(
+              new Set([...books, ...data.books].map((book) => book._id))
+            ).map((id) =>
               [...books, ...data.books].find((book) => book._id === id)
             );
-      
-      setBooks(uniqueBooks);      
+
+      setBooks(uniqueBooks);
       setHasMore(pageNum < data.totalPages);
       setPage(pageNum);
       //sau khi load sách thì filter, rồi khi hết 5 cuốn thì tiếp tục load và filter đến hết các sách
@@ -84,79 +86,85 @@ export default function Home() {
       if (refresh) {
         await sleep(800);
         setRefreshing(false);
-      }
-      else setLoading(false);
+      } else setLoading(false);
     }
-  }
+  };
 
   const resetFilters = () => {
-    setSortOption('newest');
-    setSortDirection('desc');
-    setTimeFilter('Any time');
-    setcategoryFilter('Any');
-    setSearchText('');
+    setSortOption("newest");
+    setSortDirection("desc");
+    setTimeFilter("Any time");
+    setcategoryFilter("Any");
+    setSearchText("");
   };
 
   const applyFiltersAndSort = (booksToFilter = books) => {
     // Start with all books
     let filtered = [...booksToFilter];
-    
+
     // Apply search text filter (search by title, caption, or author)
-    if (searchText.trim() !== '') {
-      filtered = filtered.filter(book => 
-        book.title.toLowerCase().includes(searchText.toLowerCase()) || 
-        book.caption.toLowerCase().includes(searchText.toLowerCase()) ||
-        book.user.username.toLowerCase().includes(searchText.toLowerCase())
+    if (searchText.trim() !== "") {
+      filtered = filtered.filter(
+        (book) =>
+          book.title.toLowerCase().includes(searchText.toLowerCase()) ||
+          book.caption.toLowerCase().includes(searchText.toLowerCase()) ||
+          book.user.username.toLowerCase().includes(searchText.toLowerCase())
       );
     }
 
     // Apply time filter
-    if (timeFilter !== 'Any time') {
+    if (timeFilter !== "Any time") {
       const now = new Date();
       let cutoffDate = new Date();
       switch (timeFilter) {
-        case 'Today':
+        case "Today":
           cutoffDate.setDate(now.getDate() - 1);
           break;
-        case 'This week':
+        case "This week":
           cutoffDate.setDate(now.getDate() - 7);
           break;
-        case 'This month':
+        case "This month":
           cutoffDate.setMonth(now.getMonth() - 1);
           break;
-        case 'This year':
+        case "This year":
           cutoffDate.setFullYear(now.getFullYear() - 1);
           break;
       }
-      filtered = filtered.filter(book => new Date(book.createdAt) >= cutoffDate);
+      filtered = filtered.filter(
+        (book) => new Date(book.createdAt) >= cutoffDate
+      );
     }
 
     // Apply category filter (assuming we had a category field)
-    if (categoryFilter !== 'Any') {
+    if (categoryFilter !== "Any") {
       // (hàm chờ) This is a placeholder. You'd implement category filtering if your books had categories
       // filtered = filtered.filter(book => book.category === categoryFilter);
     }
 
     // Apply sort based on sortOption and sortDirection
     let sortedBooks = [...filtered];
-    switch(sortOption) {
-      case 'title':
+    switch (sortOption) {
+      case "title":
         sortedBooks.sort((a, b) => a.title.localeCompare(b.title));
         break;
-      case 'author':
-        sortedBooks.sort((a, b) => a.user.username.localeCompare(b.user.username));
+      case "author":
+        sortedBooks.sort((a, b) =>
+          a.user.username.localeCompare(b.user.username)
+        );
         break;
-      case 'rating':
+      case "rating":
         sortedBooks.sort((a, b) => a.rating - b.rating);
         break;
-      case 'newest':
+      case "newest":
       default:
-        sortedBooks.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+        sortedBooks.sort(
+          (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+        );
         break;
     }
 
     // Apply sort direction
-    if (sortDirection === 'desc') {
+    if (sortDirection === "desc") {
       sortedBooks.reverse();
     }
 
@@ -174,8 +182,14 @@ export default function Home() {
 
   const handleLoadMore = async () => {
     // Only load more when we're not filtering by search text or author
-    if (hasMore && !loading && !refreshing && searchText.trim() === ''
-       && timeFilter === 'Any time' && categoryFilter === 'Any') {
+    if (
+      hasMore &&
+      !loading &&
+      !refreshing &&
+      searchText.trim() === "" &&
+      timeFilter === "Any time" &&
+      categoryFilter === "Any"
+    ) {
       await sleep(1000);
       await fetchBooks(page + 1);
     }
@@ -186,7 +200,7 @@ export default function Home() {
   };
 
   const clearSearch = () => {
-    setSearchText('');
+    setSearchText("");
     Keyboard.dismiss();
   };
 
@@ -196,18 +210,42 @@ export default function Home() {
   };
 
   // Render book item
-  const renderItem = ({item}) => (
-    <View style={styles.bookCard}>
+  const renderItem = ({ item }) => (
+    <TouchableOpacity
+      style={styles.bookCard}
+      onPress={() =>
+        router.push({
+          pathname: "/bookdetail",
+          params: { bookId: item._id },
+        })
+      }
+    >
       {/* Header of the book card */}
       <View style={styles.bookHeader}>
-        <View style={styles.userInfo}>
-          <Image source={{uri: item.user.profileImage}} style={styles.avatar} />
+        <TouchableOpacity
+          style={styles.userInfo}
+          onPress={(e) => {
+            e.stopPropagation();
+            router.push({
+              pathname: "/userprofile",
+              params: { userId: item.user._id },
+            });
+          }}
+        >
+          <Image
+            source={{ uri: item.user.profileImage }}
+            style={styles.avatar}
+          />
           <Text style={styles.username}>{item.user.username}</Text>
-        </View>
+        </TouchableOpacity>
       </View>
       {/* Book container */}
       <View style={styles.bookImageContainer}>
-        <Image source={item.image} style={styles.bookImage} contentFit="cover" />
+        <Image
+          source={item.image}
+          style={styles.bookImage}
+          contentFit="cover"
+        />
       </View>
 
       {/* Star rating */}
@@ -217,9 +255,11 @@ export default function Home() {
           {renderRatingStars(item.rating)}
         </View>
         <Text style={styles.caption}>{item.caption}</Text>
-        <Text style={styles.date}>Shared on {formatPublishDate(item.createdAt)}</Text>
+        <Text style={styles.date}>
+          Shared on {formatPublishDate(item.createAt)}
+        </Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   const renderRatingStars = (rating) => {
@@ -242,7 +282,12 @@ export default function Home() {
   const renderSearchBar = () => (
     <View style={styles.searchContainer}>
       <View style={styles.searchInputContainer}>
-        <Ionicons name="search" size={20} color={COLORS.textSecondary} style={styles.searchIcon} />
+        <Ionicons
+          name="search"
+          size={20}
+          color={COLORS.textSecondary}
+          style={styles.searchIcon}
+        />
         <TextInput
           style={styles.searchInput}
           placeholder="Search books or authors..."
@@ -252,11 +297,15 @@ export default function Home() {
         />
         {searchText.length > 0 && (
           <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
-            <Ionicons name="close-circle" size={20} color={COLORS.textSecondary} />
+            <Ionicons
+              name="close-circle"
+              size={20}
+              color={COLORS.textSecondary}
+            />
           </TouchableOpacity>
         )}
       </View>
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.sortButton}
         onPress={() => setShowFilterModal(true)}
       >
@@ -273,78 +322,104 @@ export default function Home() {
       animationType="fade"
       onRequestClose={() => setShowFilterModal(false)}
     >
-      <TouchableWithoutFeedback onPress={() => {
-        setShowFilterModal(false);
-        setShowTimePicker(false);
-        setShowCategoryPicker(false);
-        setShowSortOptionPicker(false);
-        setShowSortDirectionPicker(false);
-      }}>
+      <TouchableWithoutFeedback
+        onPress={() => {
+          setShowFilterModal(false);
+          setShowTimePicker(false);
+          setShowCategoryPicker(false);
+          setShowSortOptionPicker(false);
+          setShowSortDirectionPicker(false);
+        }}
+      >
         <View style={styles.modalOverlay}>
-            <View style={styles.filterPanelContent}>
-              {/* Filter header */}
-              <Text style={styles.filterPanelTitle}>Filters</Text>
+          <View style={styles.filterPanelContent}>
+            {/* Filter header */}
+            <Text style={styles.filterPanelTitle}>Filters</Text>
 
-              {/* Last updated section */}
-              <View style={styles.filterSection}>
-                <Text style={styles.filterSectionLabel}>Last updated:</Text>
-                <TouchableOpacity 
-                  style={styles.dropdown}
-                  onPress={() => {
-                    setShowTimePicker(!showTimePicker);
-                    setShowCategoryPicker(false);
-                    setShowSortOptionPicker(false);
-                    setShowSortDirectionPicker(false);
-                  }}
-                >
-                  <Text style={styles.dropdownText}>{timeFilter}</Text>
-                  <Ionicons name="chevron-down" size={16} color={COLORS.textSecondary} />
-                </TouchableOpacity>
-                
-                {showTimePicker && (
-                  <View style={styles.dropdownMenu}>
-                    {['Any time', 'Today', 'This week', 'This month', 'This year'].map(option => (
-                      <TouchableOpacity 
-                        key={option}
-                        style={styles.dropdownItem}
-                        onPress={() => {
-                          setTimeFilter(option);
-                          setShowTimePicker(false);
-                        }}
-                      >
-                        <Text style={[
+            {/* Last updated section */}
+            <View style={styles.filterSection}>
+              <Text style={styles.filterSectionLabel}>Last updated:</Text>
+              <TouchableOpacity
+                style={styles.dropdown}
+                onPress={() => {
+                  setShowTimePicker(!showTimePicker);
+                  setShowCategoryPicker(false);
+                  setShowSortOptionPicker(false);
+                  setShowSortDirectionPicker(false);
+                }}
+              >
+                <Text style={styles.dropdownText}>{timeFilter}</Text>
+                <Ionicons
+                  name="chevron-down"
+                  size={16}
+                  color={COLORS.textSecondary}
+                />
+              </TouchableOpacity>
+
+              {showTimePicker && (
+                <View style={styles.dropdownMenu}>
+                  {[
+                    "Any time",
+                    "Today",
+                    "This week",
+                    "This month",
+                    "This year",
+                  ].map((option) => (
+                    <TouchableOpacity
+                      key={option}
+                      style={styles.dropdownItem}
+                      onPress={() => {
+                        setTimeFilter(option);
+                        setShowTimePicker(false);
+                      }}
+                    >
+                      <Text
+                        style={[
                           styles.dropdownItemText,
-                          timeFilter === option && styles.dropdownItemTextSelected
-                        ]}>
-                          {option}
-                        </Text>
-                        {timeFilter === option && <Ionicons name="checkmark" size={16} color={COLORS.primary} />}
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                )}
-              </View>
+                          timeFilter === option &&
+                            styles.dropdownItemTextSelected,
+                        ]}
+                      >
+                        {option}
+                      </Text>
+                      {timeFilter === option && (
+                        <Ionicons
+                          name="checkmark"
+                          size={16}
+                          color={COLORS.primary}
+                        />
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </View>
 
-              {/* Book category section */}
-              <View style={styles.filterSection}>
-                <Text style={styles.filterSectionLabel}>Book category:</Text>
-                <TouchableOpacity 
-                  style={styles.dropdown}
-                  onPress={() => {
-                    setShowCategoryPicker(!showCategoryPicker);
-                    setShowTimePicker(false);
-                    setShowSortOptionPicker(false);
-                    setShowSortDirectionPicker(false);
-                  }}
-                >
-                  <Text style={styles.dropdownText}>{categoryFilter}</Text>
-                  <Ionicons name="chevron-down" size={16} color={COLORS.textSecondary} />
-                </TouchableOpacity>
-                
-                {showCategoryPicker && (
-                  <View style={styles.dropdownMenu}>
-                    {['Any', 'Fiction', 'Non-fiction', 'Science', 'History'].map(option => (
-                      <TouchableOpacity 
+            {/* Book category section */}
+            <View style={styles.filterSection}>
+              <Text style={styles.filterSectionLabel}>Book category:</Text>
+              <TouchableOpacity
+                style={styles.dropdown}
+                onPress={() => {
+                  setShowCategoryPicker(!showCategoryPicker);
+                  setShowTimePicker(false);
+                  setShowSortOptionPicker(false);
+                  setShowSortDirectionPicker(false);
+                }}
+              >
+                <Text style={styles.dropdownText}>{categoryFilter}</Text>
+                <Ionicons
+                  name="chevron-down"
+                  size={16}
+                  color={COLORS.textSecondary}
+                />
+              </TouchableOpacity>
+
+              {showCategoryPicker && (
+                <View style={styles.dropdownMenu}>
+                  {["Any", "Fiction", "Non-fiction", "Science", "History"].map(
+                    (option) => (
+                      <TouchableOpacity
                         key={option}
                         style={styles.dropdownItem}
                         onPress={() => {
@@ -352,130 +427,175 @@ export default function Home() {
                           setShowCategoryPicker(false);
                         }}
                       >
-                        <Text style={[
-                          styles.dropdownItemText,
-                          categoryFilter === option && styles.dropdownItemTextSelected
-                        ]}>
+                        <Text
+                          style={[
+                            styles.dropdownItemText,
+                            categoryFilter === option &&
+                              styles.dropdownItemTextSelected,
+                          ]}
+                        >
                           {option}
                         </Text>
-                        {categoryFilter === option && <Ionicons name="checkmark" size={16} color={COLORS.primary} />}
+                        {categoryFilter === option && (
+                          <Ionicons
+                            name="checkmark"
+                            size={16}
+                            color={COLORS.primary}
+                          />
+                        )}
                       </TouchableOpacity>
-                    ))}
-                  </View>
-                )}
+                    )
+                  )}
+                </View>
+              )}
+            </View>
+
+            {/* Sort by section */}
+            <View style={styles.filterSection}>
+              <Text style={styles.filterSectionLabel}>Sort by:</Text>
+              <View style={styles.sortByRow}>
+                <TouchableOpacity
+                  style={[styles.dropdown, styles.sortDropdown]}
+                  onPress={() => {
+                    setShowSortOptionPicker(!showSortOptionPicker);
+                    setShowTimePicker(false);
+                    setShowCategoryPicker(false);
+                    setShowSortDirectionPicker(false);
+                  }}
+                >
+                  <Text style={styles.dropdownText}>
+                    {sortOption === "newest"
+                      ? "Time"
+                      : sortOption === "title"
+                      ? "Title"
+                      : sortOption === "author"
+                      ? "Author"
+                      : sortOption === "rating"
+                      ? "Rating"
+                      : "Time"}
+                  </Text>
+                  <Ionicons
+                    name="chevron-down"
+                    size={16}
+                    color={COLORS.textSecondary}
+                  />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.dropdown, styles.sortDropdown]}
+                  onPress={() => {
+                    setShowSortDirectionPicker(!showSortDirectionPicker);
+                    setShowTimePicker(false);
+                    setShowCategoryPicker(false);
+                    setShowSortOptionPicker(false);
+                  }}
+                >
+                  <Text style={styles.dropdownText}>
+                    {sortDirection === "desc" ? "Descending" : "Ascending"}
+                  </Text>
+                  <Ionicons
+                    name="chevron-down"
+                    size={16}
+                    color={COLORS.textSecondary}
+                  />
+                </TouchableOpacity>
               </View>
 
-              {/* Sort by section */}
-              <View style={styles.filterSection}>
-                <Text style={styles.filterSectionLabel}>Sort by:</Text>
-                <View style={styles.sortByRow}>
-                  <TouchableOpacity 
-                    style={[styles.dropdown, styles.sortDropdown]}
-                    onPress={() => {
-                      setShowSortOptionPicker(!showSortOptionPicker);
-                      setShowTimePicker(false);
-                      setShowCategoryPicker(false);
-                      setShowSortDirectionPicker(false);
-                    }}
-                  >
-                    <Text style={styles.dropdownText}>
-                      {sortOption === 'newest' ? 'Time' :
-                       sortOption === 'title' ? 'Title' : 
-                       sortOption === 'author' ? 'Author' : 
-                       sortOption === 'rating' ? 'Rating' : 'Time'}
-                    </Text>
-                    <Ionicons name="chevron-down" size={16} color={COLORS.textSecondary} />
-                  </TouchableOpacity>
-
-                  <TouchableOpacity 
-                    style={[styles.dropdown, styles.sortDropdown]}
-                    onPress={() => {
-                      setShowSortDirectionPicker(!showSortDirectionPicker);
-                      setShowTimePicker(false);
-                      setShowCategoryPicker(false);
-                      setShowSortOptionPicker(false);
-                    }}
-                  >
-                    <Text style={styles.dropdownText}>
-                      {sortDirection === 'desc' ? 'Descending' : 'Ascending'}
-                    </Text>
-                    <Ionicons name="chevron-down" size={16} color={COLORS.textSecondary} />
-                  </TouchableOpacity>
-                </View>
-
-                {showSortOptionPicker && (
-                  <View style={[
-                    styles.dropdownMenu, 
+              {showSortOptionPicker && (
+                <View
+                  style={[
+                    styles.dropdownMenu,
                     styles.sortDropdownMenu,
                     // Hiển thị danh sách lên trên
-                    { bottom: '100%', top: 'auto', marginBottom: 5 }
-                  ]}>
-                    {[
-                      { value: 'newest', label: 'Time' },
-                      { value: 'title', label: 'Title' },
-                      { value: 'author', label: 'Author' },
-                      { value: 'rating', label: 'Rating' }
-                    ].map(option => (
-                      <TouchableOpacity 
-                        key={option.value}
-                        style={styles.dropdownItem}
-                        onPress={() => {
-                          setSortOption(option.value);
-                          setShowSortOptionPicker(false);
-                        }}
-                      >
-                        <Text style={[
+                    { bottom: "100%", top: "auto", marginBottom: 5 },
+                  ]}
+                >
+                  {[
+                    { value: "newest", label: "Time" },
+                    { value: "title", label: "Title" },
+                    { value: "author", label: "Author" },
+                    { value: "rating", label: "Rating" },
+                  ].map((option) => (
+                    <TouchableOpacity
+                      key={option.value}
+                      style={styles.dropdownItem}
+                      onPress={() => {
+                        setSortOption(option.value);
+                        setShowSortOptionPicker(false);
+                      }}
+                    >
+                      <Text
+                        style={[
                           styles.dropdownItemText,
-                          sortOption === option.value && styles.dropdownItemTextSelected
-                        ]}>
-                          {option.label}
-                        </Text>
-                        {sortOption === option.value && <Ionicons name="checkmark" size={16} color={COLORS.primary} />}
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                )}
+                          sortOption === option.value &&
+                            styles.dropdownItemTextSelected,
+                        ]}
+                      >
+                        {option.label}
+                      </Text>
+                      {sortOption === option.value && (
+                        <Ionicons
+                          name="checkmark"
+                          size={16}
+                          color={COLORS.primary}
+                        />
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
 
-                {showSortDirectionPicker && (
-                  <View style={[
-                    styles.dropdownMenu, 
+              {showSortDirectionPicker && (
+                <View
+                  style={[
+                    styles.dropdownMenu,
                     styles.sortDirectionDropdownMenu,
                     // Thêm logic hiển thị lên trên thay vì xuống dưới
-                    { bottom: '100%', top: 'auto', marginBottom: 5 }
-                  ]}>
-                    {[
-                      { value: 'asc', label: 'Ascending' },
-                      { value: 'desc', label: 'Descending' }
-                    ].map(option => (
-                      <TouchableOpacity 
-                        key={option.value}
-                        style={styles.dropdownItem}
-                        onPress={() => {
-                          setSortDirection(option.value);
-                          setShowSortDirectionPicker(false);
-                        }}
-                      >
-                        <Text style={[
+                    { bottom: "100%", top: "auto", marginBottom: 5 },
+                  ]}
+                >
+                  {[
+                    { value: "asc", label: "Ascending" },
+                    { value: "desc", label: "Descending" },
+                  ].map((option) => (
+                    <TouchableOpacity
+                      key={option.value}
+                      style={styles.dropdownItem}
+                      onPress={() => {
+                        setSortDirection(option.value);
+                        setShowSortDirectionPicker(false);
+                      }}
+                    >
+                      <Text
+                        style={[
                           styles.dropdownItemText,
-                          sortDirection === option.value && styles.dropdownItemTextSelected
-                        ]}>
-                          {option.label}
-                        </Text>
-                        {sortDirection === option.value && <Ionicons name="checkmark" size={16} color={COLORS.primary} />}
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                )}              
+                          sortDirection === option.value &&
+                            styles.dropdownItemTextSelected,
+                        ]}
+                      >
+                        {option.label}
+                      </Text>
+                      {sortDirection === option.value && (
+                        <Ionicons
+                          name="checkmark"
+                          size={16}
+                          color={COLORS.primary}
+                        />
+                      )}
+                    </TouchableOpacity>
+                  ))}
                 </View>
-
-              {/* Filter button */}
-              <TouchableOpacity 
-                style={styles.filterButton}
-                onPress={applyFilters}
-              >
-                <Text style={styles.filterButtonText}>Filter</Text>
-              </TouchableOpacity>
+              )}
             </View>
+
+            {/* Filter button */}
+            <TouchableOpacity
+              style={styles.filterButton}
+              onPress={applyFilters}
+            >
+              <Text style={styles.filterButtonText}>Filter</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </TouchableWithoutFeedback>
     </Modal>
@@ -506,27 +626,46 @@ export default function Home() {
         ListHeaderComponent={
           <View style={styles.header}>
             <Text style={styles.headerTitle}>BookWorm</Text>
-            <Text style={styles.headerSubtitle}>Discover great reads from the community</Text>
+            <Text style={styles.headerSubtitle}>
+              Discover great reads from the community
+            </Text>
           </View>
         }
         ListFooterComponent={
-          hasMore && books.length > 0 && searchText.trim() === '' &&
-          timeFilter === 'Any time' && categoryFilter === 'Any' ? (
-            <ActivityIndicator style={styles.footerLoader} size="small" color={COLORS.primary} />
+          hasMore &&
+          books.length > 0 &&
+          searchText.trim() === "" &&
+          timeFilter === "Any time" &&
+          categoryFilter === "Any" ? (
+            <ActivityIndicator
+              style={styles.footerLoader}
+              size="small"
+              color={COLORS.primary}
+            />
           ) : null
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Ionicons name="book-outline" size={60} color={COLORS.textSecondary}/>
+            <Ionicons
+              name="book-outline"
+              size={60}
+              color={COLORS.textSecondary}
+            />
             <Text style={styles.emptyText}>
-              {(searchText || timeFilter !== 'Any time' || categoryFilter !== 'Any') 
-                ? "No results found" 
+              {searchText ||
+              timeFilter !== "Any time" ||
+              categoryFilter !== "Any"
+                ? "No results found"
                 : "No recommendations yet"}
             </Text>
-            {(searchText || timeFilter !== 'Any time' || categoryFilter !== 'Any') ? (
+            {searchText ||
+            timeFilter !== "Any time" ||
+            categoryFilter !== "Any" ? (
               <Text style={styles.emptySubtext}>Try different filters</Text>
             ) : (
-              <Text style={styles.emptySubtext}>Be the first to share a book!</Text>
+              <Text style={styles.emptySubtext}>
+                Be the first to share a book!
+              </Text>
             )}
           </View>
         }

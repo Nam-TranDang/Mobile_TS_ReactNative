@@ -30,7 +30,7 @@ export default function RootLayout() {
         console.warn(e);
       } finally {
         setAppIsReady(true);
-        if(fontsLoaded) SplashScreen.hideAsync();
+        if (fontsLoaded) SplashScreen.hideAsync();
       }
     }
 
@@ -40,9 +40,9 @@ export default function RootLayout() {
   // Chỉ điều hướng khi app đã sẵn sàng
   useEffect(() => {
     if (!appIsReady) return;
-    
+
     const inAuthScreen = segments[0] === "(auth)";
-    const isSignedIn = user && token;    // Dùng setTimeout với độ trễ nhỏ để đảm bảo component đã mount
+    const isSignedIn = user && token; // Dùng setTimeout với độ trễ nhỏ để đảm bảo component đã mount
     const timer = setTimeout(() => {
       if (!isSignedIn && !inAuthScreen) {
         router.replace("(auth)");
@@ -50,13 +50,17 @@ export default function RootLayout() {
         router.replace("(tabs)");
       }
     }, 100);
-    
+
     return () => clearTimeout(timer);
   }, [appIsReady, user, token, segments]);
 
   // Không render gì cả cho đến khi ứng dụng đã sẵn sàng
   if (!appIsReady) {
-    return <View style={{ flex: 1 }}><Text>Loading...</Text></View>;
+    return (
+      <View style={{ flex: 1 }}>
+        <Text>Loading...</Text>
+      </View>
+    );
   }
   return (
     <SafeAreaProvider>
@@ -64,10 +68,11 @@ export default function RootLayout() {
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="(auth)" />
-          {/* <Stack.Screen name="index" redirect="(auth)" /> */}
+          <Stack.Screen name="userprofile" />
+          <Stack.Screen name="bookdetail" />
         </Stack>
       </SafeScreen>
-      <StatusBar style="dark"/>
+      <StatusBar style="dark" />
     </SafeAreaProvider>
   );
 }

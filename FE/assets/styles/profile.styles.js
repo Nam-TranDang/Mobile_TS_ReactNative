@@ -15,7 +15,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: COLORS.background,
   },
-   profileHeader: {
+  profileHeader: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: COLORS.cardBackground,
@@ -29,18 +29,18 @@ const styles = StyleSheet.create({
     elevation: 3,
     borderWidth: 1,
     borderColor: COLORS.border,
-    position: 'relative', // Thêm dòng này
+    position: "relative", // Thêm dòng này
   },
-   editButton: {
-    position: 'absolute',
+  editButton: {
+    position: "absolute",
     top: 16,
     right: 16,
     backgroundColor: COLORS.primary,
     width: 36,
     height: 36,
     borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -185,6 +185,20 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontWeight: "600",
     fontSize: 14,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: COLORS.textPrimary,
+    marginLeft: 16,
+  },
+  backButton: {
+    padding: 8,
   },
 });
 

@@ -1,0 +1,205 @@
+import { StyleSheet } from "react-native";
+import COLORS from "../../constants/colors";
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: COLORS.background,
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    padding: 16,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+    paddingTop: 10,
+  },
+  backButton: {
+    padding: 8,
+    marginRight: 16,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: COLORS.textPrimary,
+  },
+  bookCard: {
+    backgroundColor: COLORS.cardBackground,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  bookHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 12,
+  },
+  userInfo: {
+    flex: 1,
+  },
+  username: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: COLORS.textPrimary,
+  },
+  joinDate: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+  },
+  bookImageContainer: {
+    width: "100%",
+    height: 250,
+    borderRadius: 12,
+    overflow: "hidden",
+    marginBottom: 16,
+    backgroundColor: COLORS.border,
+  },
+  bookImage: {
+    width: "100%",
+    height: "100%",
+  },
+  bookTitle: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: COLORS.textPrimary,
+    marginBottom: 8,
+  },
+  ratingContainer: {
+    flexDirection: "row",
+    marginBottom: 12,
+  },
+  caption: {
+    fontSize: 16,
+    color: COLORS.textDark,
+    lineHeight: 24,
+    marginBottom: 12,
+  },
+  publishDate: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+  },
+  commentsSection: {
+    backgroundColor: COLORS.cardBackground,
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  commentsTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: COLORS.textPrimary,
+    marginBottom: 16,
+  },
+  commentItem: {
+    flexDirection: "row",
+    marginBottom: 16,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  commentAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    marginRight: 12,
+  },
+  commentContent: {
+    flex: 1,
+  },
+  commentHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  commentUsername: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: COLORS.primary,
+    marginRight: 8,
+    textDecorationLine: "none",
+  },
+  commentDate: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+  },
+  commentText: {
+    fontSize: 14,
+    color: COLORS.textDark,
+    lineHeight: 20,
+  },
+  commentInputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: COLORS.inputBackground,
+    borderRadius: 25,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginBottom: 16,
+  },
+  commentInput: {
+    flex: 1,
+    height: 40,
+    color: COLORS.textDark,
+    fontSize: 14,
+  },
+  sendButton: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    marginLeft: 8,
+  },
+  emptyComments: {
+    textAlign: "center",
+    color: COLORS.textSecondary,
+    fontSize: 14,
+    fontStyle: "italic",
+    marginVertical: 20,
+  },
+  loadMoreButton: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    alignItems: "center",
+    marginTop: 16,
+  },
+  loadMoreText: {
+    color: COLORS.white,
+    fontSize: 14,
+    fontWeight: "600",
+  },
+});
+
+export default styles;
