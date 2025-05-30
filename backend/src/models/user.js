@@ -76,19 +76,10 @@ userSchema.methods.checkAndLiftSuspension = async function() {
         this.suspensionReason = `Suspension lifted automatically on ${new Date().toLocaleDateString()}. Was: ${this.suspensionReason || 'N/A'}`; // Ghi lại lý do gỡ
         await this.save(); // Lưu thay đổi
         console.log(`Suspension lifted for user ${this.username} (${this._id})`);
-        //  Gửi email thông báo cho người dùng rằng tài khoản đã được mở lại????
-        // try {
-        //     await sendEmail({
-        //         email: this.email,
-        //         subject: "Thông báo: Tài khoản của bạn đã được mở lại",
-        //         message: `Chào ${this.username},\n\nTài khoản của bạn trên Bookworm App đã được mở lại sau thời gian tạm khóa.\n\nTrân trọng,\nĐội ngũ Bookworm App`
-        //     });
-        // } catch(emailError) {
-        //     console.error("Failed to send suspension lifted email to user:", this._id, emailError);
-        // }
-        return true; // Trả về true nếu có thay đổi
+       
+        return true; 
     }
-    return false; // Trả về false nếu không có thay đổi
+    return false; 
 };
 
 const User = mongoose.model("User",userSchema);
