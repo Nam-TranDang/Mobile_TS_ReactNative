@@ -214,6 +214,30 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     padding: 4,
   },
+  likeDislikeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 16,
+    padding: 5,
+  },
+  actionCount: {
+    marginLeft: 5,
+    fontSize: 14,
+    color: COLORS.textPrimary,
+  },
+  bookActionsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 16,
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+},
 });
 
 export default styles;

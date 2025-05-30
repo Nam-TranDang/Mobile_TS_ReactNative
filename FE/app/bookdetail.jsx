@@ -23,7 +23,7 @@ import { useAuthStore } from "../store/authStore";
 export default function BookDetail() {
   const { bookId } = useLocalSearchParams();
   const router = useRouter();
-  const { token } = useAuthStore();
+  const { token, user } = useAuthStore();
 
   const [book, setBook] = useState(null);
   const [comments, setComments] = useState([]);
@@ -33,6 +33,8 @@ export default function BookDetail() {
   const [commentsPage, setCommentsPage] = useState(1);
   const [hasMoreComments, setHasMoreComments] = useState(true);
   const [loadingMoreComments, setLoadingMoreComments] = useState(false);
+  const [isLiking, setIsLiking] = useState(false);
+  const [isDisliking, setIsDisliking] = useState(false);
 
   const fetchBookDetails = async () => {
     try {
@@ -200,7 +202,72 @@ export default function BookDetail() {
       </View>
     );
   }
+  const handleLike = async () => {
+    if (isLiking || isDisliking) return;
+    
+    setIsLiking(true);
+    try {
+      const endpoint = book.likedBy.includes(user.id) ? 
+        `${API_URL}/books/${bookId}/unlike` : 
+        `${API_URL}/books/${bookId}/like`;
+      
+      const response = await fetch(endpoint, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
+      if (!response.ok) throw new Error('Failed to update like status');
+      
+      const updatedBook = await response.json();
+      // Preserve the user information from the original book object
+      setBook({
+        ...updatedBook,
+        user: book.user // Keep the existing user information
+      });
+    } catch (error) {
+      console.error('Error updating like status:', error);
+    } finally {
+      setIsLiking(false);
+    }
+  };
+  
+  const handleDislike = async () => {
+    if (isLiking || isDisliking) return;
+    
+    setIsDisliking(true);
+    try {
+      const endpoint = book.dislikedBy.includes(user.id) ? 
+        `${API_URL}/books/${bookId}/remove-dislike` : 
+        `${API_URL}/books/${bookId}/dislike`;
+      
+      const response = await fetch(endpoint, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (!response.ok) throw new Error('Failed to update dislike status');
+      
+      const updatedBook = await response.json();
+      // Preserve the user information
+      setBook({
+        ...updatedBook,
+        user: book.user
+      });
+    } catch (error) {
+      console.error('Error updating dislike status:', error);
+    } finally {
+      setIsDisliking(false);
+    }
+  };
+  // Add this function to check if the current user has liked or disliked the book
+  const isLikedByUser = () => {
+    return book?.likedBy?.includes(user?.id);
+  };
+
+  const isDislikedByUser = () => {
+    return book?.dislikedBy?.includes(user?.id);
+  };
+  
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -252,16 +319,51 @@ export default function BookDetail() {
             <Text style={styles.publishDate}>
               Published on {formatPublishDate(book.createdAt)}
             </Text>
-            <TouchableOpacity
-              style={styles.reportButton}
-              onPress={() => router.push({
-                pathname: "/(tabs)/report",
-                params: { id: bookId, type: 'Book' }
-              })}
-            >
-              <Ionicons name="flag-outline" size={18} color={COLORS.red} />
-              <Text style={styles.reportText}>Report</Text>
-            </TouchableOpacity>
+
+            {/* Like/Dislike Buttons */}
+            {/* Book Actions Container */}
+            <View style={styles.bookActionsContainer}>
+            {/* Like/Dislike Buttons */}
+              <View style={styles.likeDislikeContainer}>
+                <TouchableOpacity
+                  style={styles.actionButton}
+                  onPress={handleLike}
+                  disabled={isLiking}
+                >
+                  <Ionicons 
+                    name={isLikedByUser() ? "thumbs-up" : "thumbs-up-outline"} 
+                    size={22} 
+                    color={isLikedByUser() ? COLORS.primary : COLORS.textSecondary} 
+                  />
+                  <Text style={styles.actionCount}>{book.like_count || 0}</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={styles.actionButton}
+                  onPress={handleDislike}
+                  disabled={isDisliking}
+                >
+                  <Ionicons 
+                    name={isDislikedByUser() ? "thumbs-down" : "thumbs-down-outline"} 
+                    size={22} 
+                    color={isDislikedByUser() ? COLORS.red : COLORS.textSecondary} 
+                  />
+                  <Text style={styles.actionCount}>{book.dislike_count || 0}</Text>
+                </TouchableOpacity>
+              </View>
+            
+              {/* Report Button */}
+              <TouchableOpacity
+                style={styles.reportButton}
+                onPress={() => router.push({
+                  pathname: "/(tabs)/report",
+                  params: { id: bookId, type: 'Book' }
+                })}
+              >
+                <Ionicons name="flag-outline" size={18} color={COLORS.red} />
+                <Text style={styles.reportText}>Report</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
 
