@@ -184,8 +184,11 @@ export default function BookDetail() {
             style={styles.commentReportButton}
             onPress={() => router.push({
               pathname: "/(tabs)/report",
-              params: { id: item._id, type: 'Comment' }
-            })}
+              params: { id: item._id, 
+                        type: 'Comment',
+                        commentText: item.text, 
+                        commentAuthor: item.user.username}
+              })}
           >
             <Ionicons name="flag-outline" size={16} color={COLORS.red} />
           </TouchableOpacity>
