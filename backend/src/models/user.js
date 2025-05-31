@@ -84,4 +84,4 @@ userSchema.methods.checkAndLiftSuspension = async function() {
 
 const User = mongoose.model("User",userSchema);
 
-export default User; // users as the wrapper for schema 
+export default User; 

@@ -163,10 +163,10 @@ router.put("/:reportId", protectRoute, isAdmin, async (req, res) => {
                 } else if (report.reportedItemType === 'User') {
                     const userToHandle = await User.findById(report.reportedItemId); 
                     if (userToHandle) {
-                        itemAffected = true; // Đánh dấu có hành động
-                        ownerId = userToHandle._id; // User bị report là người nhận thông báo
+                        itemAffected = true; 
+                        ownerId = userToHandle._id;
                         itemContentForNotification = `tài khoản "${userToHandle.username}"`;
-                        let userActionDetail = "processed"; // Mô tả hành động chung
+                        let userActionDetail = "processed"; 
 
 
                          if (suspensionDurationDays && Number.isInteger(parseInt(suspensionDurationDays)) && parseInt(suspensionDurationDays) > 0) {
