@@ -182,13 +182,17 @@ export default function BookDetail() {
           </Text>
           <TouchableOpacity
             style={styles.commentReportButton}
-            onPress={() => router.push({
-              pathname: "/(tabs)/report",
-              params: { id: item._id, 
-                        type: 'Comment',
-                        commentText: item.text, 
-                        commentAuthor: item.user.username}
-              })}
+            onPress={() =>
+              router.push({
+                pathname: "/(tabs)/report",
+                params: {
+                  id: item._id,
+                  type: "Comment",
+                  commentText: item.text,
+                  commentAuthor: item.user.username,
+                },
+              })
+            }
           >
             <Ionicons name="flag-outline" size={16} color={COLORS.red} />
           </TouchableOpacity>
@@ -207,57 +211,57 @@ export default function BookDetail() {
   }
   const handleLike = async () => {
     if (isLiking || isDisliking) return;
-    
+
     setIsLiking(true);
     try {
-      const endpoint = book.likedBy.includes(user.id) ? 
-        `${API_URL}/books/${bookId}/unlike` : 
-        `${API_URL}/books/${bookId}/like`;
-      
+      const endpoint = book.likedBy.includes(user.id)
+        ? `${API_URL}/books/${bookId}/unlike`
+        : `${API_URL}/books/${bookId}/like`;
+
       const response = await fetch(endpoint, {
-        method: 'PUT',
-        headers: { Authorization: `Bearer ${token}` }
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (!response.ok) throw new Error('Failed to update like status');
-      
+      if (!response.ok) throw new Error("Failed to update like status");
+
       const updatedBook = await response.json();
       // Preserve the user information from the original book object
       setBook({
         ...updatedBook,
-        user: book.user // Keep the existing user information
+        user: book.user, // Keep the existing user information
       });
     } catch (error) {
-      console.error('Error updating like status:', error);
+      console.error("Error updating like status:", error);
     } finally {
       setIsLiking(false);
     }
   };
-  
+
   const handleDislike = async () => {
     if (isLiking || isDisliking) return;
-    
+
     setIsDisliking(true);
     try {
-      const endpoint = book.dislikedBy.includes(user.id) ? 
-        `${API_URL}/books/${bookId}/remove-dislike` : 
-        `${API_URL}/books/${bookId}/dislike`;
-      
+      const endpoint = book.dislikedBy.includes(user.id)
+        ? `${API_URL}/books/${bookId}/remove-dislike`
+        : `${API_URL}/books/${bookId}/dislike`;
+
       const response = await fetch(endpoint, {
-        method: 'PUT',
-        headers: { Authorization: `Bearer ${token}` }
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (!response.ok) throw new Error('Failed to update dislike status');
-      
+      if (!response.ok) throw new Error("Failed to update dislike status");
+
       const updatedBook = await response.json();
       // Preserve the user information
       setBook({
         ...updatedBook,
-        user: book.user
+        user: book.user,
       });
     } catch (error) {
-      console.error('Error updating dislike status:', error);
+      console.error("Error updating dislike status:", error);
     } finally {
       setIsDisliking(false);
     }
@@ -270,7 +274,7 @@ export default function BookDetail() {
   const isDislikedByUser = () => {
     return book?.dislikedBy?.includes(user?.id);
   };
-  
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -294,8 +298,16 @@ export default function BookDetail() {
         {/* Book Details */}
         {book && (
           <View style={styles.bookCard}>
-            {/* User Info */}
-            <View style={styles.bookHeader}>
+            {/* User Info - THÊM TOUCHABLEOPACITY */}
+            <TouchableOpacity
+              style={styles.bookHeader}
+              onPress={() =>
+                router.push({
+                  pathname: "/userprofile",
+                  params: { userId: book.user._id },
+                })
+              }
+            >
               <Image
                 source={{ uri: book.user.profileImage }}
                 style={styles.avatar}
@@ -306,7 +318,13 @@ export default function BookDetail() {
                   Joined {formatMemberSince(book.user.createdAt)}
                 </Text>
               </View>
-            </View>
+              {/* Thêm icon để biểu thị có thể click */}
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color={COLORS.textSecondary}
+              />
+            </TouchableOpacity>
 
             {/* Book Image */}
             <View style={styles.bookImageContainer}>
@@ -326,42 +344,52 @@ export default function BookDetail() {
             {/* Like/Dislike Buttons */}
             {/* Book Actions Container */}
             <View style={styles.bookActionsContainer}>
-            {/* Like/Dislike Buttons */}
+              {/* Like/Dislike Buttons */}
               <View style={styles.likeDislikeContainer}>
                 <TouchableOpacity
                   style={styles.actionButton}
                   onPress={handleLike}
                   disabled={isLiking}
                 >
-                  <Ionicons 
-                    name={isLikedByUser() ? "thumbs-up" : "thumbs-up-outline"} 
-                    size={22} 
-                    color={isLikedByUser() ? COLORS.primary : COLORS.textSecondary} 
+                  <Ionicons
+                    name={isLikedByUser() ? "thumbs-up" : "thumbs-up-outline"}
+                    size={22}
+                    color={
+                      isLikedByUser() ? COLORS.primary : COLORS.textSecondary
+                    }
                   />
                   <Text style={styles.actionCount}>{book.like_count || 0}</Text>
                 </TouchableOpacity>
-                
+
                 <TouchableOpacity
                   style={styles.actionButton}
                   onPress={handleDislike}
                   disabled={isDisliking}
                 >
-                  <Ionicons 
-                    name={isDislikedByUser() ? "thumbs-down" : "thumbs-down-outline"} 
-                    size={22} 
-                    color={isDislikedByUser() ? COLORS.red : COLORS.textSecondary} 
+                  <Ionicons
+                    name={
+                      isDislikedByUser() ? "thumbs-down" : "thumbs-down-outline"
+                    }
+                    size={22}
+                    color={
+                      isDislikedByUser() ? COLORS.red : COLORS.textSecondary
+                    }
                   />
-                  <Text style={styles.actionCount}>{book.dislike_count || 0}</Text>
+                  <Text style={styles.actionCount}>
+                    {book.dislike_count || 0}
+                  </Text>
                 </TouchableOpacity>
               </View>
-            
+
               {/* Report Button */}
               <TouchableOpacity
                 style={styles.reportButton}
-                onPress={() => router.push({
-                  pathname: "/(tabs)/report",
-                  params: { id: bookId, type: 'Book' }
-                })}
+                onPress={() =>
+                  router.push({
+                    pathname: "/(tabs)/report",
+                    params: { id: bookId, type: "Book" },
+                  })
+                }
               >
                 <Ionicons name="flag-outline" size={18} color={COLORS.red} />
                 <Text style={styles.reportText}>Report</Text>
