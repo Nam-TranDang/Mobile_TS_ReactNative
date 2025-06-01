@@ -20,11 +20,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 16,
-    paddingTop: 10,
+    paddingTop: 8,
   },
   backButton: {
-    padding: 8,
-    marginRight: 16,
+    padding: 20,
+    marginRight: 10,
   },
   headerTitle: {
     fontSize: 20,
@@ -47,7 +47,10 @@ const styles = StyleSheet.create({
   bookHeader: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    borderRadius: 8,
   },
   avatar: {
     width: 40,
@@ -57,11 +60,12 @@ const styles = StyleSheet.create({
   },
   userInfo: {
     flex: 1,
+    marginLeft: 12,
   },
   username: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "600",
-    color: COLORS.textPrimary,
+    color: COLORS.primary,
   },
   joinDate: {
     fontSize: 12,
@@ -201,8 +205,8 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   reportButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: 4,
   },
   reportText: {
@@ -213,6 +217,30 @@ const styles = StyleSheet.create({
   commentReportButton: {
     marginLeft: 8,
     padding: 4,
+  },
+  likeDislikeContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  actionButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: 16,
+    padding: 5,
+  },
+  actionCount: {
+    marginLeft: 5,
+    fontSize: 14,
+    color: COLORS.textPrimary,
+  },
+  bookActionsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 16,
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
   },
 });
 

@@ -58,30 +58,48 @@ export default function ReportScreen() {
     return [];
   };
 
-  // Tải thông tin chi tiết về mục được báo cáo
-  useEffect(() => {
-    if (!reportedItemId) {
-      Alert.alert(
-        "Lỗi",
-        "Không tìm thấy ID của mục cần báo cáo",
-        [{ text: "Quay lại", onPress: () => router.back() }]
-      );
-      return;
-    }
+// Modified useEffect for fetching item details
+useEffect(() => {
+  if (!reportedItemId) {
+    Alert.alert(
+      "Lỗi",
+      "Không tìm thấy ID của mục cần báo cáo",
+      [{ text: "Quay lại", onPress: () => router.back() }]
+    );
+    return;
+  }
 
-    const fetchItemDetails = async () => {
-      try {
-        setIsLoading(true);
-        let endpoint = '';
+  const fetchItemDetails = async () => {
+    try {
+      setIsLoading(true);
+      let endpoint = '';
+      
+      if (reportedItemType === 'Comment') {
+        // For comments, use the data passed from the previous screen
+        // instead of making an API call
+        const commentText = params.commentText;
+        const commentAuthor = params.commentAuthor;
         
-        if (reportedItemType === 'Book') {
-          endpoint = `${API_URL}/books/${reportedItemId}`;
-        } else if (reportedItemType === 'Comment') {
-          endpoint = `${API_URL}/books/comments/${reportedItemId}`;
-        } else if (reportedItemType === 'User') {
-          endpoint = `${API_URL}/users/${reportedItemId}`;
+        if (commentText && commentAuthor) {
+          setItemDetails({
+            text: commentText,
+            user: { username: commentAuthor }
+          });
+        } else {
+          // Fallback for comments without passed data
+          setItemDetails({
+            text: "Bình luận đã được chọn",
+            user: { username: "Người dùng" }
+          });
         }
+      } else if (reportedItemType === 'Book') {
+        endpoint = `${API_URL}/books/${reportedItemId}`;
+      } else if (reportedItemType === 'User') {
+        endpoint = `${API_URL}/users/${reportedItemId}`;
+      }
 
+      // Only make API call if we have an endpoint (for books and users)
+      if (endpoint) {
         const response = await fetch(endpoint, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -92,20 +110,22 @@ export default function ReportScreen() {
 
         const data = await response.json();
         setItemDetails(data);
-      } catch (error) {
-        console.error('Error fetching item details:', error);
-        Alert.alert(
-          "Lỗi",
-          "Không thể tải thông tin chi tiết. Vui lòng thử lại sau.",
-          [{ text: "Quay lại", onPress: () => router.back() }]
-        );
-      } finally {
-        setIsLoading(false);
       }
-    };
+    } catch (error) {
+      console.error('Error fetching item details:', error);
+      Alert.alert(
+        "Lỗi",
+        "Không thể tải thông tin chi tiết. Vui lòng thử lại sau.",
+        [{ text: "Quay lại", onPress: () => router.back() }]
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    fetchItemDetails();
-  }, [reportedItemId, reportedItemType, token, router]);
+  fetchItemDetails();
+  // Remove params from dependency array to avoid infinite loop
+}, [reportedItemId, reportedItemType, token, router]);
 
   // Gửi báo cáo
   const handleSubmitReport = async () => {
