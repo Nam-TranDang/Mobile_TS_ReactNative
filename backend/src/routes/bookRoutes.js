@@ -2,6 +2,7 @@ import express from "express";
 import cloudinary from "../lib/cloudinary.js";
 import Comment from "../models/comment.js";
 import Book from "../models/book.js";
+import Genre from "../models/genre.js";
 import protectRoute from "../middleware/auth.middleware.js";
 import mongoose from "mongoose"; // Import mongoose here
 
@@ -10,9 +11,9 @@ const router = express.Router();
 // Before async to send POST --> Call protectRoute to check Token.
 router.post("/", protectRoute, async (req, res) => {
   try {
-    const { title, caption, rating, image } = req.body;
-
-    if (!title || !caption || !rating || !image) {
+    const { title, caption, rating, image, author, published_year, genre } = req.body;
+    
+    if (!title || !caption || !rating || !image|| !author || !genre) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -28,13 +29,34 @@ router.post("/", protectRoute, async (req, res) => {
       return res.status(400).json({ message: "Rating out of scope" });
     }
 
-    // Save to database
+    if (genre) {
+      // Check if genre is a valid ObjectId
+      if (!mongoose.Types.ObjectId.isValid(genre)) {
+        return res.status(400).json({ message: "Invalid genre ID format" });
+      }
+      const genreExists = await Genre.findById(genre);
+      if (!genreExists || genreExists.is_deleted) {
+        return res.status(400).json({ message: "Invalid or deleted genre" });
+      }
+    }
+  
+    // check valid year
+    // published year -> check dieu kien field nay co trong req - vi day la optional, isNaN - is not a number --> tra ve true neu la text 
+    if (published_year && (isNaN(published_year) || published_year < 0 || published_year > new Date().getFullYear())) {
+      return res.status(400).json({ message: "Invalid published year" });
+    }
+
     const newBook = new Book({
       title,
       caption,
       rating,
       image: imageUrl,
-      user: req.user._id, // Cần Token để xác định danh tính người gửi
+      user: req.user._id,  // Cần Token để xác định danh tính người gửi
+      author,
+      published_year: published_year || undefined, // Optional field
+      genre,
+      process: "pending", // Default o trang thai pending
+      is_deleted: false, // Default khong xoa sach
     });
 
     await newBook.save(); //build function của  Mongoose - store data
@@ -45,7 +67,29 @@ router.post("/", protectRoute, async (req, res) => {
   }
 });
 
-// Pagination cho trang home - phân trang
+// GET genre cho User 
+router.get("/genres", async (req, res) => {
+  try {
+    const genres = await Genre.find({ soft_delete: false }) // neu chua xoa mem thi get 
+      .select("genre_name _id") // select ten va id tu mongo
+      .sort({ genre_name: 1 }); // Sort alphabetically 
+
+    if (!genres || genres.length === 0) {
+      return res.status(404).json({ message: "No genres found" });
+    }
+
+    res.status(200).json(genres);
+  } catch (error) {
+    console.error("Error fetching genres:", {
+      message: error.message,
+      stack: error.stack,
+    });
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+
+// Pagination cho trang home - phân trang --> danh cho da la user 
 router.get("/", protectRoute, async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -127,8 +171,6 @@ router.get("/", protectRoute, async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
-
-// Tính năng Get sách theo bookID - hiển nội dung sách
 
 // Tính năng Get hết review sách của User đó - và hiển thị lên profile (giống hiển thị bài đăng)
 router.get("/user", protectRoute, async (req, res) => {
@@ -539,5 +581,5 @@ router.get("/:id", protectRoute, async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
-
+  
 export default router;

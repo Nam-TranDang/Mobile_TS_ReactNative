@@ -6,6 +6,7 @@ import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import bookRoutes from "./routes/bookRoutes.js";
 import reportRoutes from "./routes/reportRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
 
 import { connectDB } from "./lib/db.js";
 
@@ -22,6 +23,10 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/books", bookRoutes);
 app.use("/api/reports", reportRoutes);
+
+// Cac xu ly logic cua admin trong day 
+app.use("/api/admin", adminRoutes);
+
 
 app.listen(PORT,() => {
   console.log(`server started on port ${PORT}`);

@@ -81,6 +81,7 @@ router.post("/login", async (req,res) => {
                 email: user.email,
                 profileImage: user.profileImage,
                 password: user.password, // Note: Avoid sending password in response
+                role: user.role
             },
         });
     }

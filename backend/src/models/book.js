@@ -1,5 +1,8 @@
 import mongoose from "mongoose";
 
+// Helper function to pad numbers with leading zeros -- cho format gio
+const pad = (num) => String(num).padStart(2, "0");
+
 const bookSchema = new mongoose.Schema({
     title: {
         type: String,
@@ -47,12 +50,12 @@ const bookSchema = new mongoose.Schema({
     },
     author: {
         type: String,
-        // required: true,
+        required: true,
     },
     genre: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Genre", 
-            // required: true, 
+        required: true, 
     },
 
 
@@ -68,7 +71,22 @@ const bookSchema = new mongoose.Schema({
     },
  
 },{ 
-    timestamps: true //create at auto update + create ngày 
+    timestamps: true, //create at auto update + create ngày
+     toJSON: {
+    transform: (doc, ret) => {
+      // Convert timestamps to local time (+07:00) and format as YYYY-MM-DD HH:MM:SS
+      if (ret.createdAt) {
+        const createdAtLocal = new Date(ret.createdAt.getTime());
+        ret.createdAt = `${createdAtLocal.getFullYear()}-${pad(createdAtLocal.getMonth() + 1)}-${pad(createdAtLocal.getDate())} ${pad(createdAtLocal.getHours())}:${pad(createdAtLocal.getMinutes())}:${pad(createdAtLocal.getSeconds())}`;
+      }
+      if (ret.updatedAt) {
+        const updatedAtLocal = new Date(ret.updatedAt.getTime());
+        ret.updatedAt = `${updatedAtLocal.getFullYear()}-${pad(updatedAtLocal.getMonth() + 1)}-${pad(updatedAtLocal.getDate())} ${pad(updatedAtLocal.getHours())}:${pad(updatedAtLocal.getMinutes())}:${pad(updatedAtLocal.getSeconds())}`;
+      }
+      return ret;
+    },
+    virtuals: true, // Include virtual fields if any
+  },
 });
 
 const Book = mongoose.model("Book", bookSchema);
