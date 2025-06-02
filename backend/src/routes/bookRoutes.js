@@ -285,6 +285,7 @@ router.post("/:bookId/comments", protectRoute, async (req, res) => {
   try {
     const { text } = req.body;
     const { bookId } = req.params;
+    const io = req.io;
 
     if (!text || text.trim() === "") {
       return res.status(400).json({ message: "Comment text is required" });
@@ -311,7 +312,12 @@ router.post("/:bookId/comments", protectRoute, async (req, res) => {
 
     // Populate user info before sending response
     await newComment.populate("user", "username profileImage _id");
-
+    if (io) { // Kiểm tra io có tồn tại không
+      io.to(bookId.toString()).emit("newComment", newComment.toJSON()); // Gửi newComment đã populate và transform
+      console.log(`Emitted 'newComment' to room ${bookId} for comment ${newComment._id}`);
+    } else {
+      console.warn("Socket.io instance (req.io) not found. Cannot emit 'newComment'.");
+    }
     res.status(201).json(newComment);
   } catch (error) {
     console.error("Create comment error:", error);
@@ -368,6 +374,8 @@ router.put("/:bookId/comments/:commentId", protectRoute, async (req, res) => {
   try {
     const { text } = req.body;
     const { bookId, commentId } = req.params;
+    const io = req.io;
+    
 
     if (!text || text.trim() === "") {
       return res.status(400).json({ message: "Comment text cannot be empty." });
@@ -396,6 +404,12 @@ router.put("/:bookId/comments/:commentId", protectRoute, async (req, res) => {
       "user",
       "username profileImage"
     );
+    if (io) {
+      io.to(bookId.toString()).emit("commentUpdated", populatedComment.toJSON());
+      console.log(`Emitted 'commentUpdated' to room ${bookId} for comment ${populatedComment._id}`);
+  } else {
+      console.warn("Socket.io instance (req.io) not found. Cannot emit 'commentUpdated'.");
+  }
     res.json(populatedComment);
   } catch (error) {
     console.error("Update comment error:", error);
@@ -408,14 +422,19 @@ router.put("/:bookId/comments/:commentId", protectRoute, async (req, res) => {
   }
 });
 
-router.delete(
-  "/:bookId/comments/:commentId",
-  protectRoute,
-  async (req, res) => {
+router.delete( "/:bookId/comments/:commentId", protectRoute, async (req, res) => {
     try {
       const { bookId, commentId } = req.params;
-      const comment = await Comment.findById(commentId);
+      const io = req.io;
 
+      const comment = await Comment.findById(commentId);
+      if (io) {
+        // Gửi ID của comment đã xóa và bookId để client biết xóa comment nào khỏi sách nào
+        io.to(bookId.toString()).emit("commentDeleted", { commentId, bookId });
+        console.log(`Emitted 'commentDeleted' to room ${bookId} for comment ${commentId}`);
+    } else {
+        console.warn("Socket.io instance (req.io) not found. Cannot emit 'commentDeleted'.");
+    }
       if (!comment) {
         return res.status(404).json({ message: "Comment not found." });
       }
