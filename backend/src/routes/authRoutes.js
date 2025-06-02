@@ -72,6 +72,26 @@ router.post("/login", async (req,res) => {
 
         const isPasswordCorrect = await user.comparePassword(password);
         if(!isPasswordCorrect) return res.status(400).json({message: "invalid credentials"});
+        if (user.isSuspended && user.suspensionEndDate && user.suspensionEndDate <= new Date()) {
+            await user.checkAndLiftSuspension();
+        }
+
+        
+        if (user.isSuspended) {
+            
+            if (user.suspensionEndDate && user.suspensionEndDate > new Date()) {
+                return res.status(403).json({
+                    message: "Forbidden: Your account is currently suspended.",
+                    reason: user.suspensionReason,
+                    suspensionEndDate: user.suspensionEndDate.toISOString(),
+                });
+            } else { 
+                return res.status(403).json({
+                    message: "Forbidden: Your account is suspended indefinitely or status unclear. Please contact support.",
+                    reason: user.suspensionReason,
+                });
+            }
+        }
         const token = generateToken(user._id);
         res.status(200).json({
             token,
