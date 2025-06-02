@@ -1,6 +1,8 @@
 import express from "express";
 import "dotenv/config";
 import cors from "cors";
+import http from "http";
+import initializeSocketIO from "../../socket/socketServer.js";
 
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
@@ -13,6 +15,12 @@ import { connectDB } from "./lib/db.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const httpServer = http.createServer(app);
+export const io = initializeSocketIO(httpServer);
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
 
 app.use(express.json({ limit: '10mb' })); // Example: allow up to 10MB JSON body
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
@@ -28,8 +36,8 @@ app.use("/api/reports", reportRoutes);
 app.use("/api/admin", adminRoutes);
 
 
-app.listen(PORT,() => {
-  console.log(`server started on port ${PORT}`);
-  console.log(`Access it at: http://localhost:${PORT}`); // Add this line
+httpServer.listen(PORT, () => {
+  console.log(`Server (HTTP & Socket.IO) started on port ${PORT}`);
+  console.log(`Access it at: http://localhost:${PORT}`);
   connectDB();
 });
