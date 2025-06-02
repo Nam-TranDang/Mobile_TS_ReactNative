@@ -1,6 +1,6 @@
 // src/models/report.js
 import mongoose from "mongoose";
-
+const pad = (num) => String(num).padStart(2, "0");
 const reportSchema = new mongoose.Schema(
     {
         reporter: { 

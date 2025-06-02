@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+const pad = (num) => String(num).padStart(2, "0");
 const commentSchema = new mongoose.Schema({
     text: {
         type: String,
