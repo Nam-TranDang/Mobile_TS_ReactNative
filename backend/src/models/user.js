@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
+const pad = (num) => String(num).padStart(2, "0");
 
 const userSchema = new mongoose.Schema({
     username:{
