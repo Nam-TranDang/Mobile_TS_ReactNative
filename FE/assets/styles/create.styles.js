@@ -136,6 +136,86 @@ const styles = StyleSheet.create({
   buttonIcon: {
     marginRight: 8,
   },
+    required: {
+    color: COLORS.error,
+  },
+  genreSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    backgroundColor: COLORS.cardBackground,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    marginBottom: 12,
+  },
+  genreSelectorIcon: {
+    marginRight: 10,
+  },
+  genrePlaceholder: {
+    color: COLORS.placeholderText,
+    flex: 1,
+  },
+  selectedGenreName: {
+    color: COLORS.textPrimary,
+    flex: 1,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: COLORS.cardBackground,
+    borderRadius: 12,
+    width: '100%',
+    maxHeight: '70%',
+    padding: 20,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.textPrimary,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  genreList: {
+    maxHeight: 300,
+  },
+  genreItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  selectedGenreItem: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 8,
+    marginVertical: 2,
+  },
+  genreItemText: {
+    fontSize: 16,
+    color: COLORS.textPrimary,
+  },
+  selectedGenreItemText: {
+    color: COLORS.white,
+  },
+  closeModalButton: {
+    backgroundColor: COLORS.primary,
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  closeModalButtonText: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: '600',
+  },
 });
 
 export default styles;

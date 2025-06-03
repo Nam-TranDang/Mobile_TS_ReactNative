@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Alert,
   Image,
@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   View,
   ActivityIndicator,
+  Modal,
 } from "react-native";
 import style from "../../assets/styles/create.styles";
 import COLORS from "../../constants/colors";
@@ -27,12 +28,43 @@ export default function Create() {
   const [rating, setRating] = useState(3);
   const [image, setImage] = useState(null); // to display the selected image
   const [imageBase64, setImageBase64] = useState(null);
+  const [author, setAuthor] = useState("");
+  const [publishedYear, setPublishedYear] = useState("");
+  const [genres, setGenres] = useState([]);
+  const [selectedGenre, setSelectedGenre] = useState(null);
+  const [showGenreModal, setShowGenreModal] = useState(false);
+  const [loadingGenres, setLoadingGenres] = useState(false);
+
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
   const { token } = useAuthStore();
 
   const MAX_IMAGE_SIZE = 7 * 1024 * 1024; // 7MB
+
+  // Fetch genres when component mounts
+  useEffect(() => {
+    fetchGenres();
+  }, []);
+
+  const fetchGenres = async () => {
+    try {
+      setLoadingGenres(true);
+      const response = await fetch(`${API_URL}/books/genres`);
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch genres");
+      }
+
+      const data = await response.json();
+      setGenres(data);
+    } catch (error) {
+      console.error("Error fetching genres:", error);
+      Alert.alert("Error", "Failed to load book genres");
+    } finally {
+      setLoadingGenres(false);
+    }
+  };
 
   const pickImage = async () => {
     try {
@@ -80,10 +112,16 @@ export default function Create() {
   };
 
   const handleSubmit = async () => {
-    if (!title || !caption || !imageBase64 || !rating) {
+    if (!title || !caption || !imageBase64 || !rating|| !author || !selectedGenre) {
       Alert.alert("Please fill in all fields and select an image");
       return;
     }
+    // Validate published year if provided
+    if (publishedYear && (isNaN(publishedYear) || publishedYear < 0 || publishedYear > new Date().getFullYear())) {
+      Alert.alert("Lỗi", "Năm xuất bản không hợp lệ");
+      return;
+    }
+
     try {
       setLoading(true);
       const uriParts = image.split(".");
@@ -104,6 +142,9 @@ export default function Create() {
           caption,
           rating,
           image: imageDataUrl,
+          author,
+          published_year: publishedYear ? parseInt(publishedYear) : undefined,
+          genre: selectedGenre._id,
         }),
       });
 
@@ -120,6 +161,9 @@ export default function Create() {
             setImage(null);
             setImageBase64(null);
             setRating(3);
+            setAuthor("");
+            setPublishedYear("");
+            setSelectedGenre(null);
             // Navigate using setTimeout to ensure component is mounted
             setTimeout(() => {
               router.replace("/(tabs)");
@@ -153,6 +197,65 @@ export default function Create() {
     }
     return <View style={style.ratingContainer}>{stars}</View>;
   };
+
+    // Modal hiển thị danh sách thể loại
+  const renderGenreModal = () => (
+    <Modal
+      visible={showGenreModal}
+      transparent={true}
+      animationType="fade"
+      onRequestClose={() => setShowGenreModal(false)}
+    >
+      <TouchableOpacity
+        style={style.modalOverlay}
+        activeOpacity={1}
+        onPress={() => setShowGenreModal(false)}
+      >
+        <View style={style.modalContent}>
+          <Text style={style.modalTitle}>Chọn thể loại sách</Text>
+          
+          {loadingGenres ? (
+            <ActivityIndicator size="small" color={COLORS.primary} />
+          ) : (
+            <ScrollView style={style.genreList}>
+              {genres.map((genre) => (
+                <TouchableOpacity
+                  key={genre._id}
+                  style={[
+                    style.genreItem,
+                    selectedGenre?._id === genre._id && style.selectedGenreItem
+                  ]}
+                  onPress={() => {
+                    setSelectedGenre(genre);
+                    setShowGenreModal(false);
+                  }}
+                >
+                  <Text 
+                    style={[
+                      style.genreItemText,
+                      selectedGenre?._id === genre._id && style.selectedGenreItemText
+                    ]}
+                  >
+                    {genre.genre_name}
+                  </Text>
+                  {selectedGenre?._id === genre._id && (
+                    <Ionicons name="checkmark" size={20} color={COLORS.white} />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
+          
+          <TouchableOpacity
+            style={style.closeModalButton}
+            onPress={() => setShowGenreModal(false)}
+          >
+            <Text style={style.closeModalButtonText}>Đóng</Text>
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    </Modal>
+  );
 
   return (
     <KeyboardAvoidingView
@@ -191,64 +294,134 @@ export default function Create() {
                   onChangeText={setTitle}
                 />
               </View>
+            </View>
+            
+              {/* Author */}
+              <View style={style.formGroup}>
+                <Text style={style.label}>Author</Text>
+                <View style={style.inputContainer}>
+                  <Ionicons
+                    name="person-outline"
+                    size={20}
+                    color={COLORS.textSecondary}
+                    style={style.inputIcon}
+                  />
+                  <TextInput
+                    style={style.input}
+                    placeholder="Enter author name"
+                    placeholderTextColor={COLORS.placeholderText}
+                    value={author}
+                    onChangeText={setAuthor}
+                  />
+                </View>
+              </View>
+
+              {/* Published Year */}
+              <View style={style.formGroup}>
+                <Text style={style.label}>Published Year</Text>
+                <View style={style.inputContainer}>
+                  <Ionicons
+                    name="calendar-outline"
+                    size={20}
+                    color={COLORS.textSecondary}
+                    style={style.inputIcon}
+                  />
+                  <TextInput
+                    style={style.input}
+                    placeholder="Enter published year (optional)"
+                    placeholderTextColor={COLORS.placeholderText}
+                    value={publishedYear}
+                    onChangeText={setPublishedYear}
+                    keyboardType="number-pad"
+                    maxLength={4}
+                  />
+                </View>
+              </View>
+
+              {/* Genre */}
+              <View style={style.formGroup}>
+                <Text style={style.label}>Genre</Text>
+                <TouchableOpacity 
+                  style={style.genreSelector}
+                  onPress={() => setShowGenreModal(true)}
+                >
+                  <Ionicons
+                    name="list-outline"
+                    size={20}
+                    color={COLORS.textSecondary}
+                    style={style.genreSelectorIcon}
+                  />
+                  <Text style={selectedGenre ? style.selectedGenreName : style.genrePlaceholder}>
+                    {selectedGenre ? selectedGenre.genre_name : "Select a genre"}
+                  </Text>
+                  <Ionicons
+                    name="chevron-down"
+                    size={20}
+                    color={COLORS.textSecondary}
+                  />
+                </TouchableOpacity>
+              </View>
+
               {/* Rating */}
               <View style={style.formGroup}>
                 <Text style={style.label}>Your Rating</Text>
                 {renderRatingPicker()}
               </View>
+
               {/* Image */}
               <View style={style.formGroup}></View>
-              <Text style={style.label}>Book Image</Text>
-              <TouchableOpacity style={style.imagePicker} onPress={pickImage}>
-                {image ? (
-                  <Image source={{ uri: image }} style={style.previewImage} />
+                <Text style={style.label}>Book Image</Text>
+                <TouchableOpacity style={style.imagePicker} onPress={pickImage}>
+                  {image ? (
+                    <Image source={{ uri: image }} style={style.previewImage} />
+                  ) : (
+                    <View style={style.placeholderContainer}>
+                      <Ionicons
+                        name="image-outline"
+                        size={40}
+                        color={COLORS.textSecondary}
+                      />
+                      <Text style={style.placeholderText}>Select Image</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              </View>
+              
+              {/* Caption */}
+              <View style={style.formGroup}>
+                <Text style={style.label}>Caption</Text>
+                <TextInput
+                  style={style.textArea}
+                  placeholder="Write a caption..."
+                  placeholderTextColor={COLORS.placeholderText}
+                  value={caption}
+                  onChangeText={setCaption}
+                  multiline
+                />
+              </View>
+              {/* Submit Button */}
+              <TouchableOpacity
+                style={style.button}
+                onPress={handleSubmit}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator color={COLORS.white} />
                 ) : (
-                  <View style={style.placeholderContainer}>
+                  <>
                     <Ionicons
-                      name="image-outline"
-                      size={40}
-                      color={COLORS.textSecondary}
+                      name="cloud-upload-outline"
+                      size={20}
+                      color={COLORS.white}
+                      style={style.buttonIcon}
                     />
-                    <Text style={style.placeholderText}>Select Image</Text>
-                  </View>
+                    <Text style={style.buttonText}>Submit</Text>
+                  </>
                 )}
               </TouchableOpacity>
             </View>
-            {/* Caption */}
-            <View style={style.formGroup}>
-              <Text style={style.label}>Caption</Text>
-              <TextInput
-                style={style.textArea}
-                placeholder="Write a caption..."
-                placeholderTextColor={COLORS.placeholderText}
-                value={caption}
-                onChangeText={setCaption}
-                multiline
-              />
-            </View>
-            {/* Submit Button */}
-            <TouchableOpacity
-              style={style.button}
-              onPress={handleSubmit}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color={COLORS.white} />
-              ) : (
-                <>
-                  <Ionicons
-                    name="cloud-upload-outline"
-                    size={20}
-                    color={COLORS.white}
-                    style={style.buttonIcon}
-                  />
-                  <Text style={style.buttonText}>Submit</Text>
-                </>
-              )}
-            </TouchableOpacity>
-          </View>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
-  );
-}
+          {renderGenreModal()}
+        </ScrollView>
+      </KeyboardAvoidingView>
+    );
+  }
