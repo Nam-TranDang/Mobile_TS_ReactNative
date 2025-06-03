@@ -67,7 +67,7 @@ router.post("/", protectRoute, async (req, res) => {
 router.get("/", protectRoute, isAdmin, async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 5; // Bạn có thể tăng limit này nếu muốn
+        const limit = parseInt(req.query.limit) ; // Bạn có thể tăng limit này nếu muốn
         const statusFilter = req.query.status;
         const skip = (page - 1) * limit;
         let queryConditions = {};

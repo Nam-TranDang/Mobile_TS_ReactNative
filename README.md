@@ -12,3 +12,7 @@
 1. cd socket 
 2. npm install
 3. npm run dev
+## Run Admin
+1. cd admin
+2. npm install
+3. npm run dev
