@@ -10,6 +10,8 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Modal,
+  TextInput,
 } from "react-native";
 import { sleep } from ".";
 import Loader from "../../components/Loader";
@@ -25,8 +27,11 @@ export default function Profile() {
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [deleteBookId, setDeleteBookId] = useState(null);
+  const [isDeleteAccountModalVisible, setIsDeleteAccountModalVisible] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [confirmationText, setConfirmationText] = useState("");
 
-  const { token } = useAuthStore();
+  const { token, user, logout } = useAuthStore();
 
   const router = useRouter();
 
@@ -96,6 +101,78 @@ export default function Profile() {
     );
   };
 
+  const handleDeleteAccount = async () => {
+    // Check if user and token are available
+    if (!user) {
+      Alert.alert("Error", "User information not available");
+      return;
+    }
+
+    const userId = user._id || user.id;
+    if (!userId) {
+      Alert.alert("Error", "User ID is missing");
+      return;
+    }
+
+    if (!token) {
+      Alert.alert("Error", "Authentication token not available");
+      return;
+    }
+
+    if (confirmationText !== "DELETE") {
+      Alert.alert("Error", "Please type DELETE to confirm");
+      return;
+    }
+
+    try {
+      setIsDeleting(true);
+      console.log(`Attempting to delete user with ID: ${userId}`);
+
+      const response = await fetch(`${API_URL}/users/${userId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+      console.log("Delete account response:", data);
+      
+      if (!response.ok) throw new Error(data.message || "Failed to delete account");
+
+      // Đóng modal và đăng xuất
+      setIsDeleteAccountModalVisible(false);
+      Alert.alert("Success", "Your account has been deleted successfully", [
+        {
+          text: "OK",
+          onPress: () => {
+            logout();
+            router.replace("/(auth)");
+          },
+        },
+      ]);
+    } catch (error) {
+      console.error("Error deleting account:", error);
+      Alert.alert("Error", error.message || "Failed to delete account");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+  const showDeleteAccountConfirmation = () => {
+    Alert.alert(
+      "Delete Account",
+      "Are you sure you want to delete your account? This action CANNOT be undone and all your data will be permanently removed.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Continue",
+          style: "destructive",
+          onPress: () => setIsDeleteAccountModalVisible(true),
+        },
+      ]
+    );
+  };
+
   const renderBookItem = ({ item }) => (
     <View style={styles.bookItem}>
       <Image source={item.image} style={styles.bookImage} />
@@ -154,8 +231,18 @@ export default function Profile() {
   return (
     <View style={styles.container}>
       <ProfileHeader />
-      <LogoutButton />
+      <View style={styles.accountActionsContainer}>
+        <LogoutButton />
 
+        <TouchableOpacity 
+          style={styles.deleteAccountButton}
+          onPress={showDeleteAccountConfirmation}
+        >
+          <Ionicons name="trash-outline" size={20} color={COLORS.white} />
+          <Text style={styles.deleteAccountButtonText}>Delete Account</Text>
+        </TouchableOpacity>
+
+      </View>
       {/* Your Recommendations*/}
       <View style={styles.booksHeader}>
         <Text style={styles.booksTitle}>Your Recommendations</Text>
@@ -193,6 +280,63 @@ export default function Profile() {
           </View>
         }
       />
+
+      {/* Delete Account Confirmation Modal */}
+      <Modal
+        visible={isDeleteAccountModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setIsDeleteAccountModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Delete Account</Text>
+            
+            <Text style={styles.modalText}>
+              This action will permanently delete your account and all associated data. This action CANNOT be undone.
+            </Text>
+            
+            <Text style={styles.confirmInstructionText}>
+              To confirm, please type DELETE in the field below:
+            </Text>
+            
+            <TextInput
+              style={styles.confirmationInput}
+              value={confirmationText}
+              onChangeText={setConfirmationText}
+              placeholder="Type DELETE"
+              placeholderTextColor={COLORS.textSecondary}
+            />
+            
+            <View style={styles.modalButtonsContainer}>
+              <TouchableOpacity
+                style={styles.modalCancelButton}
+                onPress={() => {
+                  setIsDeleteAccountModalVisible(false);
+                  setConfirmationText("");
+                }}
+              >
+                <Text style={styles.modalCancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[
+                  styles.modalDeleteButton,
+                  confirmationText !== "DELETE" && styles.modalDeleteButtonDisabled
+                ]}
+                onPress={handleDeleteAccount}
+                disabled={confirmationText !== "DELETE" || isDeleting}
+              >
+                {isDeleting ? (
+                  <ActivityIndicator size="small" color="white" />
+                ) : (
+                  <Text style={styles.modalDeleteButtonText}>Delete Account</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
