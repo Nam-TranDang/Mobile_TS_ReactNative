@@ -5,7 +5,7 @@
 3. npm run dev
 ## Run Frontend
 1. cd FE
-2. npm install
+2. npm install (`npm install socket.io-client` if error relavants to socket, otherwise ignore this)
 3. Change API link with your IP address in FE\constants\api.js
 4. npx expo
 ## Run Socket Server

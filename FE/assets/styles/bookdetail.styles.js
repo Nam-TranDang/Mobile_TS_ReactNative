@@ -242,6 +242,51 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: COLORS.border,
   },
+  typingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.03)',
+    borderRadius: 12,
+    marginBottom: 8,
+  },
+  typingText: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    fontStyle: 'italic',
+    marginRight: 8,
+  },
+  typingDots: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  typingDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: COLORS.primary,
+    marginHorizontal: 1,
+  },
+  typingDot1: {
+    opacity: 0.4,
+  },
+  typingDot2: {
+    opacity: 0.7,
+  },
+  typingDot3: {
+    opacity: 1,
+  },
+  viewerCountContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 'auto',
+    marginRight: 8,
+  },
+  viewerCountText: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    marginLeft: 4,
+  },
 });
 
 export default styles;

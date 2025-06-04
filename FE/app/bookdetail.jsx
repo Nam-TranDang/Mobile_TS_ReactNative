@@ -1,7 +1,8 @@
+import { io } from "socket.io-client";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState,useRef } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -16,7 +17,7 @@ import {
 } from "react-native";
 import styles from "../assets/styles/bookdetail.styles";
 import COLORS from "../constants/colors";
-import { API_URL } from "../constants/api";
+import { API_URL, SOCKET_URL } from "../constants/api";
 import { formatMemberSince, formatPublishDate } from "../lib/utils";
 import { useAuthStore } from "../store/authStore";
 
@@ -35,6 +36,51 @@ export default function BookDetail() {
   const [loadingMoreComments, setLoadingMoreComments] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
   const [isDisliking, setIsDisliking] = useState(false);
+  const [newCommentId, setNewCommentId] = useState(null);
+  const socketRef = useRef(null);
+
+  // Thiết lập kết nối Socket.IO
+  useEffect(() => {
+    if (!bookId || !token) return;
+    
+    // Khởi tạo kết nối socket
+    const socket = io(SOCKET_URL);
+    socketRef.current = socket;
+    
+    // Tham gia vào phòng của sách cụ thể
+    socket.emit("joinBookRoom", bookId);
+        
+    // Lắng nghe khi có bình luận mới
+    socket.on("newComment", (newComment) => {
+      // Không thêm comment nếu nó đến từ người dùng hiện tại (đã được thêm thủ công)
+      if (newComment.user._id !== user.id) {
+        setNewCommentId(newComment._id);
+        setComments(prev => [newComment, ...prev]);
+      }
+    });
+    
+    // Lắng nghe khi có bình luận bị xóa
+    socket.on("commentDeleted", ({ commentId }) => {
+      setComments(prev => prev.filter(comment => comment._id !== commentId));
+    });
+    
+    // Lắng nghe khi có bình luận được cập nhật
+    socket.on("commentUpdated", (updatedComment) => {
+      setComments(prev => 
+        prev.map(comment => 
+          comment._id === updatedComment._id ? updatedComment : comment
+        )
+      );
+    });
+        
+    // Cleanup when component unmounts
+    return () => {
+      if (socket) {
+        socket.emit("leaveBookRoom", bookId);
+        socket.disconnect();
+      }
+    };
+  }, [bookId, token, user?.id]);
 
   const fetchBookDetails = async () => {
     try {
@@ -119,6 +165,11 @@ export default function BookDetail() {
       const newComment = await response.json();
       setComments((prev) => [newComment, ...prev]);
       setCommentText("");
+
+      // Reset typing status
+      if (socketRef.current) {
+        socketRef.current.emit("userTyping", { bookId, isTyping: false });
+      }
     } catch (error) {
       console.error("Error submitting comment:", error);
       Alert.alert("Error", "Failed to submit comment");
