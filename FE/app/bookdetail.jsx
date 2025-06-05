@@ -2,7 +2,7 @@ import { io } from "socket.io-client";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState,useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -42,37 +42,39 @@ export default function BookDetail() {
   // Thiết lập kết nối Socket.IO
   useEffect(() => {
     if (!bookId || !token) return;
-    
+
     // Khởi tạo kết nối socket
     const socket = io(SOCKET_URL);
     socketRef.current = socket;
-    
+
     // Tham gia vào phòng của sách cụ thể
     socket.emit("joinBookRoom", bookId);
-        
+
     // Lắng nghe khi có bình luận mới
     socket.on("newComment", (newComment) => {
       // Không thêm comment nếu nó đến từ người dùng hiện tại (đã được thêm thủ công)
       if (newComment.user._id !== user.id) {
         setNewCommentId(newComment._id);
-        setComments(prev => [newComment, ...prev]);
+        setComments((prev) => [newComment, ...prev]);
       }
     });
-    
+
     // Lắng nghe khi có bình luận bị xóa
     socket.on("commentDeleted", ({ commentId }) => {
-      setComments(prev => prev.filter(comment => comment._id !== commentId));
+      setComments((prev) =>
+        prev.filter((comment) => comment._id !== commentId)
+      );
     });
-    
+
     // Lắng nghe khi có bình luận được cập nhật
     socket.on("commentUpdated", (updatedComment) => {
-      setComments(prev => 
-        prev.map(comment => 
+      setComments((prev) =>
+        prev.map((comment) =>
           comment._id === updatedComment._id ? updatedComment : comment
         )
       );
     });
-        
+
     // Cleanup when component unmounts
     return () => {
       if (socket) {
@@ -396,55 +398,94 @@ export default function BookDetail() {
             {/* Book Actions Container */}
             <View style={styles.bookActionsContainer}>
               {/* Like/Dislike Buttons */}
-              <View style={styles.likeDislikeContainer}>
+              <View style={styles.actionsRow}>
+                {/* Like Button */}
                 <TouchableOpacity
                   style={styles.actionButton}
                   onPress={handleLike}
-                  disabled={isLiking}
+                  disabled={isLiking || isDisliking}
                 >
-                  <Ionicons
-                    name={isLikedByUser() ? "thumbs-up" : "thumbs-up-outline"}
-                    size={22}
-                    color={
-                      isLikedByUser() ? COLORS.primary : COLORS.textSecondary
-                    }
-                  />
-                  <Text style={styles.actionCount}>{book.like_count || 0}</Text>
+                  {isLiking ? (
+                    <ActivityIndicator size="small" color={COLORS.primary} />
+                  ) : (
+                    <Ionicons
+                      name={
+                        book.likedBy && book.likedBy.includes(user?.id)
+                          ? "heart"
+                          : "heart-outline"
+                      }
+                      size={24}
+                      color={
+                        book.likedBy && book.likedBy.includes(user?.id)
+                          ? COLORS.primary
+                          : COLORS.textSecondary
+                      }
+                    />
+                  )}
+                  <Text style={styles.actionText}>{book.like_count || 0}</Text>
                 </TouchableOpacity>
 
+                {/* Dislike Button */}
                 <TouchableOpacity
                   style={styles.actionButton}
                   onPress={handleDislike}
-                  disabled={isDisliking}
+                  disabled={isLiking || isDisliking}
                 >
-                  <Ionicons
-                    name={
-                      isDislikedByUser() ? "thumbs-down" : "thumbs-down-outline"
-                    }
-                    size={22}
-                    color={
-                      isDislikedByUser() ? COLORS.red : COLORS.textSecondary
-                    }
-                  />
-                  <Text style={styles.actionCount}>
+                  {isDisliking ? (
+                    <ActivityIndicator size="small" color={COLORS.primary} />
+                  ) : (
+                    <Ionicons
+                      name={
+                        book.dislikedBy && book.dislikedBy.includes(user?.id)
+                          ? "thumbs-down"
+                          : "thumbs-down-outline"
+                      }
+                      size={22}
+                      color={
+                        book.dislikedBy && book.dislikedBy.includes(user?.id)
+                          ? COLORS.primary
+                          : COLORS.textSecondary
+                      }
+                    />
+                  )}
+                  <Text style={styles.actionText}>
                     {book.dislike_count || 0}
                   </Text>
                 </TouchableOpacity>
               </View>
 
-              {/* Report Button */}
-              <TouchableOpacity
-                style={styles.reportButton}
-                onPress={() =>
-                  router.push({
-                    pathname: "/(tabs)/report",
-                    params: { id: bookId, type: "Book" },
-                  })
-                }
-              >
-                <Ionicons name="flag-outline" size={18} color={COLORS.red} />
-                <Text style={styles.reportText}>Report</Text>
-              </TouchableOpacity>
+              <View style={styles.actionsRow}>
+                {/* Edit Button - Chỉ hiển thị nếu người dùng hiện tại là tác giả */}
+                {user && book && book.user && book.user._id === user.id && (
+                  <TouchableOpacity
+                    style={styles.editButton}
+                    onPress={() =>
+                      router.push(`/(tabs)/editbook?bookId=${bookId}`)
+                    }
+                  >
+                    <Ionicons
+                      name="create-outline"
+                      size={18}
+                      color={COLORS.primary}
+                    />
+                    <Text style={styles.editText}>Edit</Text>
+                  </TouchableOpacity>
+                )}
+
+                {/* Report Button */}
+                <TouchableOpacity
+                  style={styles.reportButton}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/(tabs)/report",
+                      params: { id: bookId, type: "Book" },
+                    })
+                  }
+                >
+                  <Ionicons name="flag-outline" size={18} color={COLORS.red} />
+                  <Text style={styles.reportText}>Report</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         )}

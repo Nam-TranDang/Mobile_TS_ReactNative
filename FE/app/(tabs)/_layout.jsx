@@ -65,6 +65,13 @@ export default function TabLayout() {
           title: "Báo cáo",
         }}
       />
+      <Tabs.Screen
+        name="editbook"
+        options={{
+          href: null, // Ẩn khỏi thanh tab
+          title: "Edit Book",
+        }}
+      />
     </Tabs>
   );
   

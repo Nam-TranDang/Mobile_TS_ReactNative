@@ -27,7 +27,8 @@ export default function Profile() {
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [deleteBookId, setDeleteBookId] = useState(null);
-  const [isDeleteAccountModalVisible, setIsDeleteAccountModalVisible] = useState(false);
+  const [isDeleteAccountModalVisible, setIsDeleteAccountModalVisible] =
+    useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [confirmationText, setConfirmationText] = useState("");
 
@@ -137,8 +138,9 @@ export default function Profile() {
 
       const data = await response.json();
       console.log("Delete account response:", data);
-      
-      if (!response.ok) throw new Error(data.message || "Failed to delete account");
+
+      if (!response.ok)
+        throw new Error(data.message || "Failed to delete account");
 
       // Đóng modal và đăng xuất
       setIsDeleteAccountModalVisible(false);
@@ -175,7 +177,7 @@ export default function Profile() {
 
   const renderBookItem = ({ item }) => (
     <View style={styles.bookItem}>
-      <Image source={item.image} style={styles.bookImage} />
+      <Image source={{ uri: item.image }} style={styles.bookImage} />
 
       <View style={styles.bookInfo}>
         <Text style={styles.bookTitle}>{item.title}</Text>
@@ -190,16 +192,26 @@ export default function Profile() {
           {new Date(item.createdAt).toLocaleDateString()}
         </Text>
       </View>
-      <TouchableOpacity
-        style={styles.deleteButton}
-        onPress={() => confirmDelete(item._id)}
-      >
-        {deleteBookId === item._id ? (
-          <ActivityIndicator size="small" color={COLORS.primary} />
-        ) : (
-          <Ionicons name="trash-outline" size={20} color={COLORS.primary} />
-        )}
-      </TouchableOpacity>
+
+      <View style={styles.bookActions}>
+        <TouchableOpacity
+          style={styles.editButtonBook}
+          onPress={() => router.push(`/editbook?bookId=${item._id}`)}
+        >
+          <Ionicons name="create-outline" size={20} color={COLORS.primary} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.deleteButton}
+          onPress={() => confirmDelete(item._id)}
+        >
+          {deleteBookId === item._id ? (
+            <ActivityIndicator size="small" color={COLORS.primary} />
+          ) : (
+            <Ionicons name="trash-outline" size={20} color={COLORS.primary} />
+          )}
+        </TouchableOpacity>
+      </View>
     </View>
   );
 
@@ -234,14 +246,13 @@ export default function Profile() {
       <View style={styles.accountActionsContainer}>
         <LogoutButton />
 
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.deleteAccountButton}
           onPress={showDeleteAccountConfirmation}
         >
           <Ionicons name="trash-outline" size={20} color={COLORS.white} />
           <Text style={styles.deleteAccountButtonText}>Delete Account</Text>
         </TouchableOpacity>
-
       </View>
       {/* Your Recommendations*/}
       <View style={styles.booksHeader}>
@@ -291,15 +302,16 @@ export default function Profile() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Delete Account</Text>
-            
+
             <Text style={styles.modalText}>
-              This action will permanently delete your account and all associated data. This action CANNOT be undone.
+              This action will permanently delete your account and all
+              associated data. This action CANNOT be undone.
             </Text>
-            
+
             <Text style={styles.confirmInstructionText}>
               To confirm, please type DELETE in the field below:
             </Text>
-            
+
             <TextInput
               style={styles.confirmationInput}
               value={confirmationText}
@@ -307,7 +319,7 @@ export default function Profile() {
               placeholder="Type DELETE"
               placeholderTextColor={COLORS.textSecondary}
             />
-            
+
             <View style={styles.modalButtonsContainer}>
               <TouchableOpacity
                 style={styles.modalCancelButton}
@@ -318,11 +330,12 @@ export default function Profile() {
               >
                 <Text style={styles.modalCancelButtonText}>Cancel</Text>
               </TouchableOpacity>
-              
+
               <TouchableOpacity
                 style={[
                   styles.modalDeleteButton,
-                  confirmationText !== "DELETE" && styles.modalDeleteButtonDisabled
+                  confirmationText !== "DELETE" &&
+                    styles.modalDeleteButtonDisabled,
                 ]}
                 onPress={handleDeleteAccount}
                 disabled={confirmationText !== "DELETE" || isDeleting}
@@ -330,7 +343,9 @@ export default function Profile() {
                 {isDeleting ? (
                   <ActivityIndicator size="small" color="white" />
                 ) : (
-                  <Text style={styles.modalDeleteButtonText}>Delete Account</Text>
+                  <Text style={styles.modalDeleteButtonText}>
+                    Delete Account
+                  </Text>
                 )}
               </TouchableOpacity>
             </View>
