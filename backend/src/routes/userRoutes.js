@@ -3,6 +3,8 @@ import bcrypt, { compare } from "bcryptjs";
 import cloudinary from "../lib/cloudinary.js"; 
 import User from "../models/user.js"; 
 import protectRoute from "../middleware/auth.middleware.js";
+import Book from "../models/book.js"; // Add this import
+import Comment from "../models/comment.js"; // Add this import
 
 const router = express.Router();
 
