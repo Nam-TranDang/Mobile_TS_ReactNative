@@ -60,6 +60,15 @@ router.post("/", protectRoute, async (req, res) => {
     });
 
     await newBook.save(); //build function của  Mongoose - store data
+
+    // Emit to admin clients khi có sách mới
+    if (req.emitToAdmins) {
+      req.emitToAdmins("newBook", {
+        book: newBook,
+        user: req.user
+      });
+    }
+    
     res.status(201).json(newBook);
   } catch (error) {
     console.error(error);

@@ -3,6 +3,7 @@ import { Header } from "../../components";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
 import { useState, useEffect } from "react";
+import useAdminSocket from "../../hooks/useAdminSocket"; // Import custom hook for socket
 
 const Report = () => {
   const theme = useTheme();
@@ -19,6 +20,36 @@ const Report = () => {
   useEffect(() => {
     fetchReports();
   }, []);
+  // THÊM: Socket event handler cho report mới
+  const handleNewReport = (data) => {
+    console.log('New report received:', data);
+    
+    // Format report data để phù hợp với UI
+    const newReport = {
+      id: data.report._id,
+      shortId: data.report._id.slice(-4),
+      reason: data.report.reason,
+      reporter: data.reporter.username || data.reporter.name || 'Unknown',
+      reportedItemType: data.report.reportedItemType,
+      reportedItemId: data.report.reportedItemId,
+      status: data.report.status || 'pending',
+      createdAt: data.report.createdAt
+    };
+    
+    setReports(prev => [newReport, ...prev]);
+    
+    // Hiển thị thông báo
+    setSuccessMessage(`Báo cáo mới: ${data.report.reason}`);
+    setTimeout(() => {
+      setSuccessMessage("");
+    }, 5000);
+  };
+
+  // THÊM: Initialize socket connection
+  useAdminSocket(
+    handleNewReport, // onNewReport
+
+  );
 
 const fetchReports = async () => {
   try {

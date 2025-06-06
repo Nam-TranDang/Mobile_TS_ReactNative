@@ -28,8 +28,9 @@ import {
   VisibilityTwoTone,
 } from "@mui/icons-material";
 import { tokens } from "../../theme";
-import { useState, useEffect } from "react";
+import { useState, useEffect ,useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import useAdminSocket from "../../hooks/useAdminSocket"; // THÊM IMPORT NÀY
 
 function Dashboard() {
   const theme = useTheme();
@@ -44,87 +45,164 @@ function Dashboard() {
     totalReports: 0,
     totalBooks: 0,
     totalUsers: 0,
-    totalVisitors: 0
+    totalVisitors: 0,
+    onlineUsers: 0 
   });
 
+ const handleNewReport = useCallback((data) => {
+    console.log('New report received in real-time!', data);
+    
+    // Update reports count
+    setStats(prev => ({
+      ...prev,
+      totalReports: prev.totalReports + 1
+    }));
 
+    // Add to recent reports với format đúng
+    const formattedReport = {
+      id: data.report._id,
+      reporter: data.reporter?.username || data.reporter?.name || "Unknown",
+      reportedItemType: data.report.reportedItemType || '',
+      reportedItemId: data.report.reportedItemId || '',
+      reason: data.report.reason || '',
+      status: data.report.status || 'pending',
+      description: data.report.description || '',
+      adminNotes: data.report.adminNotes || '',
+      createdAt: data.report.createdAt,
+      reporterObject: data.reporter
+    };
 
-  // Gọi API để lấy số lượng user
+    setRecentReports(prev => [formattedReport, ...prev.slice(0, 9)]);
+  }, []);
 
+  const handleNewBook = useCallback((data) => {
+    console.log('New book received in real-time!', data);
+    
+    // Update books count
+    setStats(prev => ({
+      ...prev,
+      totalBooks: prev.totalBooks + 1
+    }));
 
+    // Add to recent books với format đúng
+    const formattedBook = {
+      id: data.book._id,
+      title: data.book.title || '',
+      username: data.user?.username || data.user?.name || 'Unknown',
+      caption: data.book.caption || '',
+      rating: data.book.rating || 0,
+      likesCount: data.book.like_count || 0,
+      dislikesCount: data.book.dislike_count || 0,
+      createdAt: data.book.createdAt,
+      imageUrl: data.book.image || null,
+      genres: data.book.genre || null,
+      userObject: data.user,
+      ...data.book
+    };
+
+    setRecentBooks(prev => [formattedBook, ...prev.slice(0, 9)]);
+  }, []);
+
+  const handleNewUser = useCallback((data) => {
+    console.log('New user registered in real-time!', data);
+    
+    // Update users count
+    setStats(prev => ({
+      ...prev,
+      totalUsers: prev.totalUsers + 1
+    }));
+  }, []);
+
+  const handleOnlineUsersUpdate = useCallback((count) => {
+    console.log('Online users updated:', count);
+    setStats(prev => ({
+      ...prev,
+      onlineUsers: count
+    }));
+  }, []);
+  
+    // Initialize socket connection
+    useAdminSocket(
+        handleNewReport,
+        handleNewBook,
+        handleNewUser,
+        handleOnlineUsersUpdate
+    );
 
 
 // Fetch statistics
-const fetchStatistics = async () => {
-  try {
-    const token = localStorage.getItem('admin-token');
-    if (!token) return;
+ const fetchStatistics = async () => {
+    try {
+      const token = localStorage.getItem('admin-token');
+      if (!token) return;
 
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-    
-    // Fetch total reports
-    const reportsResponse = await fetch(`${API_URL}/api/reports`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    // Fetch total books với API count mới
-    const booksCountResponse = await fetch(`${API_URL}/api/admin/books/count`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    // Fetch total users với API count
-    const usersCountResponse = await fetch(`${API_URL}/api/admin/users/count`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (reportsResponse.ok) {
-      const reportsData = await reportsResponse.json();
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
       
-      let totalUsers = 0;
-      if (usersCountResponse.ok) {
-        const usersCountData = await usersCountResponse.json();
-        console.log('Users count response:', usersCountData);
-        totalUsers = usersCountData.success ? usersCountData.count : 0;
-      } else {
-        console.error('Failed to fetch users count:', usersCountResponse.statusText);
-      }
-
-      let totalBooks = 0;
-      if (booksCountResponse.ok) {
-        const booksCountData = await booksCountResponse.json();
-        console.log('Books count response:', booksCountData);
-        totalBooks = booksCountData.success ? booksCountData.count : 0;
-      } else {
-        console.error('Failed to fetch books count:', booksCountResponse.statusText);
-      }
-
-      setStats({
-        totalReports: reportsData.reports?.length || reportsData.total || 0,
-        totalBooks: totalBooks,
-        totalUsers: totalUsers,
-        totalVisitors: 1325134
+      // Fetch total reports
+      const reportsResponse = await fetch(`${API_URL}/api/reports`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
 
-      console.log('Updated stats:', {
-        totalReports: reportsData.reports?.length || reportsData.total || 0,
-        totalBooks: totalBooks,
-        totalUsers: totalUsers,
-        totalVisitors: 1325134
+      // Fetch total books với API count mới
+      const booksCountResponse = await fetch(`${API_URL}/api/admin/books/count`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
+
+      // Fetch total users với API count
+      const usersCountResponse = await fetch(`${API_URL}/api/admin/users/count`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (reportsResponse.ok) {
+        const reportsData = await reportsResponse.json();
+        
+        let totalUsers = 0;
+        if (usersCountResponse.ok) {
+          const usersCountData = await usersCountResponse.json();
+          console.log('Users count response:', usersCountData);
+          totalUsers = usersCountData.success ? usersCountData.count : 0;
+        } else {
+          console.error('Failed to fetch users count:', usersCountResponse.statusText);
+        }
+
+        let totalBooks = 0;
+        if (booksCountResponse.ok) {
+          const booksCountData = await booksCountResponse.json();
+          console.log('Books count response:', booksCountData);
+          totalBooks = booksCountData.success ? booksCountData.count : 0;
+        } else {
+          console.error('Failed to fetch books count:', booksCountResponse.statusText);
+        }
+
+        // CẬP NHẬT để giữ lại onlineUsers từ socket
+        setStats(prev => ({
+          ...prev, // Giữ lại onlineUsers hiện tại
+          totalReports: reportsData.reports?.length || reportsData.total || 0,
+          totalBooks: totalBooks,
+          totalUsers: totalUsers,
+          totalVisitors: 1325134
+        }));
+
+        console.log('Updated stats:', {
+          totalReports: reportsData.reports?.length || reportsData.total || 0,
+          totalBooks: totalBooks,
+          totalUsers: totalUsers,
+          totalVisitors: 1325134
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching statistics:', error);
     }
-  } catch (error) {
-    console.error('Error fetching statistics:', error);
-  }
-};
+  };
   // State for reports
   const [recentReports, setRecentReports] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -464,14 +542,14 @@ const formatDateTime = (dateString) => {
           justifyContent="center"
         >
           <StatBox
-            title={stats.totalVisitors.toLocaleString()}
-            subtitle="Người truy cập"
-            progress="0.80"
-            increase="+43%"
-            icon={
-              <PermIdentityTwoTone
-                sx={{ color: "#76ff03",  fontSize: "50px" , marginBottom: "-23px" }}
-              />
+          title={stats.onlineUsers.toLocaleString()}
+          subtitle="Người đang truy cập" 
+          progress="0.80"
+          increase={`${stats.onlineUsers > 0 ? '+' : ''}${stats.onlineUsers}`}
+          icon={
+            <PermIdentityTwoTone
+              sx={{ color: "#76ff03", fontSize: "50px", marginBottom: "-23px" }}
+            />
             }
           />
         </Box>

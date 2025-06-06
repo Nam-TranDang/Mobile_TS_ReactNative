@@ -3,6 +3,7 @@ import { Header } from "../../components";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
 import { useState, useEffect } from "react";
+import  useAdminSocket  from "../../hooks/useAdminSocket"; // Import custom hook for socket connection
 
 const Book = () => {
   const theme = useTheme();
@@ -19,6 +20,33 @@ const Book = () => {
   useEffect(() => {
     fetchBooks();
   }, []);
+ const [successMessage, setSuccessMessage] = useState("");
+
+  const handleNewBook = (data) => {
+  console.log('New book received:', data);
+  
+  const newBook = {
+    id: data.book._id,
+    shortId: data.book._id.slice(-4),
+    title: data.book.title,
+    username: data.user.username || data.user.name || 'Unknown',
+    rating: data.book.rating,
+    status: data.book.process || 'pending',
+    createdAt: data.book.createdAt
+  };
+  
+  setBooks(prev => [newBook, ...prev]);
+  
+  setSuccessMessage(`Bài viết mới: ${data.book.title}`);
+  setTimeout(() => {
+    setSuccessMessage("");
+  }, 5000);
+};
+
+// Initialize socket
+useAdminSocket(
+  handleNewBook, // onNewBook
+);
 
   const fetchBooks = async () => {
     try {

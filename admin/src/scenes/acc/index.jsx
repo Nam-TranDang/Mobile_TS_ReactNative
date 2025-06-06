@@ -19,6 +19,7 @@ import {
 import { Header } from "../../components";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
+import useAdminSocket from "../../hooks/useAdminSocket";
 
 const Acc = () => {
   const theme = useTheme();
@@ -28,7 +29,34 @@ const Acc = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
-  
+
+  // THÊM: Socket event handlers
+  const handleNewUser = (data) => {
+    console.log('New user registered:', data);
+    
+    // Thêm user mới vào danh sách
+    const newUser = {
+      id: data.user._id,
+      shortId: data.user._id.slice(-4),
+      name: data.user.username || "Không có tên",
+      email: data.user.email || "Không có email", 
+      status: data.user.role || "user",
+      accountStatus: "Active",
+      isActive: true
+    };
+    
+    setUsers(prev => [newUser, ...prev]);
+    
+    // Hiển thị thông báo
+    setSuccessMessage(`Người dùng mới đã đăng ký: ${data.user.username}`);
+    setTimeout(() => {
+      setSuccessMessage("");
+    }, 5000);
+  };
+    useAdminSocket(
+    handleNewUser, 
+  );
+
   // State cho dialog chỉnh sửa
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [editUser, setEditUser] = useState(null);
