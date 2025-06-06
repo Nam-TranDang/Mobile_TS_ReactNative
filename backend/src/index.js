@@ -2,7 +2,7 @@ import express from "express";
 import "dotenv/config";
 import cors from "cors";
 import { createServer } from "http";
-import initializeSocketIO from "../../socket/socketServer.js";
+import initializeSocketIO from "../../socket/socketserver.js";
 
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
