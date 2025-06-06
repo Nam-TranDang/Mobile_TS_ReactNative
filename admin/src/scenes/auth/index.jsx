@@ -1,221 +1,340 @@
-import { useState } from "react";
-import { useAuth } from "../../context/AuthContext";
+"use client"
+
+import { useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { useAuth } from "../../context/AuthContext"
 import {
   Box,
   Button,
   TextField,
   Typography,
-  useTheme,
   Paper,
   InputAdornment,
   IconButton,
   CircularProgress,
   Alert,
-} from "@mui/material";
-import { tokens } from "../../theme";
-import { Visibility, VisibilityOff } from "@mui/icons-material";
+  GlobalStyles,
+} from "@mui/material"
+import { Visibility, VisibilityOff, LoginOutlined } from "@mui/icons-material"
 
 const Login = () => {
-  const theme = useTheme();
-  const colors = tokens(theme.palette.mode);
-  const { login } = useAuth();
-  
+  const { login } = useAuth()
+  const navigate = useNavigate()
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-  });
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-  
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
-  
-  const handleClickShowPassword = () => {
-    setShowPassword(!showPassword);
-  };
+  })
+  const [showPassword, setShowPassword] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("")
 
-  const updateUserProfile = (updates) => {
-  setUser(prev => ({
-    ...prev,
-    ...updates
-  }));
-};
-  
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setError("");
-  setIsLoading(true);
-  
-  try {
-    const result = await login(formData.email, formData.password);
-    console.log("Kết quả đăng nhập:", result);
-    
-    if (!result.success) {
-      setError(result.error);
-    } else {
-      // Thêm chuyển hướng trực tiếp nếu AuthContext không chuyển hướng
-      console.log("Đăng nhập thành công, chuyển hướng...");
-      navigate("/");
-    }
-  } catch (error) {
-    console.error("Lỗi khi đăng nhập:", error);
-    setError(error.message || "Đăng nhập thất bại. Vui lòng thử lại sau.");
-  } finally {
-    setIsLoading(false);
+  const handleChange = (e) => {
+    const { name, value } = e.target
+    setFormData({ ...formData, [name]: value })
   }
-};
-  
+
+  const handleClickShowPassword = () => {
+    setShowPassword(!showPassword)
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setError("")
+    setIsLoading(true)
+
+    try {
+      const result = await login(formData.email, formData.password)
+      console.log("Kết quả đăng nhập:", result)
+
+      if (!result.success) {
+        setError(result.error)
+      } else {
+        console.log("Đăng nhập thành công, chuyển hướng...")
+        navigate("/")
+      }
+    } catch (error) {
+      console.error("Lỗi khi đăng nhập:", error)
+      setError(error.message || "Đăng nhập thất bại. Vui lòng thử lại sau.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
-    <Box
-      sx={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        minHeight: "100vh",
-        backgroundColor: colors.primary[400],
-      }}
-    >
-      <Paper
-        elevation={3}
+    <>
+      {/* Global CSS Reset */}
+      <GlobalStyles
+        styles={{
+          "*": {
+            margin: 0,
+            padding: 0,
+            boxSizing: "border-box",
+          },
+          "html, body": {
+            margin: 0,
+            padding: 0,
+            overflow: "hidden",
+            height: "100%",
+            width: "100%",
+          },
+          "#root": {
+            margin: 0,
+            padding: 0,
+            height: "100vh",
+            width: "100vw",
+          },
+        }}
+      />
+
+      <Box
         sx={{
-          p: 4,
-          width: "100%",
-          maxWidth: "500px",
-          borderRadius: "10px",
-          backgroundColor: colors.primary[400],
-          boxShadow: `0px 10px 30px rgba(0, 0, 0, 0.1)`,
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          width: "100vw",
+          height: "100vh",
+          margin: 0,
+          padding: 0,
+          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          overflow: "hidden",
         }}
       >
-        <Typography
-          variant="h2"
-          fontWeight="bold"
-          mb={3}
-          color={colors.greenAccent[400]}
-          textAlign="center"
+        <Box
+          sx={{
+            width: "100%",
+            maxWidth: "450px",
+            margin: "0 20px",
+          }}
         >
-          ĐĂNG NHẬP ADMIN
-        </Typography>
-        
-        {error && (
-          <Alert severity="error" sx={{ mb: 3 }}>
-            {error}
-          </Alert>
-        )}
-        
-        <form onSubmit={handleSubmit}>
-          <TextField
-            fullWidth
-            label="Email"
-            name="email"
-            variant="outlined"
-            value={formData.email}
-            onChange={handleChange}
-            margin="normal"
-            required
-            autoComplete="email"
-            InputProps={{
-              sx: {
-                color: colors.gray[100],
-                borderColor: colors.greenAccent[400],
-              },
-            }}
-            InputLabelProps={{
-              sx: {
-                color: colors.gray[100],
-              },
-            }}
+          <Paper
+            elevation={0}
             sx={{
-              mb: 3,
-              "& .MuiOutlinedInput-root": {
-                "& fieldset": {
-                  borderColor: colors.gray[100],
-                },
-                "&:hover fieldset": {
-                  borderColor: colors.greenAccent[400],
-                },
-                "&.Mui-focused fieldset": {
-                  borderColor: colors.greenAccent[400],
-                },
-              },
-            }}
-          />
-          
-          <TextField
-            fullWidth
-            label="Mật khẩu"
-            name="password"
-            type={showPassword ? "text" : "password"}
-            variant="outlined"
-            value={formData.password}
-            onChange={handleChange}
-            margin="normal"
-            required
-            autoComplete="current-password"
-            InputProps={{
-              sx: {
-                color: colors.gray[100],
-              },
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton
-                    aria-label="toggle password visibility"
-                    onClick={handleClickShowPassword}
-                    edge="end"
-                    sx={{ color: colors.gray[100] }}
-                  >
-                    {showPassword ? <VisibilityOff /> : <Visibility />}
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-            InputLabelProps={{
-              sx: {
-                color: colors.gray[100],
-              },
-            }}
-            sx={{
-              mb: 4,
-              "& .MuiOutlinedInput-root": {
-                "& fieldset": {
-                  borderColor: colors.gray[100],
-                },
-                "&:hover fieldset": {
-                  borderColor: colors.greenAccent[400],
-                },
-                "&.Mui-focused fieldset": {
-                  borderColor: colors.greenAccent[400],
-                },
-              },
-            }}
-          />
-          
-          <Button
-            type="submit"
-            variant="contained"
-            fullWidth
-            disabled={isLoading}
-            sx={{
-              mt: 2,
-              mb: 2,
-              p: 1.5,
-              backgroundColor: colors.greenAccent[600],
-              color: colors.gray[100],
-              fontSize: "16px",
-              fontWeight: "bold",
-              "&:hover": {
-                backgroundColor: colors.greenAccent[400],
-              },
+              padding: "40px 30px",
+              borderRadius: "20px",
+              backgroundColor: "rgba(255, 255, 255, 0.95)",
+              backdropFilter: "blur(10px)",
+              boxShadow: "0 20px 40px rgba(0, 0, 0, 0.1)",
+              border: "1px solid rgba(255, 255, 255, 0.2)",
+              margin: 0,
             }}
           >
-            {isLoading ? <CircularProgress size={24} color="inherit" /> : "ĐĂNG NHẬP"}
-          </Button>
-        </form>
-      </Paper>
-    </Box>
-  );
-};
+            {/* Header với icon */}
+            <Box sx={{ textAlign: "center", mb: 3 }}>
+              <Box
+                sx={{
+                  width: "70px",
+                  height: "70px",
+                  borderRadius: "50%",
+                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  margin: "0 auto 16px auto",
+                  boxShadow: "0 10px 30px rgba(102, 126, 234, 0.3)",
+                }}
+              >
+                <LoginOutlined sx={{ fontSize: "32px", color: "white" }} />
+              </Box>
+              <Typography
+                variant="h4"
+                fontWeight="bold"
+                sx={{
+                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  backgroundClip: "text",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  fontSize: "1.8rem",
+                  marginBottom: "6px",
+                }}
+              >
+                Đăng nhập Admin
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "#666",
+                  fontSize: "0.9rem",
+                }}
+              >
+                Chào mừng trở lại! Vui lòng đăng nhập để tiếp tục.
+              </Typography>
+            </Box>
 
-export default Login;
+            {error && (
+              <Alert
+                severity="error"
+                sx={{
+                  mb: 2,
+                  borderRadius: "10px",
+                  backgroundColor: "#ffebee",
+                  color: "#c62828",
+                  border: "1px solid #ffcdd2",
+                }}
+              >
+                {error}
+              </Alert>
+            )}
+
+            <Box component="form" onSubmit={handleSubmit} sx={{ width: "100%" }}>
+              <TextField
+                fullWidth
+                label="Email"
+                name="email"
+                variant="outlined"
+                value={formData.email}
+                onChange={handleChange}
+                required
+                autoComplete="email"
+                sx={{
+                  mb: 2,
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "10px",
+                    backgroundColor: "#f8f9fa",
+                    "& fieldset": {
+                      borderColor: "#e0e0e0",
+                      borderWidth: "1px",
+                    },
+                    "&:hover fieldset": {
+                      borderColor: "#667eea",
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: "#667eea",
+                      borderWidth: "2px",
+                    },
+                  },
+                  "& .MuiInputLabel-root": {
+                    color: "#666",
+                    "&.Mui-focused": {
+                      color: "#667eea",
+                    },
+                  },
+                  "& .MuiOutlinedInput-input": {
+                    color: "#333",
+                    padding: "14px",
+                  },
+                }}
+              />
+
+              <TextField
+                fullWidth
+                label="Mật khẩu"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                variant="outlined"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                autoComplete="current-password"
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label="toggle password visibility"
+                        onClick={handleClickShowPassword}
+                        edge="end"
+                        sx={{
+                          color: "#666",
+                          "&:hover": {
+                            color: "#667eea",
+                          },
+                        }}
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  mb: 3,
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "10px",
+                    backgroundColor: "#f8f9fa",
+                    "& fieldset": {
+                      borderColor: "#e0e0e0",
+                      borderWidth: "1px",
+                    },
+                    "&:hover fieldset": {
+                      borderColor: "#667eea",
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: "#667eea",
+                      borderWidth: "2px",
+                    },
+                  },
+                  "& .MuiInputLabel-root": {
+                    color: "#666",
+                    "&.Mui-focused": {
+                      color: "#667eea",
+                    },
+                  },
+                  "& .MuiOutlinedInput-input": {
+                    color: "#333",
+                    padding: "14px",
+                  },
+                }}
+              />
+
+              <Button
+                type="submit"
+                variant="contained"
+                fullWidth
+                disabled={isLoading}
+                sx={{
+                  padding: "14px",
+                  borderRadius: "10px",
+                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  color: "white",
+                  fontSize: "16px",
+                  fontWeight: "600",
+                  textTransform: "none",
+                  boxShadow: "0 8px 25px rgba(102, 126, 234, 0.3)",
+                  transition: "all 0.3s ease",
+                  "&:hover": {
+                    background: "linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)",
+                    boxShadow: "0 12px 35px rgba(102, 126, 234, 0.4)",
+                    transform: "translateY(-1px)",
+                  },
+                  "&:disabled": {
+                    background: "#ccc",
+                    boxShadow: "none",
+                    transform: "none",
+                  },
+                }}
+              >
+                {isLoading ? (
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <CircularProgress size={18} color="inherit" />
+                    <span>Đang đăng nhập...</span>
+                  </Box>
+                ) : (
+                  "Đăng nhập"
+                )}
+              </Button>
+            </Box>
+
+            {/* Footer */}
+            <Box sx={{ textAlign: "center", mt: 3 }}>
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "#999",
+                  fontSize: "0.8rem",
+                }}
+              >
+                © 2025 Thư viện tan vỡ. Tất cả quyền được bảo lưu.
+              </Typography>
+            </Box>
+          </Paper>
+        </Box>
+      </Box>
+    </>
+  )
+}
+
+export default Login
