@@ -3,11 +3,12 @@ import { useContext, useState } from "react";
 import { tokens } from "../../../theme";
 import { Menu, MenuItem, Sidebar } from "react-pro-sidebar";
 import {
-  ContactsOutlined,
+  ReportGmailerrorred,
   DashboardOutlined,
   MenuOutlined,
   PeopleAltOutlined,
   SummarizeTwoTone,
+  Category,
   BookOutlined, // Thêm icon cho sách
 } from "@mui/icons-material";
 import avatar from "../../../assets/images/avatar.png";
@@ -157,7 +158,7 @@ const SideBar = () => {
             icon={<PeopleAltOutlined sx={{ fontSize: "25px" }} />}
           />
           <Item
-            title="Quản lý sách"
+            title="Quản lý bài viết"
             path="/book"
             colors={colors}
             icon={<BookOutlined sx={{ fontSize: "25px" }} />}
@@ -166,7 +167,13 @@ const SideBar = () => {
             title="Quản lý báo cáo"
             path="/report"
             colors={colors}
-            icon={<SummarizeTwoTone sx={{ fontSize: "25px" }} />}
+            icon={<ReportGmailerrorred sx={{ fontSize: "25px" }} />}
+          />
+          <Item
+            title="Quản thể loại"
+            path="/genre"
+            colors={colors}
+            icon={<Category sx={{ fontSize: "25px" }} />}
           />
         </Menu>
       </Box>

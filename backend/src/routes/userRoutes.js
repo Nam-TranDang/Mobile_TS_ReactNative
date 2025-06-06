@@ -177,5 +177,64 @@ router.get("/", protectRoute, async (req, res) => {
   }
 });
 
+router.patch("/admin/profile", protectRoute, async (req, res) => {
+  try {
+    // Kiểm tra quyền admin
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ message: "Không có quyền truy cập" });
+    }
+
+    const { username, password, currentPassword, profileImage } = req.body;
+    const userId = req.user._id; // Lấy ID từ token, không từ params
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Initialize updates object
+    const updates = {};
+
+    // Handle profile image update
+    if (profileImage !== undefined) {
+      // Delete old image from Cloudinary if it exists
+      if (user.profileImage && user.profileImage.includes("cloudinary")) {
+        try {
+          const parts = user.profileImage.split('/');
+          const oldPublicId = parts.slice(parts.indexOf('upload') + 2).join('/').split('.')[0];
+          await cloudinary.uploader.destroy(oldPublicId);
+        } catch (deleteError) {
+          console.error("Error deleting old profile image:", deleteError);
+        }
+      }
+
+      // Upload new profile image
+      const uploadResponse = await cloudinary.uploader.upload(profileImage, {
+        folder: "Book_Forum/Admin"
+      });
+
+      updates.profileImage = uploadResponse.secure_url;
+    }
+
+    // Apply updates
+    Object.assign(user, updates);
+    await user.save();
+
+    res.status(200).json({
+      message: "Profile updated successfully",
+      user: {
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+        profileImage: user.profileImage,
+        role: user.role
+      }
+    });
+
+  } catch (error) {
+    console.error("Error updating admin profile:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
 
 export default router;

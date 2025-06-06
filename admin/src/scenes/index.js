@@ -5,6 +5,7 @@ import Acc from "./acc";
 import Report from "./report";
 import Login from "./auth";
 import Book from "./book";
+import Genre from "./genre";
 
 export {
   Navbar,
@@ -13,6 +14,6 @@ export {
   Acc,
   Report,
   Login,
-  Book
-
+  Book,
+  Genre
 };

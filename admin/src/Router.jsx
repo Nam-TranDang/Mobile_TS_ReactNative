@@ -7,7 +7,8 @@ import {
   Dashboard,
   Acc,
   Report,
-  Book
+  Book,
+  Genre
 } from "./scenes";
 
 // Component bảo vệ đường dẫn chỉ cho người dùng đã đăng nhập
@@ -59,6 +60,7 @@ const AppRoutes = () => {
         <Route path="/acc" element={<Acc />} />
         <Route path="/book" element={<Book />} />
         <Route path="/report" element={<Report/>} />
+        <Route path="/genre" element={<Genre />} />
       </Route>
       
       {/* Điều hướng URL không hợp lệ về trang chính */}

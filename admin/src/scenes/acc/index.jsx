@@ -17,7 +17,7 @@ import {
   Alert
 } from "@mui/material";
 import { Header } from "../../components";
-import { DataGrid } from "@mui/x-data-grid";
+import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
 
 const Acc = () => {
@@ -447,6 +447,7 @@ const Acc = () => {
         sx={{
           "& .MuiDataGrid-root": {
             border: "none",
+            height: "fit-content", // Thêm dòng này
           },
           "& .MuiDataGrid-cell": {
             border: "none",
@@ -481,6 +482,7 @@ const Acc = () => {
         <DataGrid
           rows={users}
           columns={columns}
+          components={{ Toolbar: GridToolbar }} // Đây là phần tạo ra toolbar
           loading={loading}
           initialState={{
             pagination: {

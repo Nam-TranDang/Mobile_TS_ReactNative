@@ -14,49 +14,37 @@ function App() {
   const [theme, colorMode] = useMode();
   const colors = tokens(theme.palette.mode);
   const [toggled, setToggled] = useState(false);
-  const { logout } = useAuth();
 
   return (
     <ColorModeContext.Provider value={colorMode}>
       <ToggledContext.Provider value={{ toggled, setToggled }}>
         <ThemeProvider theme={theme}>
           <CssBaseline />
-          <Box sx={{ height: "100vh", position: "relative" }}>
-            <Navbar />
-            <Box sx={{ display: "flex", height: "calc(100% - 64px)" }}>
-              <SideBar />
-              <Box
-                component="main"
-                sx={{
-                  flexGrow: 1,
-                  p: 2,
-                  backgroundColor: colors.primary[500],
-                  overflow: "auto",
-                }}
-              >
-                {/* Nút đăng xuất */}
-                <Box 
-                  sx={{ 
-                    position: "absolute", 
-                    top: "16px", 
-                    right: "16px", 
-                    zIndex: 1100 
-                  }}
-                >
-                  <IconButton
-                    onClick={logout}
-                    sx={{
-                      backgroundColor: colors.redAccent[600],
-                      color: colors.gray[100],
-                      "&:hover": { backgroundColor: colors.redAccent[500] },
-                    }}
-                  >
-                    <LogoutOutlined />
-                  </IconButton>
-                </Box>
-                
-                <Outlet />
-              </Box>
+          
+          {/* Navbar floating ở góc phải */}
+          <Navbar />
+          
+          <Box sx={{ 
+            height: "100vh", 
+            overflow: "hidden", 
+            display: "flex"
+          }}>
+            <SideBar />
+            
+            <Box
+              component="main"
+              sx={{
+                flexGrow: 1,
+                backgroundColor: colors.primary[500],
+                overflow: "auto",
+                height: "100vh",
+                paddingTop: "60px", // Khoảng cách để tránh navbar
+                paddingLeft: 2,
+                paddingRight: 2,
+                paddingBottom: 0, // Loại bỏ padding bottom
+              }}
+            >
+              <Outlet />
             </Box>
           </Box>
         </ThemeProvider>
@@ -64,5 +52,4 @@ function App() {
     </ColorModeContext.Provider>
   );
 }
-
 export default App;

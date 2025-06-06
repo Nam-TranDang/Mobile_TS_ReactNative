@@ -36,6 +36,13 @@ const Login = () => {
   const handleClickShowPassword = () => {
     setShowPassword(!showPassword);
   };
+
+  const updateUserProfile = (updates) => {
+  setUser(prev => ({
+    ...prev,
+    ...updates
+  }));
+};
   
 const handleSubmit = async (e) => {
   e.preventDefault();

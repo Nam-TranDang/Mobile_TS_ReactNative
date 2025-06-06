@@ -322,6 +322,7 @@ const Book = () => {
         sx={{
           "& .MuiDataGrid-root": {
             border: "none",
+            height: "fit-content", // Thêm dòng này
           },
           "& .MuiDataGrid-cell": {
             border: "none",
