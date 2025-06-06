@@ -1,36 +1,48 @@
-import { Avatar, Box, IconButton, Typography, useTheme } from "@mui/material";
-import { useContext, useState } from "react";
-import { tokens } from "../../../theme";
-import { Menu, MenuItem, Sidebar } from "react-pro-sidebar";
+"use client"
+
+import { Avatar, Box, IconButton, Typography, useTheme } from "@mui/material"
+import { useContext, useState } from "react"
+import { tokens } from "../../../theme"
+import { Menu, MenuItem, Sidebar } from "react-pro-sidebar"
 import {
   ReportGmailerrorred,
   DashboardOutlined,
-  MenuOutlined,
   PeopleAltOutlined,
-  SummarizeTwoTone,
   Category,
-  BookOutlined, // Thêm icon cho sách
-} from "@mui/icons-material";
-import avatar from "../../../assets/images/avatar.png";
-import logo from "../../../assets/images/logo.png";
-import Item from "./Item";
-import { ToggledContext } from "../../../App";
-import { useAuth } from "../../../context/AuthContext";
-import Book from "../../book";
+  BookOutlined,
+  ChevronLeft,
+  ChevronRight,
+} from "@mui/icons-material"
+import avatar from "../../../assets/images/avatar.png"
+import logo from "../../../assets/images/logo.png"
+import Item from "./Item"
+import { ToggledContext } from "../../../App"
+import { useAuth } from "../../../context/AuthContext"
 
 const SideBar = () => {
-  const [collapsed, setCollapsed] = useState(false);
-  const { toggled, setToggled } = useContext(ToggledContext);
-  const { user } = useAuth();
-  const theme = useTheme();
-  const colors = tokens(theme.palette.mode);
-  
+  const [collapsed, setCollapsed] = useState(false)
+  const { toggled, setToggled } = useContext(ToggledContext)
+  const { user } = useAuth()
+  const theme = useTheme()
+  const colors = tokens(theme.palette.mode)
+  const isDark = theme.palette.mode === "dark"
+
+  // Sử dụng theme colors thay vì hard-code
+  const textColor = colors.gray[100]
+  const primaryColor = colors.blueAccent[500]
+  const bgColor = colors.primary[400]
+  const secondaryBgColor = colors.primary[500]
+  const borderColor = colors.primary[300]
+
   return (
     <Sidebar
-      backgroundColor={colors.primary[400]}
+      backgroundColor={bgColor}
       rootStyles={{
-        border: 0,
+        border: "none",
         height: "100%",
+        boxShadow: isDark 
+          ? "0 2px 8px rgba(0,0,0,0.3)" 
+          : "0 2px 8px rgba(0,0,0,0.1)",
       }}
       collapsed={collapsed}
       onBackdropClick={() => setToggled(false)}
@@ -44,8 +56,8 @@ const SideBar = () => {
       >
         <MenuItem
           rootStyles={{
-            margin: "10px 0 20px 0",
-            color: colors.gray[100],
+            margin: "16px 0 20px 0",
+            color: textColor,
           }}
         >
           <Box
@@ -56,72 +68,106 @@ const SideBar = () => {
             }}
           >
             {!collapsed && (
-              <Box
-                display="flex"
-                alignItems="center"
-                gap="11px"
-                sx={{ transition: ".3s ease" }}
-              >
+              <Box display="flex" alignItems="center" gap="12px" sx={{ transition: ".3s ease" }}>
                 <img
-                  style={{ width: "30px", height: "30px", borderRadius: "8px" }}
-                  src={logo}
-                  alt="Argon"
+                  style={{
+                    width: "32px",
+                    height: "32px",
+                    borderRadius: "8px",
+                    objectFit: "cover",
+                  }}
+                  src={logo || "/placeholder.svg"}
+                  alt="Logo"
                 />
                 <Typography
                   variant="h4"
                   fontWeight="bold"
-                  textTransform="capitalize"
-                  color={colors.greenAccent[500]}
+                  sx={{
+                    fontSize: "1.2rem",
+                    color: primaryColor,
+                  }}
                 >
                   Thư viện tan
                 </Typography>
               </Box>
             )}
-            <IconButton onClick={() => setCollapsed(!collapsed)}>
-              <MenuOutlined />
+            <IconButton
+              onClick={() => setCollapsed(!collapsed)}
+              sx={{
+                backgroundColor: secondaryBgColor,
+                borderRadius: "8px",
+                width: "36px",
+                height: "36px",
+                color: textColor,
+                "&:hover": {
+                  backgroundColor: borderColor,
+                },
+              }}
+            >
+              {collapsed ? <ChevronRight /> : <ChevronLeft />}
             </IconButton>
           </Box>
         </MenuItem>
       </Menu>
+
       {!collapsed && (
         <Box
           sx={{
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            gap: "10px",
+            gap: "12px",
             mb: "25px",
+            padding: "16px",
+            margin: "0 12px",
+            borderRadius: "12px",
           }}
         >
           <Avatar
             alt="avatar"
             src={user?.profileImage || avatar}
-            sx={{ width: "100px", height: "100px" }}
+            sx={{
+              width: "80px",
+              height: "80px",
+              border: `3px solid ${primaryColor}`,
+            }}
           />
           <Box sx={{ textAlign: "center" }}>
-            <Typography variant="h3" fontWeight="bold" color={colors.gray[100]}>
+            <Typography
+              variant="h3"
+              fontWeight="600"
+              sx={{
+                fontSize: "1.1rem",
+                marginBottom: "6px",
+                color: textColor,
+              }}
+            >
               {user?.username || "Admin User"}
             </Typography>
-            <Typography
-              variant="h5"
-              fontWeight="500"
-              color={colors.greenAccent[500]}
-              sx={{ fontSize: "18px" }}
+            <Box
+              sx={{
+                backgroundColor: primaryColor,
+                color: "white",
+                fontSize: "0.8rem",
+                fontWeight: "500",
+                padding: "4px 12px",
+                borderRadius: "20px",
+                display: "inline-block",
+              }}
             >
               Admin
-            </Typography>
+            </Box>
           </Box>
         </Box>
       )}
 
-      <Box mb={5} pl={collapsed ? undefined : "5%" }>
+      <Box mb={5} pl={collapsed ? undefined : "8px"} pr="8px">
         <Menu
           menuItemStyles={{
             button: {
               ":hover": {
-                color: "#868dfb",
                 background: "transparent",
-                transition: ".4s ease",
+                transition: ".3s ease",
               },
             },
           }}
@@ -130,23 +176,30 @@ const SideBar = () => {
             title="Tổng quan"
             path="/"
             colors={colors}
-            icon={<DashboardOutlined sx={{ fontSize: "25px" }} />}
+            icon={<DashboardOutlined sx={{ fontSize: "22px", color: primaryColor }} />}
           />
         </Menu>
+
         <Typography
           variant="h6"
-          color={colors.gray[300]}
-          sx={{ m: "15px 0 5px 20px" }}
+          sx={{
+            margin: "20px 16px 12px 16px",
+            fontSize: "0.8rem",
+            textTransform: "uppercase",
+            letterSpacing: "1px",
+            color: colors.gray[300],
+            fontWeight: "600",
+          }}
         >
           {!collapsed ? "Quản lý" : " "}
         </Typography>
+
         <Menu
           menuItemStyles={{
             button: {
               ":hover": {
-                color: "#868dfb",
                 background: "transparent",
-                transition: ".4s ease",
+                transition: ".3s ease",
               },
             },
           }}
@@ -155,30 +208,30 @@ const SideBar = () => {
             title="Quản lý tài khoản"
             path="/acc"
             colors={colors}
-            icon={<PeopleAltOutlined sx={{ fontSize: "25px" }} />}
+            icon={<PeopleAltOutlined sx={{ fontSize: "22px", color: colors.greenAccent[500] }} />}
           />
           <Item
             title="Quản lý bài viết"
             path="/book"
             colors={colors}
-            icon={<BookOutlined sx={{ fontSize: "25px" }} />}
+            icon={<BookOutlined sx={{ fontSize: "22px", color: colors.blueAccent[500] }} />}
           />
           <Item
             title="Quản lý báo cáo"
             path="/report"
             colors={colors}
-            icon={<ReportGmailerrorred sx={{ fontSize: "25px" }} />}
+            icon={<ReportGmailerrorred sx={{ fontSize: "22px", color: colors.redAccent[500] }} />}
           />
           <Item
-            title="Quản thể loại"
+            title="Quản lý thể loại"
             path="/genre"
             colors={colors}
-            icon={<Category sx={{ fontSize: "25px" }} />}
+            icon={<Category sx={{ fontSize: "22px", color: colors.primary[200] }} />}
           />
         </Menu>
       </Box>
     </Sidebar>
-  );
-};
+  )
+}
 
-export default SideBar;
+export default SideBar
