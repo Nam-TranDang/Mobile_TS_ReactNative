@@ -493,5 +493,76 @@ Trân trọng,
   }
 });
 
+// ...existing code...
+
+// API để đếm tổng số user
+router.get("/users/count", protectRoute, isAdmin, async (req, res) => {
+  try {
+    const totalUsers = await User.countDocuments();
+    
+    res.status(200).json({
+      success: true,
+      count: totalUsers,
+      message: "Total users count retrieved successfully"
+    });
+  } catch (error) {
+    console.error("Error counting users:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message
+    });
+  }
+});
+
+// API để đếm user theo trạng thái khác nhau (optional)
+router.get("/users/stats", protectRoute, isAdmin, async (req, res) => {
+  try {
+    const totalUsers = await User.countDocuments();
+    const suspendedUsers = await User.countDocuments({ isSuspended: true });
+    const activeUsers = totalUsers - suspendedUsers;
+    
+    res.status(200).json({
+      success: true,
+      stats: {
+        total: totalUsers,
+        active: activeUsers,
+        suspended: suspendedUsers
+      },
+      message: "User statistics retrieved successfully"
+    });
+  } catch (error) {
+    console.error("Error getting user stats:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message
+    });
+  }
+});
+
+
+// API để đếm tổng số sách
+router.get("/books/count", protectRoute, isAdmin, async (req, res) => {
+  try {
+    const totalBooks = await Book.countDocuments();
+    
+    res.status(200).json({
+      success: true,
+      count: totalBooks,
+      message: "Total books count retrieved successfully"
+    });
+  } catch (error) {
+    console.error("Error counting books:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message
+    });
+  }
+});
+
+
+
 
 export default router;

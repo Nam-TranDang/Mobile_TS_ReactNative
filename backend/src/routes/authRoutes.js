@@ -43,8 +43,21 @@ router.post("/register", async (req,res) => {
             username,
             password,
             profileImage,
+            role: "user" // mặc định
         });
         await user.save();
+           // THÊM ĐOẠN NÀY - Emit to admin clients khi có user mới đăng ký
+    if (req.emitToAdmins) {
+      req.emitToAdmins("newUser", {
+        user: {
+          _id: newUser._id,
+          username: newUser.username,
+          email: newUser.email,
+          role: newUser.role,
+          createdAt: newUser.createdAt
+        }
+      });
+    }
         const token = generateToken(user._id);
         res.status(201).json({
             token,

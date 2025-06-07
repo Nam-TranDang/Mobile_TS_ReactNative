@@ -2,6 +2,8 @@
 import { Server } from "socket.io";
 
 const bookRooms = {};
+const adminClients = new Set(); // Track admin clients
+let onlineUsersCount = 0; // Track online users
 
 // Hàm để khởi tạo và quản lý Socket.IO server
 const initializeSocketIO = (httpServer) => {
@@ -16,6 +18,24 @@ const initializeSocketIO = (httpServer) => {
 
     io.on("connection", (socket) => {
         console.log(`New client connected: ${socket.id}`);
+
+        // Increment online users count
+        onlineUsersCount++;
+
+        // Emit updated count to all admin clients
+        io.to("admin-room").emit("onlineUsersUpdate", onlineUsersCount);
+         
+        // Admin joins admin room
+        socket.on("joinAdminRoom", () => {
+            socket.join("admin-room");
+            adminClients.add(socket.id);
+            console.log(`Admin client ${socket.id} joined admin room`);
+            
+            // Send current stats to new admin
+            socket.emit("currentStats", {
+                onlineUsers: onlineUsersCount
+            });
+        });
 
         // Khi client tham gia vào một "phòng" của sách để nhận comment
         socket.on("joinBookRoom", (bookId) => {
@@ -52,6 +72,15 @@ const initializeSocketIO = (httpServer) => {
         // Lắng nghe sự kiện khi client ngắt kết nối
         socket.on("disconnect", () => {
             console.log(`Client disconnected: ${socket.id}`);
+
+            // Decrement online users count
+            onlineUsersCount--;
+
+            // Remove from admin clients if it was an admin
+            if (adminClients.has(socket.id)) {
+                adminClients.delete(socket.id);
+            }
+
             // Xóa client khỏi tất cả các phòng mà nó đã tham gia
             for (const bookId in bookRooms) {
                 if (bookRooms[bookId].has(socket.id)) {
@@ -63,6 +92,7 @@ const initializeSocketIO = (httpServer) => {
                 }
             }
             // console.log("Current book rooms after disconnect:", bookRooms);
+            io.to("admin-room").emit("onlineUsersUpdate", onlineUsersCount);
         });
 
         // (Tùy chọn) Lắng nghe các sự kiện lỗi từ client
@@ -71,8 +101,13 @@ const initializeSocketIO = (httpServer) => {
         });
     });
 
+    // Helper functions to emit to admin clients
+    const emitToAdmins = (event, data) => {
+        io.to("admin-room").emit(event, data);
+    };
+
     // Trả về instance io để có thể sử dụng ở nơi khác (ví dụ: trong routes)
-    return io;
+    return { io, emitToAdmins };
 };
 
 export default initializeSocketIO;

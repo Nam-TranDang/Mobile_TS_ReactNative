@@ -50,6 +50,12 @@ router.post("/", protectRoute, async (req, res) => {
         });
 
         await newReport.save();
+        if (req.emitToAdmins) {
+        req.emitToAdmins("newReport", {
+            report: newReport,
+            reporter: req.user
+        });
+        }   
         res.status(201).json({ message: "Report submitted successfully. We will review it shortly.", reportId: newReport._id });
 
     } catch (error) {

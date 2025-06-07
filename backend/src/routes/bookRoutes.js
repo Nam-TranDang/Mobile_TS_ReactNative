@@ -60,6 +60,15 @@ router.post("/", protectRoute, async (req, res) => {
     });
 
     await newBook.save(); //build function của  Mongoose - store data
+
+    // Emit to admin clients khi có sách mới
+    if (req.emitToAdmins) {
+      req.emitToAdmins("newBook", {
+        book: newBook,
+        user: req.user
+      });
+    }
+    
     res.status(201).json(newBook);
   } catch (error) {
     console.error(error);
@@ -466,15 +475,35 @@ router.delete( "/:bookId/comments/:commentId", protectRoute, async (req, res) =>
 
 // Tính năng like và dislike O day
 // chỉ cần check authenticate là like được - make sure chỉ like hoặc dislike
+const emitBookUpdate = (req, bookDocument) => {
+  const io = req.io;
+  if (io && bookDocument) {
+      const bookUpdateData = {
+          _id: bookDocument._id,
+          like_count: bookDocument.like_count,
+          dislike_count: bookDocument.dislike_count,
+          likedBy: bookDocument.likedBy,
+          dislikedBy: bookDocument.dislikedBy,
+      };
+      // Emit đến room của sách này
+      io.to(bookDocument._id.toString()).emit("bookInteractionUpdate", bookUpdateData);
+      console.log(`Emitted 'bookInteractionUpdate' to room ${bookDocument._id.toString()} for book ${bookDocument._id}`);
+  } else if (!io) {
+      console.warn("Socket.io instance (req.io) not found. Cannot emit 'bookInteractionUpdate'.");
+  }
+};
+
 router.put("/:id/like", protectRoute, async (req, res) => {
   try {
     const book = await Book.findById(req.params.id);
     if (!book) return res.status(404).json({ message: "Book not found" });
 
     const userId = req.user._id;
+    let updated = false;
     if (!book.likedBy.includes(userId)) {
       book.likedBy.push(userId);
       book.like_count += 1;
+      updated = true;
       // If user previously disliked, remove from dislikedBy and decrement dislike_count
       if (book.dislikedBy.includes(userId)) {
         book.dislikedBy.pull(userId);
@@ -482,6 +511,10 @@ router.put("/:id/like", protectRoute, async (req, res) => {
       }
       await book.save();
     }
+    if (updated) {
+      await book.save();
+      emitBookUpdate(req, book); // <--- THÊM: Emit sự kiện
+  }
     res.status(200).json(book);
   } catch (error) {
     console.error(error);
@@ -524,11 +557,16 @@ router.put("/:id/unlike", protectRoute, async (req, res) => {
     if (!book) return res.status(404).json({ message: "Book not found" });
 
     const userId = req.user._id;
+    let updated = false;
     if (book.likedBy.includes(userId)) {
       book.likedBy.pull(userId);
       book.like_count -= 1;
-      await book.save();
+      updated = true;
     }
+    if (updated) {
+      await book.save();
+      emitBookUpdate(req, book); 
+  }
     res.status(200).json(book);
   } catch (error) {
     console.error(error);
@@ -543,9 +581,11 @@ router.put("/:id/dislike", protectRoute, async (req, res) => {
     if (!book) return res.status(404).json({ message: "Book not found" });
 
     const userId = req.user._id;
+    let updated = false;
     if (!book.dislikedBy.includes(userId)) {
       book.dislikedBy.push(userId);
       book.dislike_count += 1;
+      updated = true;
       // If user previously liked, remove from likedBy and decrement like_count
       if (book.likedBy.includes(userId)) {
         book.likedBy.pull(userId);
@@ -553,6 +593,9 @@ router.put("/:id/dislike", protectRoute, async (req, res) => {
       }
       await book.save();
     }
+    if (updated) {
+      emitBookUpdate(req, book); 
+  }
     res.status(200).json(book);
   } catch (error) {
     console.error(error);
@@ -567,11 +610,16 @@ router.put("/:id/remove-dislike", protectRoute, async (req, res) => {
     if (!book) return res.status(404).json({ message: "Book not found" });
 
     const userId = req.user._id;
+    let updated = false;
     if (book.dislikedBy.includes(userId)) {
       book.dislikedBy.pull(userId);
       book.dislike_count -= 1;
+      updated = true;
       await book.save();
     }
+    if (updated) {
+      emitBookUpdate(req, book); 
+  }
     res.status(200).json(book);
   } catch (error) {
     console.error(error);

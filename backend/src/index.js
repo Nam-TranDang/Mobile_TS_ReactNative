@@ -1,8 +1,8 @@
 import express from "express";
 import "dotenv/config";
 import cors from "cors";
-import http from "http";
-import initializeSocketIO from "../../socket/socketServer.js";
+import { createServer } from "http";
+import initializeSocketIO from "../../socket/socketserver.js";
 
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
@@ -15,12 +15,19 @@ import { connectDB } from "./lib/db.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const httpServer = http.createServer(app);
-export const io = initializeSocketIO(httpServer);
+
+// Tạo HTTP server
+const httpServer = createServer(app);
+// Khởi tạo Socket.IO và lấy instance để sử dụng trong routes
+const { io, emitToAdmins } = initializeSocketIO(httpServer);
+
+
 app.use((req, res, next) => {
   req.io = io;
+  req.emitToAdmins = emitToAdmins;
   next();
 });
+
 
 app.use(express.json({ limit: '10mb' })); // Example: allow up to 10MB JSON body
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
@@ -35,6 +42,12 @@ app.use("/api/reports", reportRoutes);
 // Cac xu ly logic cua admin trong day 
 app.use("/api/admin", adminRoutes);
 
+// Middleware để truyền socket instance vào routes
+app.use((req, res, next) => {
+    req.io = io;
+    req.emitToAdmins = emitToAdmins;
+    next();
+});
 
 httpServer.listen(PORT, () => {
   console.log(`Server (HTTP & Socket.IO) started on port ${PORT}`);
