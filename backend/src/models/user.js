@@ -41,6 +41,14 @@ const userSchema = new mongoose.Schema({
         trim: true,
         default: null,
     },
+    following: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User"
+    }],
+    followers: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User"
+    }],
     resetPasswordToken: String, 
     resetPasswordExpires: Date,
 }, { 
@@ -70,6 +78,13 @@ userSchema.pre("save",async function(next){
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
     next();
+});
+userSchema.virtual('followingCount').get(function() {
+    return this.following ? this.following.length : 0;
+});
+
+userSchema.virtual('followersCount').get(function() {
+    return this.followers ? this.followers.length : 0;
 });
 
 userSchema.methods.comparePassword = async function(userPassword){

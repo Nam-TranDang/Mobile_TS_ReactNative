@@ -5,6 +5,7 @@ import User from "../models/user.js";
 import protectRoute from "../middleware/auth.middleware.js";
 import Book from "../models/book.js"; // Add this import
 import Comment from "../models/comment.js"; // Add this import
+import mongoose from "mongoose";
 
 const router = express.Router();
 
@@ -12,11 +13,14 @@ const router = express.Router();
 // fetching any user's public profile -> tất cả có thể xem thông tin của nhaunhau
 router.get("/:id", protectRoute, async (req, res) => {
     try {
-        const user = await User.findById(req.params.id).select("-password"); // Exclude password
+        const user = await User.findById(req.params.id)
+                                                .select("-password")
+                                                .populate('followers', 'username profileImage _id') // <--- THÊM MỚI: Populate followers
+                                                .populate('following', 'username profileImage _id'); // Exclude password
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
-        res.status(200).json(user);
+        res.status(200).json(user.toObject());
     } catch (error) {
         console.error("Error fetching user:", error.message);
 
@@ -238,5 +242,208 @@ router.patch("/admin/profile", protectRoute, async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
+
+
+router.post("/:userIdToFollow/follow", protectRoute, async (req, res) => {
+  try {
+      const userIdToFollow = req.params.userIdToFollow;
+      const currentUserId = req.user._id;
+      const io = req.io; 
+
+      if (!mongoose.Types.ObjectId.isValid(userIdToFollow)) {
+          return res.status(400).json({ message: "Invalid user ID to follow." });
+      }
+
+      if (currentUserId.toString() === userIdToFollow) {
+          return res.status(400).json({ message: "You cannot follow yourself." });
+      }
+
+      const userToFollow = await User.findById(userIdToFollow);
+      const currentUser = await User.findById(currentUserId); 
+
+      if (!userToFollow || !currentUser) {
+          return res.status(404).json({ message: "User not found." });
+      }
+
+      if (currentUser.following.includes(userIdToFollow)) {
+          return res.status(400).json({ message: "You are already following this user." });
+      }
+
+      currentUser.following.push(userIdToFollow);
+      userToFollow.followers.push(currentUserId);
+
+      await currentUser.save();
+      await userToFollow.save();
+
+      // Dữ liệu user cơ bản để gửi qua socket
+      const simplifiedCurrentUser = { _id: currentUser._id, username: currentUser.username, profileImage: currentUser.profileImage };
+      const simplifiedUserToFollow = { _id: userToFollow._id, username: userToFollow.username, profileImage: userToFollow.profileImage };
+
+
+      if (io) {
+          
+          io.to(`userRoom_${userIdToFollow}`).emit("userFollowUpdate", {
+              action: "newFollower",
+              follower: simplifiedCurrentUser, 
+              
+              updatedTargetUser: userToFollow.toObject() 
+          });
+
+          
+          io.to(`userRoom_${currentUserId.toString()}`).emit("userFollowUpdate", {
+              action: "followingSomeone",
+              followedUser: simplifiedUserToFollow, 
+              
+              updatedCurrentUser: currentUser.toObject()
+          });
+          console.log(`User ${currentUser.username} followed ${userToFollow.username}. Emitting updates.`);
+      }
+
+      res.status(200).json({
+          message: `Successfully followed ${userToFollow.username}.`,
+          currentUser: currentUser.toObject(), 
+          followedUser: userToFollow.toObject() 
+      });
+
+  } catch (error) {
+      console.error("Error following user:", error);
+      res.status(500).json({ message: "Internal server error." });
+  }
+});
+
+router.post("/:userIdToUnfollow/unfollow", protectRoute, async (req, res) => {
+  try {
+      const userIdToUnfollow = req.params.userIdToUnfollow;
+      const currentUserId = req.user._id;
+      const io = req.io;
+      if (!mongoose.Types.ObjectId.isValid(userIdToUnfollow)) {
+          return res.status(400).json({ message: "Invalid user ID to unfollow." });
+      }
+
+      const userToUnfollow = await User.findById(userIdToUnfollow);
+      const currentUser = await User.findById(currentUserId);
+
+      if (!userToUnfollow || !currentUser) {
+          return res.status(404).json({ message: "User not found." });
+      }
+
+      if (!currentUser.following.includes(userIdToUnfollow)) {
+          return res.status(400).json({ message: "You are not following this user." });
+      }
+
+      currentUser.following.pull(userIdToUnfollow);
+      userToUnfollow.followers.pull(currentUserId);
+
+      await currentUser.save();
+      await userToUnfollow.save();
+
+      const simplifiedCurrentUser = { _id: currentUser._id, username: currentUser.username, profileImage: currentUser.profileImage };
+      const simplifiedUserToUnfollow = { _id: userToUnfollow._id, username: userToUnfollow.username, profileImage: userToUnfollow.profileImage };
+
+      if (io) {
+          
+          io.to(`userRoom_${userIdToUnfollow}`).emit("userFollowUpdate", {
+              action: "lostFollower",
+              unfollower: simplifiedCurrentUser, 
+              updatedTargetUser: userToUnfollow.toObject()
+          });
+
+          // Thông báo cho NGƯỜI THỰC HIỆN UNFOLLOW
+          io.to(`userRoom_${currentUserId.toString()}`).emit("userFollowUpdate", {
+              action: "unfollowedSomeone",
+              unfollowedUser: simplifiedUserToUnfollow, 
+              updatedCurrentUser: currentUser.toObject()
+          });
+          console.log(`User ${currentUser.username} unfollowed ${userToUnfollow.username}. Emitting updates.`);
+      }
+
+      res.status(200).json({
+          message: `Successfully unfollowed ${userToUnfollow.username}.`,
+          currentUser: currentUser.toObject(),
+          unfollowedUser: userToUnfollow.toObject()
+      });
+
+  } catch (error) {
+      console.error("Error unfollowing user:", error);
+      res.status(500).json({ message: "Internal server error." });
+  }
+});
+
+router.get("/:userId/followers", protectRoute, async (req, res) => {
+  try {
+      const { userId } = req.params;
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 20;
+      const skip = (page - 1) * limit;
+
+      if (!mongoose.Types.ObjectId.isValid(userId)) {
+          return res.status(400).json({ message: "Invalid user ID." });
+      }
+      const user = await User.findById(userId)
+          .select('username followersCount') 
+          .populate({
+              path: 'followers',
+              select: 'username profileImage _id', 
+              options: {
+                  sort: { username: 1 }, 
+                  skip: skip,
+                  limit: limit
+              }
+          });
+
+      if (!user) {
+          return res.status(404).json({ message: "User not found." });
+      }
+      const totalFollowers = await User.countDocuments({ _id: userId, 'followers.0': { $exists: true } })
+                              .then(async () => (await User.findById(userId).select('followers')).followers.length);
+      res.json({
+          followers: user.followers, 
+          currentPage: page,
+          totalFollowers: totalFollowers,
+          totalPages: Math.ceil(totalFollowers / limit)
+      });
+  } catch (error) {
+      console.error("Error fetching followers:", error);
+      res.status(500).json({ message: "Internal server error." });
+  }
+});
+
+router.get("/:userId/following", protectRoute, async (req, res) => {
+  try {
+      const { userId } = req.params;
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 20;
+      const skip = (page - 1) * limit;
+      if (!mongoose.Types.ObjectId.isValid(userId)) {
+          return res.status(400).json({ message: "Invalid user ID." });
+      }
+      const user = await User.findById(userId)
+          .select('username followingCount')
+          .populate({
+              path: 'following',
+              select: 'username profileImage _id',
+              options: {
+                  sort: { username: 1 },
+                  skip: skip,
+                  limit: limit
+              }
+          });
+      if (!user) {
+          return res.status(404).json({ message: "User not found." });
+      }
+      const totalFollowing = await User.findById(userId).select('following').then(u => u.following.length);
+      res.json({
+          following: user.following,
+          currentPage: page,
+          totalFollowing: totalFollowing,
+          totalPages: Math.ceil(totalFollowing / limit)
+      });
+  } catch (error) {
+      console.error("Error fetching following:", error);
+      res.status(500).json({ message: "Internal server error." });
+  }
+});
+
+
 
 export default router;

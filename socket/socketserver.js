@@ -2,6 +2,7 @@
 import { Server } from "socket.io";
 
 const bookRooms = {};
+const userRooms = {};
 const adminClients = new Set(); // Track admin clients
 let onlineUsersCount = 0; // Track online users
 
@@ -69,6 +70,37 @@ const initializeSocketIO = (httpServer) => {
             // console.log("Current book rooms:", bookRooms);
         });
 
+        // Khi client tham gia vào một "phòng" của người dùng để nhận thông báo cá nhân
+        socket.on("joinUserRoom", (userId) => {
+            if (!userId) {
+                console.warn(`Client ${socket.id} tried to join user room without a userId.`);
+                return;
+            }
+            const roomName = `userRoom_${userId}`;
+            socket.join(roomName);
+            if (!userRooms[userId]) {
+                userRooms[userId] = new Set();
+            }
+            userRooms[userId].add(socket.id);
+            console.log(`Client ${socket.id} joined room: ${roomName}`);
+        });
+
+        socket.on("leaveUserRoom", (userId) => {
+            if (!userId) {
+                console.warn(`Client ${socket.id} tried to leave user room without a userId.`);
+                return;
+            }
+            const roomName = `userRoom_${userId}`;
+            socket.leave(roomName);
+            if (userRooms[userId]) {
+                userRooms[userId].delete(socket.id);
+                if (userRooms[userId].size === 0) {
+                    delete userRooms[userId];
+                }
+            }
+            console.log(`Client ${socket.id} left room: ${roomName}`);
+        });
+
         // Lắng nghe sự kiện khi client ngắt kết nối
         socket.on("disconnect", () => {
             console.log(`Client disconnected: ${socket.id}`);
@@ -99,6 +131,8 @@ const initializeSocketIO = (httpServer) => {
         socket.on("error", (err) => {
             console.error(`Socket Error from ${socket.id}:`, err);
         });
+
+
     });
 
     // Helper functions to emit to admin clients
