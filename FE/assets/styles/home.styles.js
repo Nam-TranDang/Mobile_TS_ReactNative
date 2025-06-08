@@ -159,12 +159,7 @@ const styles = StyleSheet.create({
   searchIcon: {
     marginLeft: 12,
   },
-  searchInput: {
-    flex: 1,
-    height: 40,
-    paddingHorizontal: 10,
-    color: COLORS.textPrimary,
-  },
+
   clearButton: {
     padding: 8,
   },
@@ -175,6 +170,19 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
+  },
+  filterbutton: {
+    position: "absolute",
+    top: 10, // Điều chỉnh giá trị này để di chuyển lên trên nhiều hơn hoặc ít hơn
+    right: 0, // Đặt nút ở bên phải
+    zIndex: 1, // Đảm bảo nút hiển thị phía trên các phần tử khác
+  },
+
+  searchPlaceholder: {
+    flex: 1,
+    fontSize: 16,
+    color: COLORS.textSecondary,
+    paddingVertical: 10,
   },
 
   // Modal overlay

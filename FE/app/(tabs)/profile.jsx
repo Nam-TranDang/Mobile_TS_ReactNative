@@ -21,6 +21,7 @@ import COLORS from "../../constants/colors";
 import { useAuthStore } from "../../store/authStore";
 import styles from "./../../assets/styles/profile.styles";
 import { API_URL } from "./../../constants/api";
+import defaultAvatar from "../../assets/images/default-avatar.png";
 
 export default function Profile() {
   const [books, setBooks] = useState([]);

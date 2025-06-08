@@ -191,7 +191,7 @@ export default function EditBook() {
     try {
       setLoading(true);
 
-      // Create request body
+      // Create request body with base info
       let requestBody = {
         title,
         caption,
@@ -201,7 +201,7 @@ export default function EditBook() {
         genre: selectedGenre._id,
       };
 
-      // Only include image in request if it was changed (base64 is set)
+      // Chỉ gửi ảnh nếu người dùng thực sự đã thay đổi ảnh
       if (imageBase64) {
         const uriParts = image.split(".");
         const fileType = uriParts[uriParts.length - 1];
@@ -224,11 +224,23 @@ export default function EditBook() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Something went wrong");
 
+      // Thêm đoạn code này để xóa cache của Image component
+      try {
+        // Đối với expo-image
+        Image.clearMemoryCache();
+      } catch (cacheError) {
+        console.log("Cache clearing error:", cacheError);
+      }
+
       Alert.alert("Success", "Book recommendation updated successfully", [
         {
           text: "OK",
           onPress: () => {
-            router.back();
+            // Thêm một tham số ngẫu nhiên vào route để đảm bảo component Profile được tạo lại
+            router.replace({
+              pathname: "/(tabs)",
+              params: { refresh: Date.now() },
+            });
           },
         },
       ]);

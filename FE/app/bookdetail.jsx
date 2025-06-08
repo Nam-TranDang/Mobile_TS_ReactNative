@@ -321,7 +321,9 @@ export default function BookDetail() {
   };
   // Add this function to check if the current user has liked or disliked the book
   const isLikedByUser = () => {
-    return book?.likedBy?.includes(user?.id);
+    // Make sure types match for comparison (string vs ObjectId)
+    const userId = user?.id?.toString();
+    return book?.likedBy?.some((id) => id.toString() === userId);
   };
 
   const isDislikedByUser = () => {
@@ -386,6 +388,9 @@ export default function BookDetail() {
 
             {/* Book Info */}
             <Text style={styles.bookTitle}>{book.title}</Text>
+            <Text style={styles.bookAuthor}>
+              Tác giả: {book.author || "Không có thông tin"}
+            </Text>
             <View style={styles.ratingContainer}>
               {renderRatingStars(book.rating)}
             </View>
