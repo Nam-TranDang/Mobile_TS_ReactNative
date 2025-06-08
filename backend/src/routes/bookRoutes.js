@@ -11,9 +11,10 @@ const router = express.Router();
 // Before async to send POST --> Call protectRoute to check Token.
 router.post("/", protectRoute, async (req, res) => {
   try {
-    const { title, caption, rating, image, author, published_year, genre } = req.body;
-    
-    if (!title || !caption || !rating || !image|| !author || !genre) {
+    const { title, caption, rating, image, author, published_year, genre } =
+      req.body;
+
+    if (!title || !caption || !rating || !image || !author || !genre) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -39,10 +40,15 @@ router.post("/", protectRoute, async (req, res) => {
         return res.status(400).json({ message: "Invalid or deleted genre" });
       }
     }
-  
+
     // check valid year
-    // published year -> check dieu kien field nay co trong req - vi day la optional, isNaN - is not a number --> tra ve true neu la text 
-    if (published_year && (isNaN(published_year) || published_year < 0 || published_year > new Date().getFullYear())) {
+    // published year -> check dieu kien field nay co trong req - vi day la optional, isNaN - is not a number --> tra ve true neu la text
+    if (
+      published_year &&
+      (isNaN(published_year) ||
+        published_year < 0 ||
+        published_year > new Date().getFullYear())
+    ) {
       return res.status(400).json({ message: "Invalid published year" });
     }
 
@@ -51,7 +57,7 @@ router.post("/", protectRoute, async (req, res) => {
       caption,
       rating,
       image: imageUrl,
-      user: req.user._id,  // Cần Token để xác định danh tính người gửi
+      user: req.user._id, // Cần Token để xác định danh tính người gửi
       author,
       published_year: published_year || undefined, // Optional field
       genre,
@@ -65,10 +71,10 @@ router.post("/", protectRoute, async (req, res) => {
     if (req.emitToAdmins) {
       req.emitToAdmins("newBook", {
         book: newBook,
-        user: req.user
+        user: req.user,
       });
     }
-    
+
     res.status(201).json(newBook);
   } catch (error) {
     console.error(error);
@@ -76,12 +82,12 @@ router.post("/", protectRoute, async (req, res) => {
   }
 });
 
-// GET genre cho User 
+// GET genre cho User
 router.get("/genres", async (req, res) => {
   try {
-    const genres = await Genre.find({ soft_delete: false }) // neu chua xoa mem thi get 
+    const genres = await Genre.find({ soft_delete: false }) // neu chua xoa mem thi get
       .select("genre_name _id") // select ten va id tu mongo
-      .sort({ genre_name: 1 }); // Sort alphabetically 
+      .sort({ genre_name: 1 }); // Sort alphabetically
 
     if (!genres || genres.length === 0) {
       return res.status(404).json({ message: "No genres found" });
@@ -97,8 +103,7 @@ router.get("/genres", async (req, res) => {
   }
 });
 
-
-// Pagination cho trang home - phân trang --> danh cho da la user 
+// Pagination cho trang home - phân trang --> danh cho da la user
 router.get("/", protectRoute, async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -106,7 +111,9 @@ router.get("/", protectRoute, async (req, res) => {
     const skip = (page - 1) * limit;
 
     // Add filter for user if provided
-    const matchFilter = req.query.user ? { user: new mongoose.Types.ObjectId(req.query.user) } : {};
+    const matchFilter = req.query.user
+      ? { user: new mongoose.Types.ObjectId(req.query.user) }
+      : {};
 
     // Sử dụng aggregate để loại bỏ books có user null
     const books = await Book.aggregate([
@@ -116,16 +123,16 @@ router.get("/", protectRoute, async (req, res) => {
           from: "users",
           localField: "user",
           foreignField: "_id",
-          as: "user"
-        }
+          as: "user",
+        },
       },
       {
         $match: {
-          "user.0": { $exists: true } // Chỉ lấy books có user tồn tại
-        }
+          "user.0": { $exists: true }, // Chỉ lấy books có user tồn tại
+        },
       },
       {
-        $unwind: "$user"
+        $unwind: "$user",
       },
       {
         $project: {
@@ -140,12 +147,12 @@ router.get("/", protectRoute, async (req, res) => {
           createdAt: 1,
           "user.username": 1,
           "user.profileImage": 1,
-          "user._id": 1
-        }
+          "user._id": 1,
+        },
       },
       { $sort: { createdAt: -1 } },
       { $skip: skip },
-      { $limit: limit }
+      { $limit: limit },
     ]);
 
     // Đếm tổng số books hợp lệ
@@ -156,15 +163,15 @@ router.get("/", protectRoute, async (req, res) => {
           from: "users",
           localField: "user",
           foreignField: "_id",
-          as: "user"
-        }
+          as: "user",
+        },
       },
       {
         $match: {
-          "user.0": { $exists: true }
-        }
+          "user.0": { $exists: true },
+        },
       },
-      { $count: "total" }
+      { $count: "total" },
     ]);
 
     const totalBooks = totalBooksResult[0]?.total || 0;
@@ -197,30 +204,52 @@ router.get("/user", protectRoute, async (req, res) => {
 // Update (về bản chất - Put update toàn bộ, Patch update 1 phần)
 router.patch("/:id", protectRoute, async (req, res) => {
   try {
-    const { title, caption, rating, image } = req.body;
+    const { title, caption, rating, image, author, published_year, genre } =
+      req.body;
 
     const book = await Book.findById(req.params.id);
     if (!book) return res.status(404).json({ message: "Book not found" });
 
-    // protectRoute để kiểm Authorization - xác minh người dùngdùng
-    // Check người xóa có phải người viết Sách không - Check Ủy quyền cho phép chỉnh sửa
-    // Ví dụ token User A -> được xác thực. Nhưng User A muốn sửa bài viết của User B -> không được phép
-
+    // Check người sửa có phải người viết Sách không
     if (book.user.toString() !== req.user._id.toString()) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    // Conditionally update fields if they are provided in the request body
+    // Cập nhật các thông tin văn bản
     if (title !== undefined) book.title = title;
     if (caption !== undefined) book.caption = caption;
     if (rating !== undefined) book.rating = rating;
+    if (author !== undefined) book.author = author;
+    if (published_year !== undefined) book.published_year = published_year;
+    if (genre !== undefined) book.genre = genre;
 
+    // Nếu có hình ảnh mới, xử lý xóa hình ảnh cũ và upload hình mới
     if (image !== undefined) {
-      // Use 'image' from req.body {
-      // If a new image is provided, upload it to Cloudinary - Vì đây là patch (CẦN TEST XEM PUT LÊN CÓ CẬP NHẬT ẢNH KHÔNGKHÔNG)
+      // Xóa ảnh cũ nếu có
+      if (book.image && book.image.includes("cloudinary")) {
+        try {
+          const parts = book.image.split("/");
+          const oldPublicId = parts
+            .slice(parts.indexOf("upload") + 2)
+            .join("/")
+            .split(".")[0];
+          await cloudinary.uploader.destroy(oldPublicId);
+          console.log("Đã xóa ảnh cũ: ", oldPublicId);
+        } catch (deleteError) {
+          console.log("Lỗi xóa ảnh cũ:", deleteError);
+          // Tiếp tục xử lý dù có lỗi khi xóa ảnh cũ
+        }
+      }
+
+      // Tạo tên ảnh duy nhất với timestamp và ID sách
+      const uniqueFilename = `${book._id}_${Date.now()}`;
+
+      // Upload ảnh mới với tên duy nhất
       const uploadResponse = await cloudinary.uploader.upload(image, {
         folder: "Book_Forum/Book_Review",
+        public_id: uniqueFilename, // Đặt tên duy nhất cho ảnh
       });
+
       book.image = uploadResponse.secure_url;
     }
 
@@ -321,11 +350,16 @@ router.post("/:bookId/comments", protectRoute, async (req, res) => {
 
     // Populate user info before sending response
     await newComment.populate("user", "username profileImage _id");
-    if (io) { // Kiểm tra io có tồn tại không
+    if (io) {
+      // Kiểm tra io có tồn tại không
       io.to(bookId.toString()).emit("newComment", newComment.toJSON()); // Gửi newComment đã populate và transform
-      console.log(`Emitted 'newComment' to room ${bookId} for comment ${newComment._id}`);
+      console.log(
+        `Emitted 'newComment' to room ${bookId} for comment ${newComment._id}`
+      );
     } else {
-      console.warn("Socket.io instance (req.io) not found. Cannot emit 'newComment'.");
+      console.warn(
+        "Socket.io instance (req.io) not found. Cannot emit 'newComment'."
+      );
     }
     res.status(201).json(newComment);
   } catch (error) {
@@ -384,7 +418,6 @@ router.put("/:bookId/comments/:commentId", protectRoute, async (req, res) => {
     const { text } = req.body;
     const { bookId, commentId } = req.params;
     const io = req.io;
-    
 
     if (!text || text.trim() === "") {
       return res.status(400).json({ message: "Comment text cannot be empty." });
@@ -414,11 +447,18 @@ router.put("/:bookId/comments/:commentId", protectRoute, async (req, res) => {
       "username profileImage"
     );
     if (io) {
-      io.to(bookId.toString()).emit("commentUpdated", populatedComment.toJSON());
-      console.log(`Emitted 'commentUpdated' to room ${bookId} for comment ${populatedComment._id}`);
-  } else {
-      console.warn("Socket.io instance (req.io) not found. Cannot emit 'commentUpdated'.");
-  }
+      io.to(bookId.toString()).emit(
+        "commentUpdated",
+        populatedComment.toJSON()
+      );
+      console.log(
+        `Emitted 'commentUpdated' to room ${bookId} for comment ${populatedComment._id}`
+      );
+    } else {
+      console.warn(
+        "Socket.io instance (req.io) not found. Cannot emit 'commentUpdated'."
+      );
+    }
     res.json(populatedComment);
   } catch (error) {
     console.error("Update comment error:", error);
@@ -431,7 +471,10 @@ router.put("/:bookId/comments/:commentId", protectRoute, async (req, res) => {
   }
 });
 
-router.delete( "/:bookId/comments/:commentId", protectRoute, async (req, res) => {
+router.delete(
+  "/:bookId/comments/:commentId",
+  protectRoute,
+  async (req, res) => {
     try {
       const { bookId, commentId } = req.params;
       const io = req.io;
@@ -440,10 +483,14 @@ router.delete( "/:bookId/comments/:commentId", protectRoute, async (req, res) =>
       if (io) {
         // Gửi ID của comment đã xóa và bookId để client biết xóa comment nào khỏi sách nào
         io.to(bookId.toString()).emit("commentDeleted", { commentId, bookId });
-        console.log(`Emitted 'commentDeleted' to room ${bookId} for comment ${commentId}`);
-    } else {
-        console.warn("Socket.io instance (req.io) not found. Cannot emit 'commentDeleted'.");
-    }
+        console.log(
+          `Emitted 'commentDeleted' to room ${bookId} for comment ${commentId}`
+        );
+      } else {
+        console.warn(
+          "Socket.io instance (req.io) not found. Cannot emit 'commentDeleted'."
+        );
+      }
       if (!comment) {
         return res.status(404).json({ message: "Comment not found." });
       }
@@ -478,18 +525,27 @@ router.delete( "/:bookId/comments/:commentId", protectRoute, async (req, res) =>
 const emitBookUpdate = (req, bookDocument) => {
   const io = req.io;
   if (io && bookDocument) {
-      const bookUpdateData = {
-          _id: bookDocument._id,
-          like_count: bookDocument.like_count,
-          dislike_count: bookDocument.dislike_count,
-          likedBy: bookDocument.likedBy,
-          dislikedBy: bookDocument.dislikedBy,
-      };
-      // Emit đến room của sách này
-      io.to(bookDocument._id.toString()).emit("bookInteractionUpdate", bookUpdateData);
-      console.log(`Emitted 'bookInteractionUpdate' to room ${bookDocument._id.toString()} for book ${bookDocument._id}`);
+    const bookUpdateData = {
+      _id: bookDocument._id,
+      like_count: bookDocument.like_count,
+      dislike_count: bookDocument.dislike_count,
+      likedBy: bookDocument.likedBy,
+      dislikedBy: bookDocument.dislikedBy,
+    };
+    // Emit đến room của sách này
+    io.to(bookDocument._id.toString()).emit(
+      "bookInteractionUpdate",
+      bookUpdateData
+    );
+    console.log(
+      `Emitted 'bookInteractionUpdate' to room ${bookDocument._id.toString()} for book ${
+        bookDocument._id
+      }`
+    );
   } else if (!io) {
-      console.warn("Socket.io instance (req.io) not found. Cannot emit 'bookInteractionUpdate'.");
+    console.warn(
+      "Socket.io instance (req.io) not found. Cannot emit 'bookInteractionUpdate'."
+    );
   }
 };
 
@@ -509,12 +565,11 @@ router.put("/:id/like", protectRoute, async (req, res) => {
         book.dislikedBy.pull(userId);
         book.dislike_count -= 1;
       }
-      await book.save();
     }
     if (updated) {
       await book.save();
       emitBookUpdate(req, book); // <--- THÊM: Emit sự kiện
-  }
+    }
     res.status(200).json(book);
   } catch (error) {
     console.error(error);
@@ -565,8 +620,8 @@ router.put("/:id/unlike", protectRoute, async (req, res) => {
     }
     if (updated) {
       await book.save();
-      emitBookUpdate(req, book); 
-  }
+      emitBookUpdate(req, book);
+    }
     res.status(200).json(book);
   } catch (error) {
     console.error(error);
@@ -591,11 +646,11 @@ router.put("/:id/dislike", protectRoute, async (req, res) => {
         book.likedBy.pull(userId);
         book.like_count -= 1;
       }
-      await book.save();
     }
     if (updated) {
-      emitBookUpdate(req, book); 
-  }
+      await book.save();
+      emitBookUpdate(req, book);
+    }
     res.status(200).json(book);
   } catch (error) {
     console.error(error);
@@ -615,11 +670,11 @@ router.put("/:id/remove-dislike", protectRoute, async (req, res) => {
       book.dislikedBy.pull(userId);
       book.dislike_count -= 1;
       updated = true;
-      await book.save();
     }
     if (updated) {
-      emitBookUpdate(req, book); 
-  }
+      await book.save();
+      emitBookUpdate(req, book);
+    }
     res.status(200).json(book);
   } catch (error) {
     console.error(error);
@@ -627,7 +682,30 @@ router.put("/:id/remove-dislike", protectRoute, async (req, res) => {
   }
 });
 
-// Get single book details - đặt sau route /user để tránh conflict
+// Di chuyển route search lên trước route /:id
+router.get("/search", protectRoute, async (req, res) => {
+  try {
+    const searchQuery = req.query.q;
+    if (!searchQuery) {
+      return res.status(200).json([]);
+    }
+
+    // Tìm sách theo tiêu đề, tác giả
+    const books = await Book.find({
+      $or: [
+        { title: { $regex: searchQuery, $options: "i" } },
+        { author: { $regex: searchQuery, $options: "i" } },
+      ],
+    }).populate("user", "username profileImage _id");
+
+    res.status(200).json(books);
+  } catch (error) {
+    console.error("Error searching books:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Sau đó mới là route lấy chi tiết sách theo id
 router.get("/:id", protectRoute, async (req, res) => {
   try {
     const book = await Book.findById(req.params.id).populate(
@@ -648,5 +726,5 @@ router.get("/:id", protectRoute, async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
-  
+
 export default router;

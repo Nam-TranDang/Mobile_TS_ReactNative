@@ -279,40 +279,29 @@ export default function Home() {
   };
 
   // Search bar component
-  const renderSearchBar = () => (
-    <View style={styles.searchContainer}>
-      <View style={styles.searchInputContainer}>
-        <Ionicons
-          name="search"
-          size={20}
-          color={COLORS.textSecondary}
-          style={styles.searchIcon}
-        />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search books or authors..."
-          value={searchText}
-          onChangeText={handleSearch}
-          returnKeyType="search"
-        />
-        {searchText.length > 0 && (
-          <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
-            <Ionicons
-              name="close-circle"
-              size={20}
-              color={COLORS.textSecondary}
-            />
-          </TouchableOpacity>
-        )}
-      </View>
-      <TouchableOpacity
-        style={styles.sortButton}
-        onPress={() => setShowFilterModal(true)}
-      >
-        <Ionicons name="filter" size={20} color={COLORS.white} />
-      </TouchableOpacity>
-    </View>
-  );
+  // const renderSearchBar = () => (
+  //   <View style={styles.searchContainer}>
+  //     <TouchableOpacity
+  //       style={styles.searchInputContainer}
+  //       activeOpacity={0.7}
+  //       onPress={() => router.push("/(tabs)/search")}
+  //     >
+  //       <Ionicons
+  //         name="search"
+  //         size={20}
+  //         color={COLORS.textSecondary}
+  //         style={styles.searchIcon}
+  //       />
+  //       <Text style={styles.searchPlaceholder}>Search books or authors...</Text>
+  //     </TouchableOpacity>
+  //     <TouchableOpacity
+  //       style={styles.sortButton}
+  //       onPress={() => setShowFilterModal(true)}
+  //     >
+  //       <Ionicons name="filter" size={20} color={COLORS.white} />
+  //     </TouchableOpacity>
+  //   </View>
+  // );
 
   // Filter modal using the design from the image you sent
   const renderFilterModal = () => (
@@ -605,7 +594,7 @@ export default function Home() {
 
   return (
     <View style={styles.container}>
-      {renderSearchBar()}
+      {/* {renderSearchBar()} */}
       {renderFilterModal()}
       <FlatList
         data={filteredBooks}
@@ -629,6 +618,14 @@ export default function Home() {
             <Text style={styles.headerSubtitle}>
               Discover great reads from the community
             </Text>
+            <View style={styles.filterbutton}>
+              <TouchableOpacity
+                style={styles.sortButton}
+                onPress={() => setShowFilterModal(true)}
+              >
+                <Ionicons name="filter" size={20} color={COLORS.white} />
+              </TouchableOpacity>
+            </View>
           </View>
         }
         ListFooterComponent={

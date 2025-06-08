@@ -1,58 +1,69 @@
-import { Ionicons } from '@expo/vector-icons';
-import { Tabs } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import COLORS from '../../constants/colors';
+import { Ionicons } from "@expo/vector-icons";
+import { Tabs } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import COLORS from "../../constants/colors";
 
 export default function TabLayout() {
   const inset = useSafeAreaInsets();
 
   return (
     <Tabs
-        screenOptions={{
-            headerShown: false,
-            tabBarActiveTintColor: COLORS.primary,
-            headerTitleStyle: {
-              color: COLORS.primary,
-              fontWeight: "600",
-            },
-            headerShadowVisible: false,
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: COLORS.primary,
+        headerTitleStyle: {
+          color: COLORS.primary,
+          fontWeight: "600",
+        },
+        headerShadowVisible: false,
 
-            tabBarStyle :{
-              backgroundColor: COLORS.cardBackground,
-              borderTopWidth: 1,
-              borderTopColor: COLORS.border,
-              paddingTop: 5,
-              paddingBottom: inset.bottom,
-              height: 60 + inset.bottom,
-            },
-
-        }}
+        tabBarStyle: {
+          backgroundColor: COLORS.cardBackground,
+          borderTopWidth: 1,
+          borderTopColor: COLORS.border,
+          paddingTop: 5,
+          paddingBottom: inset.bottom,
+          height: 60 + inset.bottom,
+        },
+      }}
     >
-      <Tabs.Screen name = "index"
+      <Tabs.Screen
+        name="index"
         options={{
-            title: "Home",
-            tabBarIcon:({color,size}) => (
-              <Ionicons name="home-outline" size={size} color={color}/>
-             ),
+          title: "Home",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="home-outline" size={size} color={color} />
+          ),
         }}
-       />
-      <Tabs.Screen name = "create"
+      />
+      <Tabs.Screen
+        name="search"
         options={{
-            title: "Create",
-            tabBarIcon:({color,size}) => (
-              <Ionicons name="add-circle-outline" size={size} color={color}/>
-             ),
+          title: "Search",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="search" size={size} color={color} />
+          ),
         }}
-       />
-      <Tabs.Screen name = "profile"
+      />
+      <Tabs.Screen
+        name="create"
         options={{
-            title: "Profile",
-            tabBarIcon:({color,size}) => (
-              <Ionicons name="person-outline" size={size} color={color} />
-             ),
+          title: "Create",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="add-circle-outline" size={size} color={color} />
+          ),
         }}
-       />
-       <Tabs.Screen
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: "Profile",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="person-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="editprofile"
         options={{
           href: null, // Ẩn tab này khỏi bottom navigation
@@ -65,7 +76,13 @@ export default function TabLayout() {
           title: "Báo cáo",
         }}
       />
+      <Tabs.Screen
+        name="editbook"
+        options={{
+          href: null, // Ẩn khỏi thanh tab
+          title: "Edit Book",
+        }}
+      />
     </Tabs>
   );
-  
 }

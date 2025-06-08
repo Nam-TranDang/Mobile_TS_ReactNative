@@ -72,8 +72,8 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
   },
   accountActionsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 24,
   },
   logoutButton: {
@@ -207,16 +207,16 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   userReportButton: {
-    marginLeft: 'auto',
+    marginLeft: "auto",
     padding: 8,
   },
   deleteAccountButton: {
     backgroundColor: COLORS.red,
     borderRadius: 12,
     padding: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -232,37 +232,37 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   modalContent: {
     backgroundColor: COLORS.cardBackground,
     borderRadius: 12,
     padding: 24,
-    width: '100%',
+    width: "100%",
     maxWidth: 400,
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 16,
     color: COLORS.error,
-    textAlign: 'center',
+    textAlign: "center",
   },
   modalText: {
     fontSize: 14,
     color: COLORS.textPrimary,
     marginBottom: 20,
-    textAlign: 'center',
+    textAlign: "center",
     lineHeight: 22,
   },
   confirmInstructionText: {
     fontSize: 14,
     color: COLORS.textPrimary,
     marginBottom: 10,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   confirmationInput: {
     borderWidth: 1,
@@ -275,14 +275,14 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
   },
   modalButtonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   modalCancelButton: {
     flex: 1,
     padding: 12,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
     marginRight: 8,
     backgroundColor: COLORS.cardBackground,
     borderWidth: 1,
@@ -290,13 +290,13 @@ const styles = StyleSheet.create({
   },
   modalCancelButtonText: {
     color: COLORS.textPrimary,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   modalDeleteButton: {
     flex: 1,
     padding: 12,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
     backgroundColor: COLORS.red,
     color: COLORS.white,
     marginLeft: 8,
@@ -306,7 +306,15 @@ const styles = StyleSheet.create({
   },
   modalDeleteButtonText: {
     color: COLORS.white,
-    fontWeight: '500',
+    fontWeight: "500",
+  },
+  bookActions: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  editButtonBook: {
+    padding: 8,
+    marginRight: 8,
   },
 });
 

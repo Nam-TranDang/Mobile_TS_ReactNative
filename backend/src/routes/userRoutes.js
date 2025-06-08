@@ -1,13 +1,76 @@
 import express from "express";
-import bcrypt, { compare } from "bcryptjs"; 
-import cloudinary from "../lib/cloudinary.js"; 
-import User from "../models/user.js"; 
+import bcrypt, { compare } from "bcryptjs";
+import cloudinary from "../lib/cloudinary.js";
+import User from "../models/user.js";
 import protectRoute from "../middleware/auth.middleware.js";
 import Book from "../models/book.js"; // Add this import
 import Comment from "../models/comment.js"; // Add this import
 import mongoose from "mongoose";
 
 const router = express.Router();
+
+// Đặt các routes cụ thể đầu tiên
+router.get("/search", protectRoute, async (req, res) => {
+  try {
+    const searchQuery = req.query.q;
+    if (!searchQuery) {
+      return res.status(200).json([]);
+    }
+
+    // Tìm người dùng theo username
+    const users = await User.find({
+      username: { $regex: searchQuery, $options: "i" },
+    }).select("username profileImage _id");
+
+    // Thêm số sách đã đăng
+    const usersWithCounts = await Promise.all(
+      users.map(async (user) => {
+        const bookCount = await Book.countDocuments({ user: user._id });
+        return {
+          ...user.toObject(),
+          bookCount,
+        };
+      })
+    );
+
+    res.status(200).json(usersWithCounts);
+  } catch (error) {
+    console.error("Error searching users:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+router.get("/suggestions", protectRoute, async (req, res) => {
+  try {
+    // Lấy người dùng có nhiều sách nhất
+    const users = await User.aggregate([
+      {
+        $lookup: {
+          from: "books",
+          localField: "_id",
+          foreignField: "user",
+          as: "books",
+        },
+      },
+      { $addFields: { bookCount: { $size: "$books" } } },
+      { $sort: { bookCount: -1 } },
+      { $limit: 10 },
+      {
+        $project: {
+          _id: 1,
+          username: 1,
+          profileImage: 1,
+          bookCount: 1,
+        },
+      },
+    ]);
+
+    res.status(200).json(users);
+  } catch (error) {
+    console.error("Error getting suggested users:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
 // --- GET User Profile --> để mở ra một trang UI chỉnh thông tin || dùng để Get thông tin tính năng follow
 // fetching any user's public profile -> tất cả có thể xem thông tin của nhaunhau
@@ -29,107 +92,133 @@ router.get("/:id", protectRoute, async (req, res) => {
         }
         res.status(500).json({ message: "Internal server error" });
     }
+   
 });
 
-
-// --- Update user 
+// --- Update user
 router.patch("/:id", protectRoute, async (req, res) => {
-    try {
-        const { username, password, currentPassword, profileImage } = req.body; // Correct destructuring
-        const userId = req.params.id;
+  try {
+    const { username, password, currentPassword, profileImage } = req.body; // Correct destructuring
+    const userId = req.params.id;
 
-        // Authorize user
-        if (req.user._id.toString() !== userId) {
-            return res.status(403).json({ message: "Forbidden: You can only update your own profile" });
-        }
-
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
-
-        // Initialize updates object to track changes
-        const updates = {};
-
-        // Handle password update
-        if (password !== undefined) {
-            if (!currentPassword) {
-                return res.status(400).json({ message: "Current password is required to change your password." });
-            }
-
-            if (password.length < 6) {
-                return res.status(400).json({ message: "New password must be at least 6 characters long." });
-            }
-
-            const isMatch = await bcrypt.compare(currentPassword, user.password);
-            console.log("Current password match status:", isMatch);
-
-            if (!isMatch) {
-                return res.status(401).json({ message: "Incorrect current password." });
-            }
-
-            // Set plain-text password; let pre-save hook handle hashing
-            updates.password = password;
-            console.log("Password set for update (plain-text, will be hashed by pre-save hook).");
-        }
-
-        // Handle username update
-        if (username !== undefined) {
-            updates.username = username;
-        }
-
-        // Handle profile image update
-        if (profileImage !== undefined) {
-            // Delete old image from Cloudinary if it exists
-            if (user.profileImage && user.profileImage.includes("cloudinary")) {
-                try {
-                    const parts = user.profileImage.split('/');
-                    const oldPublicId = parts.slice(parts.indexOf('upload') + 2).join('/').split('.')[0];
-                    await cloudinary.uploader.destroy(oldPublicId);
-                } catch (deleteError) {
-                    console.error("Error deleting old profile image from Cloudinary:", deleteError);
-                    // Continue despite deletion error
-                }
-            }
-
-            // Upload new profile image
-            try {
-                const uploadResponse = await cloudinary.uploader.upload(profileImage, {
-                    folder: "Book_Forum/User"
-                });
-                updates.profileImage = uploadResponse.secure_url;
-            } catch (uploadError) {
-                console.error("Error uploading new profile image to Cloudinary:", uploadError);
-                return res.status(500).json({ message: "Failed to upload new profile image." });
-            }
-        }
-
-        // Update lại toàn bộ chổ nào user cần update - xem như là 1 objectobject
-        Object.assign(user, updates);
-
-        // Save the user (triggers pre-save hook for password hashing)
-        await user.save();
-
-        // Send response
-        res.status(200).json({
-            message: "Profile updated successfully",
-            user: {
-                _id: user._id,
-                username: user.username,
-                email: user.email,
-                profileImage: user.profileImage,
-                password: user.password // Note: Do not send password in response
-            }
-        });
-
-    } catch (error) {
-        console.error("Error updating user profile:", error.message);
-        if (error.code === 11000) {
-            const field = Object.keys(error.keyValue)[0];
-            return res.status(400).json({ message: `The ${field} '${error.keyValue[field]}' is already taken.` });
-        }
-        res.status(500).json({ message: "Internal server error" });
+    // Authorize user
+    if (req.user._id.toString() !== userId) {
+      return res
+        .status(403)
+        .json({ message: "Forbidden: You can only update your own profile" });
     }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Initialize updates object to track changes
+    const updates = {};
+
+    // Handle password update
+    if (password !== undefined) {
+      if (!currentPassword) {
+        return res
+          .status(400)
+          .json({
+            message: "Current password is required to change your password.",
+          });
+      }
+
+      if (password.length < 6) {
+        return res
+          .status(400)
+          .json({
+            message: "New password must be at least 6 characters long.",
+          });
+      }
+
+      const isMatch = await bcrypt.compare(currentPassword, user.password);
+      console.log("Current password match status:", isMatch);
+
+      if (!isMatch) {
+        return res.status(401).json({ message: "Incorrect current password." });
+      }
+
+      // Set plain-text password; let pre-save hook handle hashing
+      updates.password = password;
+      console.log(
+        "Password set for update (plain-text, will be hashed by pre-save hook)."
+      );
+    }
+
+    // Handle username update
+    if (username !== undefined) {
+      updates.username = username;
+    }
+
+    // Handle profile image update
+    if (profileImage !== undefined) {
+      // Delete old image from Cloudinary if it exists
+      if (user.profileImage && user.profileImage.includes("cloudinary")) {
+        try {
+          const parts = user.profileImage.split("/");
+          const oldPublicId = parts
+            .slice(parts.indexOf("upload") + 2)
+            .join("/")
+            .split(".")[0];
+          await cloudinary.uploader.destroy(oldPublicId);
+        } catch (deleteError) {
+          console.error(
+            "Error deleting old profile image from Cloudinary:",
+            deleteError
+          );
+          // Continue despite deletion error
+        }
+      }
+
+      // Upload new profile image
+      try {
+        const uploadResponse = await cloudinary.uploader.upload(profileImage, {
+          folder: "Book_Forum/User",
+        });
+        updates.profileImage = uploadResponse.secure_url;
+      } catch (uploadError) {
+        console.error(
+          "Error uploading new profile image to Cloudinary:",
+          uploadError
+        );
+        return res
+          .status(500)
+          .json({ message: "Failed to upload new profile image." });
+      }
+    }
+
+    // Update lại toàn bộ chổ nào user cần update - xem như là 1 objectobject
+    Object.assign(user, updates);
+
+    // Save the user (triggers pre-save hook for password hashing)
+    await user.save();
+
+    // Send response
+    res.status(200).json({
+      message: "Profile updated successfully",
+      user: {
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+        profileImage: user.profileImage,
+        password: user.password, // Note: Do not send password in response
+      },
+    });
+  } catch (error) {
+    console.error("Error updating user profile:", error.message);
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyValue)[0];
+      return res
+        .status(400)
+        .json({
+          message: `The ${field} '${error.keyValue[field]}' is already taken.`,
+        });
+    }
+    res.status(500).json({ message: "Internal server error" });
+  }
 });
 
 // Deactivate/Self-Delete - tự khóa và xóa acc
@@ -138,7 +227,9 @@ router.delete("/:id", protectRoute, async (req, res) => {
     const userId = req.params.id;
 
     if (req.user._id.toString() !== userId) {
-      return res.status(403).json({ message: "Forbidden: You can only delete your own account" });
+      return res
+        .status(403)
+        .json({ message: "Forbidden: You can only delete your own account" });
     }
 
     const user = await User.findById(userId);
@@ -158,7 +249,9 @@ router.delete("/:id", protectRoute, async (req, res) => {
 
     await User.deleteOne({ _id: userId });
 
-    res.status(200).json({ message: "Account and associated data deleted successfully" });
+    res
+      .status(200)
+      .json({ message: "Account and associated data deleted successfully" });
   } catch (error) {
     console.error("Error deleting user account:", error.message);
     res.status(500).json({ message: "Internal server error" });
@@ -175,7 +268,7 @@ router.get("/", protectRoute, async (req, res) => {
 
     // Lấy tất cả người dùng từ database, trừ trường password
     const users = await User.find({}).select("-password");
-    
+
     res.status(200).json(users);
   } catch (error) {
     console.error("Error fetching users:", error.message);
@@ -206,8 +299,11 @@ router.patch("/admin/profile", protectRoute, async (req, res) => {
       // Delete old image from Cloudinary if it exists
       if (user.profileImage && user.profileImage.includes("cloudinary")) {
         try {
-          const parts = user.profileImage.split('/');
-          const oldPublicId = parts.slice(parts.indexOf('upload') + 2).join('/').split('.')[0];
+          const parts = user.profileImage.split("/");
+          const oldPublicId = parts
+            .slice(parts.indexOf("upload") + 2)
+            .join("/")
+            .split(".")[0];
           await cloudinary.uploader.destroy(oldPublicId);
         } catch (deleteError) {
           console.error("Error deleting old profile image:", deleteError);
@@ -216,7 +312,7 @@ router.patch("/admin/profile", protectRoute, async (req, res) => {
 
       // Upload new profile image
       const uploadResponse = await cloudinary.uploader.upload(profileImage, {
-        folder: "Book_Forum/Admin"
+        folder: "Book_Forum/Admin",
       });
 
       updates.profileImage = uploadResponse.secure_url;
@@ -233,10 +329,9 @@ router.patch("/admin/profile", protectRoute, async (req, res) => {
         username: user.username,
         email: user.email,
         profileImage: user.profileImage,
-        role: user.role
-      }
+        role: user.role,
+      },
     });
-
   } catch (error) {
     console.error("Error updating admin profile:", error);
     res.status(500).json({ message: "Internal server error" });

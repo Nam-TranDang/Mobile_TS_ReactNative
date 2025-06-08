@@ -89,6 +89,13 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
     marginBottom: 8,
   },
+  bookAuthor: {
+    fontSize: 16,
+    color: COLORS.textSecondary,
+    marginBottom: 8,
+    marginTop: 2,
+    fontWeight: "500",
+  },
   ratingContainer: {
     flexDirection: "row",
     marginBottom: 12,
@@ -243,22 +250,22 @@ const styles = StyleSheet.create({
     borderTopColor: COLORS.border,
   },
   typingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.03)',
+    backgroundColor: "rgba(0, 0, 0, 0.03)",
     borderRadius: 12,
     marginBottom: 8,
   },
   typingText: {
     fontSize: 12,
     color: COLORS.textSecondary,
-    fontStyle: 'italic',
+    fontStyle: "italic",
     marginRight: 8,
   },
   typingDots: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   typingDot: {
     width: 4,
@@ -277,15 +284,35 @@ const styles = StyleSheet.create({
     opacity: 1,
   },
   viewerCountContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: 'auto',
+    flexDirection: "row",
+    alignItems: "center",
+    marginLeft: "auto",
     marginRight: 8,
   },
   viewerCountText: {
     fontSize: 12,
     color: COLORS.textSecondary,
     marginLeft: 4,
+  },
+  // Thêm style cho nút edit
+  editButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: COLORS.lightBackground,
+    borderRadius: 20,
+    marginRight: 12,
+  },
+  editText: {
+    marginLeft: 4,
+    fontSize: 14,
+    color: COLORS.primary,
+    fontWeight: "500",
+  },
+  actionsRow: {
+    flexDirection: "row",
+    alignItems: "center",
   },
 });
 
