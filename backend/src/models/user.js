@@ -79,6 +79,7 @@ userSchema.pre("save",async function(next){
     this.password = await bcrypt.hash(this.password, salt);
     next();
 });
+
 userSchema.virtual('followingCount').get(function() {
     return this.following ? this.following.length : 0;
 });
@@ -100,6 +101,8 @@ userSchema.methods.getResetPasswordCode = function() {
     this.resetPasswordExpires = Date.now() + 10 * 60 * 1000;
     return resetCode; 
 };
+
+//AUTO remove ngày bị treo và lý do treo useruser
 userSchema.methods.checkAndLiftSuspension = async function() {
     if (this.isSuspended && this.suspensionEndDate && this.suspensionEndDate <= new Date()) {
         this.isSuspended = false;

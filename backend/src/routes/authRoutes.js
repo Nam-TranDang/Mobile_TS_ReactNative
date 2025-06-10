@@ -14,7 +14,6 @@ const generateToken = (userId) => {
     return jwt.sign({userId}, process.env.JWT_SECRET, {expiresIn: "15d"});
 };
 
-
 router.post("/register", async (req,res) => {
     try{
         const {email,username,password}=req.body;
@@ -27,8 +26,13 @@ router.post("/register", async (req,res) => {
         if(username.length<3){
             return res.status(400).json({message: "Username must be at least 3 characters"});
         }
-        //const existingUser = await User.findOne({$or: [{email}, {username}]});
-        //if(existingUser) return res.status(400).json({message: "User already exists"});
+        
+        // Kiểm tra định dạng email hợp lệ - Regular Expression (Regex) 
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({message: "Invalid email format"});
+        }
+    
         const existingEmail = await User.findOne({email});
         if (existingEmail){
             return res.status(400).json({message: "email already exists"});
@@ -46,18 +50,19 @@ router.post("/register", async (req,res) => {
             role: "user" // mặc định
         });
         await user.save();
-           // THÊM ĐOẠN NÀY - Emit to admin clients khi có user mới đăng ký
-    if (req.emitToAdmins) {
-      req.emitToAdmins("newUser", {
-        user: {
-          _id: newUser._id,
-          username: newUser.username,
-          email: newUser.email,
-          role: newUser.role,
-          createdAt: newUser.createdAt
+        
+        // THÊM ĐOẠN NÀY - Emit to admin clients khi có user mới đăng ký -> fix một chút 
+        if (req.emitToAdmins) {
+        req.emitToAdmins("newUser", {
+            user: {
+                _id: user._id,
+                username: user.username,
+                email: user.email,
+                role: user.role,
+                createdAt: user.createdAt
+            }
+        });
         }
-      });
-    }
         const token = generateToken(user._id);
         res.status(201).json({
             token,
@@ -74,6 +79,7 @@ router.post("/register", async (req,res) => {
         res.status(500).json({message: "Internal server error"});
     }
 });
+
 router.post("/login", async (req,res) => {
     try{
         const {email,password}= req.body;
@@ -83,7 +89,7 @@ router.post("/login", async (req,res) => {
         const user = await User.findOne({email});
         if(!user) return res.status(400).json({message:"User does not exist"});
 
-        const isPasswordCorrect = await user.comparePassword(password);
+        const isPasswordCorrect = await user.comparePassword(password); 
         if(!isPasswordCorrect) return res.status(400).json({message: "invalid credentials"});
         if (user.isSuspended && user.suspensionEndDate && user.suspensionEndDate <= new Date()) {
             await user.checkAndLiftSuspension();
@@ -123,19 +129,21 @@ router.post("/login", async (req,res) => {
         res.status(500).json({message: "Internal server error"});
     }
 });
+
 router.post("/forgot-password", async (req, res) => {
     const { email } = req.body;
-
+    
     if (!email) {
         return res.status(400).json({ success: false, message: 'Vui lòng cung cấp email' });
     }
     try {
         const user = await User.findOne({ email });
-
+        // Do dự án vẫn dùng email giả lập --> nếu email thật thì sẽ được gửi
         if (!user) {
             console.warn(`Yêu cầu reset mật khẩu cho email không tồn tại: ${email}`);
             return res.status(200).json({ success: true, message: 'Nếu email của bạn tồn tại, một mã xác nhận sẽ được gửi.' });
         }
+
         const resetCode = user.getResetPasswordCode(); 
         await user.save({ validateBeforeSave: false });
         const message = `
@@ -149,7 +157,8 @@ router.post("/forgot-password", async (req, res) => {
             email: user.email,
             subject: 'Mã xác nhận đặt lại mật khẩu',
             message,
-});
+        });
+        
         if (emailSent) {
             res.status(200).json({ success: true, message: 'Mã xác nhận đã được gửi tới email của bạn.' });
         } else {
@@ -164,6 +173,7 @@ router.post("/forgot-password", async (req, res) => {
         res.status(500).json({ success: false, message: 'Lỗi máy chủ nội bộ' });
     }
 });
+
 router.post("/reset-password", async (req, res) => {
     const { email, code, newPassword } = req.body;
 
