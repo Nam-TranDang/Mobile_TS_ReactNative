@@ -63,9 +63,9 @@ router.post("/register", async (req,res) => {
             }
         });
         }
-        const token = generateToken(user._id);
+       
         res.status(201).json({
-            token,
+           
             user:{
                 _id: user._id,
                 username: user.username,
