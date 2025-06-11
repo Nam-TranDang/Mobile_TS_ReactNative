@@ -75,6 +75,24 @@ export default function BookDetail() {
       );
     });
 
+    socket.on("bookInteractionUpdate", (updatedBookData) => {
+    // Kiểm tra xem có phải là sách hiện tại không
+    if (updatedBookData._id === bookId) {
+      // Cập nhật state của sách với thông tin tương tác mới
+      setBook((prevBook) => {
+        if (!prevBook) return prevBook;
+        
+        return {
+          ...prevBook,
+          like_count: updatedBookData.like_count,
+          dislike_count: updatedBookData.dislike_count,
+          likedBy: updatedBookData.likedBy,
+          dislikedBy: updatedBookData.dislikedBy,
+        };
+      });
+    }
+  });
+
     // Cleanup when component unmounts
     return () => {
       if (socket) {
@@ -278,12 +296,12 @@ export default function BookDetail() {
 
       if (!response.ok) throw new Error("Failed to update like status");
 
-      const updatedBook = await response.json();
-      // Preserve the user information from the original book object
-      setBook({
-        ...updatedBook,
-        user: book.user, // Keep the existing user information
-      });
+      // const updatedBook = await response.json();
+      // // Preserve the user information from the original book object
+      // setBook({
+      //   ...updatedBook,
+      //   user: book.user, // Keep the existing user information
+      // });
     } catch (error) {
       console.error("Error updating like status:", error);
     } finally {
@@ -307,12 +325,12 @@ export default function BookDetail() {
 
       if (!response.ok) throw new Error("Failed to update dislike status");
 
-      const updatedBook = await response.json();
-      // Preserve the user information
-      setBook({
-        ...updatedBook,
-        user: book.user,
-      });
+      // const updatedBook = await response.json();
+      // // Preserve the user information
+      // setBook({
+      //   ...updatedBook,
+      //   user: book.user,
+      // });
     } catch (error) {
       console.error("Error updating dislike status:", error);
     } finally {
