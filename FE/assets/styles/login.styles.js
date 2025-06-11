@@ -37,8 +37,9 @@ const styles = StyleSheet.create({
     marginTop: -24,
   },
   header: {
-    alignItems: "center",
-    marginBottom: 24,
+    flexDirection: 'row',
+    paddingHorizontal: 2,
+    marginBottom: 10,
   },
   title: {
     fontSize: 32,
@@ -114,6 +115,28 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     fontWeight: "600",
   },
+  backButton:{
+    marginTop: -50,
+  },
+  illustrationText:{
+    color: COLORS.primary,
+    fontSize: 16,
+    textAlign: "center",
+    fontWeight: "600",
+  },
+  cardHeader: {
+    backgroundColor: COLORS.cardBackground,
+    borderRadius: 30,
+    padding: 12,
+    shadowColor: COLORS.red,
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 8,
+    borderWidth: 0.8,
+    borderColor: COLORS.red,
+    marginTop: -12,
+  },
+
 });
 
 export default styles;

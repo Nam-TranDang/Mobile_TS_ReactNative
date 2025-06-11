@@ -351,6 +351,44 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: COLORS.inputBackground,
   },
+  loginPromptContainer: {
+    margin: 20,
+    padding: 20,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 12,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  loginPromptTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.textPrimary,
+    marginTop: 10,
+    marginBottom: 8,
+  },
+  loginPromptText: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  loginButton: {
+    backgroundColor: COLORS.primary,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    width: '100%',
+    alignItems: 'center',
+  },
+  loginButtonText: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });
 
 export default styles;

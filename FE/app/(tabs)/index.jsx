@@ -7,11 +7,11 @@ import {
   Text,
   View,
   RefreshControl,
-  TextInput,
+  // TextInput,
   TouchableOpacity,
   Modal,
   TouchableWithoutFeedback,
-  Keyboard,
+  // Keyboard,
 } from "react-native";
 import { useRouter } from "expo-router"; // Add this import
 import styles from "../../assets/styles/home.styles";
@@ -24,7 +24,9 @@ import { useAuthStore } from "../../store/authStore";
 export const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export default function Home() {
-  const { token } = useAuthStore();
+  const { token, user } = useAuthStore();
+  const isAuthenticated = !!token && !!user;
+
   const router = useRouter(); // Add this line
   const [books, setBooks] = useState([]);
   const [filteredBooks, setFilteredBooks] = useState([]);
@@ -34,7 +36,7 @@ export default function Home() {
   const [hasMore, setHasMore] = useState(true);
 
   // State for filter/search
-  const [searchText, setSearchText] = useState("");
+  // const [searchText, setSearchText] = useState("");
   const [showFilterModal, setShowFilterModal] = useState(false);
 
   const [sortOption, setSortOption] = useState("newest");
@@ -57,6 +59,11 @@ export default function Home() {
         setLoading(true);
       }
 
+      // For non-authenticated users, limit to first page only
+      if (!isAuthenticated && pageNum > 1) {
+        setHasMore(false);
+        return;
+      }
       const response = await fetch(`${API_URL}/books?page=${pageNum}&limit=5`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -76,7 +83,8 @@ export default function Home() {
             );
 
       setBooks(uniqueBooks);
-      setHasMore(pageNum < data.totalPages);
+      // For non-authenticated users, always set hasMore to false after first page
+      setHasMore(isAuthenticated ? pageNum < data.totalPages : false);
       setPage(pageNum);
       //sau khi load sách thì filter, rồi khi hết 5 cuốn thì tiếp tục load và filter đến hết các sách
       applyFiltersAndSort(uniqueBooks);
@@ -95,7 +103,7 @@ export default function Home() {
     setSortDirection("desc");
     setTimeFilter("Any time");
     setcategoryFilter("Any");
-    setSearchText("");
+    // setSearchText("");
   };
 
   const applyFiltersAndSort = (booksToFilter = books) => {
@@ -103,14 +111,14 @@ export default function Home() {
     let filtered = [...booksToFilter];
 
     // Apply search text filter (search by title, caption, or author)
-    if (searchText.trim() !== "") {
-      filtered = filtered.filter(
-        (book) =>
-          book.title.toLowerCase().includes(searchText.toLowerCase()) ||
-          book.caption.toLowerCase().includes(searchText.toLowerCase()) ||
-          book.user.username.toLowerCase().includes(searchText.toLowerCase())
-      );
-    }
+    // if (searchText.trim() !== "") {
+    //   filtered = filtered.filter(
+    //     (book) =>
+    //       book.title.toLowerCase().includes(searchText.toLowerCase()) ||
+    //       book.caption.toLowerCase().includes(searchText.toLowerCase()) ||
+    //       book.user.username.toLowerCase().includes(searchText.toLowerCase())
+    //   );
+    // }
 
     // Apply time filter
     if (timeFilter !== "Any time") {
@@ -174,19 +182,20 @@ export default function Home() {
   // Re-apply filters whenever any filter criteria changes
   useEffect(() => {
     applyFiltersAndSort();
-  }, [searchText, sortOption, sortDirection, timeFilter, categoryFilter]);
+  }, [sortOption, sortDirection, timeFilter, categoryFilter]);
 
   useEffect(() => {
     fetchBooks();
-  }, []);
+  }, [isAuthenticated]);
 
   const handleLoadMore = async () => {
     // Only load more when we're not filtering by search text or author
     if (
+      isAuthenticated &&
       hasMore &&
       !loading &&
       !refreshing &&
-      searchText.trim() === "" &&
+      // searchText.trim() === "" &&
       timeFilter === "Any time" &&
       categoryFilter === "Any"
     ) {
@@ -195,14 +204,42 @@ export default function Home() {
     }
   };
 
-  const handleSearch = (text) => {
-    setSearchText(text);
+  const handleBookClick = (bookId) => {
+    if (isAuthenticated) {
+      router.push({
+        pathname: "/bookdetail",
+        params: { bookId },
+      });
+    } else {
+      // Show login prompt
+      showLoginPrompt();
+    }
   };
 
-  const clearSearch = () => {
-    setSearchText("");
-    Keyboard.dismiss();
+  const handleUserClick = (userId) => {
+    if (isAuthenticated) {
+      router.push({
+        pathname: "/userprofile",
+        params: { userId },
+      });
+    } else {
+      showLoginPrompt();
+    }
   };
+
+  const showLoginPrompt = () => {
+    // Navigate to login screen with the ability to go back
+    router.push("/(auth)/");
+  };
+
+  // const handleSearch = (text) => {
+  //   setSearchText(text);
+  // };
+
+  // const clearSearch = () => {
+  //   setSearchText("");
+  //   Keyboard.dismiss();
+  // };
 
   const applyFilters = () => {
     applyFiltersAndSort();
@@ -213,12 +250,7 @@ export default function Home() {
   const renderItem = ({ item }) => (
     <TouchableOpacity
       style={styles.bookCard}
-      onPress={() =>
-        router.push({
-          pathname: "/bookdetail",
-          params: { bookId: item._id },
-        })
-      }
+      onPress={() => handleBookClick(item._id)}
     >
       {/* Header of the book card */}
       <View style={styles.bookHeader}>
@@ -226,10 +258,7 @@ export default function Home() {
           style={styles.userInfo}
           onPress={(e) => {
             e.stopPropagation();
-            router.push({
-              pathname: "/userprofile",
-              params: { userId: item.user._id },
-            });
+            handleUserClick(item.user._id);
           }}
         >
           <Image
@@ -303,7 +332,6 @@ export default function Home() {
   //   </View>
   // );
 
-  // Filter modal using the design from the image you sent
   const renderFilterModal = () => (
     <Modal
       transparent={true}
@@ -590,6 +618,23 @@ export default function Home() {
     </Modal>
   );
 
+    // Login prompt component for non-authenticated users
+  const LoginPrompt = () => (
+    <View style={styles.loginPromptContainer}>
+      <Ionicons name="lock-closed" size={40} color={COLORS.primary} />
+      <Text style={styles.loginPromptTitle}>Login Required</Text>
+      <Text style={styles.loginPromptText}>
+        You need to login to see more books and access all features
+      </Text>
+      <TouchableOpacity
+        style={styles.loginButton}
+        onPress={() => router.push("/(auth)/")}
+      >
+        <Text style={styles.loginButtonText}>Login / Register</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
   if (loading && !refreshing) return <Loader size="large" />;
 
   return (
@@ -629,18 +674,21 @@ export default function Home() {
           </View>
         }
         ListFooterComponent={
-          hasMore &&
-          books.length > 0 &&
-          searchText.trim() === "" &&
-          timeFilter === "Any time" &&
-          categoryFilter === "Any" ? (
-            <ActivityIndicator
-              style={styles.footerLoader}
-              size="small"
-              color={COLORS.primary}
-            />
-          ) : null
-        }
+          <>
+            {!isAuthenticated && books.length > 0 && <LoginPrompt />}
+            {isAuthenticated &&
+              hasMore &&
+              books.length > 0 &&
+              timeFilter === "Any time" &&
+              categoryFilter === "Any" && (
+                <ActivityIndicator
+                  style={styles.footerLoader}
+                  size="small"
+                  color={COLORS.primary}
+                />
+              )}
+          </>
+        }        
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Ionicons
@@ -649,14 +697,12 @@ export default function Home() {
               color={COLORS.textSecondary}
             />
             <Text style={styles.emptyText}>
-              {searchText ||
-              timeFilter !== "Any time" ||
+              {timeFilter !== "Any time" ||
               categoryFilter !== "Any"
                 ? "No results found"
                 : "No recommendations yet"}
             </Text>
-            {searchText ||
-            timeFilter !== "Any time" ||
+            {timeFilter !== "Any time" ||
             categoryFilter !== "Any" ? (
               <Text style={styles.emptySubtext}>Try different filters</Text>
             ) : (

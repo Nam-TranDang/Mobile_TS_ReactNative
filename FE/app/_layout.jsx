@@ -38,20 +38,31 @@ export default function RootLayout() {
   }, [fontsLoaded]);
 
   // Chỉ điều hướng khi app đã sẵn sàng
+  // useEffect(() => {
+  //   if (!appIsReady) return;
+
+  //   const inAuthScreen = segments[0] === "(auth)";
+  //   const isSignedIn = user && token; // Dùng setTimeout với độ trễ nhỏ để đảm bảo component đã mount
+  //   const timer = setTimeout(() => {
+  //     // if (!isSignedIn && !inAuthScreen) {
+  //     //   router.replace("(auth)");
+  //     // } else 
+  //     if (isSignedIn && inAuthScreen) {
+  //       router.replace("/(tabs)");
+  //     }
+  //   }, 100);
+
+  //   return () => clearTimeout(timer);
+  // }, [appIsReady, user, token, segments]);
   useEffect(() => {
     if (!appIsReady) return;
 
     const inAuthScreen = segments[0] === "(auth)";
-    const isSignedIn = user && token; // Dùng setTimeout với độ trễ nhỏ để đảm bảo component đã mount
-    const timer = setTimeout(() => {
-      if (!isSignedIn && !inAuthScreen) {
-        router.replace("(auth)");
-      } else if (isSignedIn && inAuthScreen) {
-        router.replace("(tabs)");
-      }
-    }, 100);
-
-    return () => clearTimeout(timer);
+    // Chỉ chuyển hướng từ auth screen về tabs khi đã đăng nhập
+    // Không tự động chuyển hướng từ tabs hoặc các trang khác đến auth screen
+    if (inAuthScreen && user && token) {
+      router.replace("/(tabs)");
+    }
   }, [appIsReady, user, token, segments]);
 
   // Không render gì cả cho đến khi ứng dụng đã sẵn sàng

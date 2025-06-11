@@ -319,16 +319,16 @@ export default function BookDetail() {
       setIsDisliking(false);
     }
   };
-  // Add this function to check if the current user has liked or disliked the book
-  const isLikedByUser = () => {
-    // Make sure types match for comparison (string vs ObjectId)
-    const userId = user?.id?.toString();
-    return book?.likedBy?.some((id) => id.toString() === userId);
-  };
+  // // Add this function to check if the current user has liked or disliked the book
+  // const isLikedByUser = () => {
+  //   // Make sure types match for comparison (string vs ObjectId)
+  //   const userId = user?.id?.toString();
+  //   return book?.likedBy?.some((id) => id.toString() === userId);
+  // };
 
-  const isDislikedByUser = () => {
-    return book?.dislikedBy?.includes(user?.id);
-  };
+  // const isDislikedByUser = () => {
+  //   return book?.dislikedBy?.includes(user?.id);
+  // };
 
   return (
     <KeyboardAvoidingView

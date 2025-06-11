@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { API_URL } from '../constants/api';
+import { router } from 'expo-router';
 
 export const useAuthStore = create((set) => ({
     user : null,
@@ -31,7 +32,9 @@ export const useAuthStore = create((set) => ({
 
             set({user: data.user, token: data.token, isLoading: false});
             return {success : true};
-        } catch(error){}
+        } catch(error){
+            console.log("Registration error", error);
+        }
     },
 
     checkAuth: async () => {
@@ -78,8 +81,14 @@ export const useAuthStore = create((set) => ({
     },
 
     logout: async () => {
-        await AsyncStorage.removeItem('token');
-        await AsyncStorage.removeItem('user');
-        set({token: null, user: null});
+        try {
+            await AsyncStorage.removeItem('token');
+            await AsyncStorage.removeItem('user');
+            set({token: null, user: null});
+            // Chuyển hướng về trang home sau khi đăng xuất
+            router.replace('/(tabs)');
+        } catch (error) {
+        console.error('Error during logout:', error);
+        }
     },
 }));

@@ -38,8 +38,23 @@ export default function Login() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <View style={styles.container}>
+        {/* Header with back button */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.replace("/(tabs)")}
+          >
+            <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
+          </TouchableOpacity>
+        </View>
+
         {/* illusration */}
         <View style={styles.topIllustration}>
+          <View style={styles.cardHeader}>
+            <Text style={styles.illustrationText}>
+              Bạn cần đăng nhập để được trải nghiệm đầy đủ các tính năng!
+            </Text>
+          </View>
           <Image
             source={require("../../assets/images/Reading_glasses.png")}
             style={styles.illustrationImage}
