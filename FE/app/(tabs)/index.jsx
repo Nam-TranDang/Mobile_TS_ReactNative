@@ -285,7 +285,7 @@ export default function Home() {
         </View>
         <Text style={styles.caption}>{item.caption}</Text>
         <Text style={styles.date}>
-          Shared on {formatPublishDate(item.createAt)}
+          Shared on {formatPublishDate(item.createdAt)}
         </Text>
       </View>
     </TouchableOpacity>
@@ -331,6 +331,38 @@ export default function Home() {
   //     </TouchableOpacity>
   //   </View>
   // );
+
+  const renderRecommendationBar = () => (
+    <View style={styles.searchContainer}>
+      <TouchableOpacity
+        style={styles.searchInputContainer}
+        activeOpacity={0.7}
+        onPress={() => {
+          // Check if user is authenticated before navigating
+          if (isAuthenticated) {
+            router.push("/(tabs)/create");
+          } else {
+            // If not authenticated, redirect to login screen
+            router.push("/(auth)/");
+          }
+        }}
+      >
+        <Ionicons
+          name="add-circle-outline"
+          size={20}
+          color={COLORS.textSecondary}
+          style={styles.searchIcon}
+        />
+        <Text style={styles.searchPlaceholder}> Bạn muốn giới thiệu sách gì?</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.sortButton}
+        onPress={() => setShowFilterModal(true)}
+      >
+        <Ionicons name="filter" size={20} color={COLORS.white} />
+      </TouchableOpacity>
+    </View>
+  );
 
   const renderFilterModal = () => (
     <Modal
@@ -618,7 +650,7 @@ export default function Home() {
     </Modal>
   );
 
-    // Login prompt component for non-authenticated users
+  // Login prompt component for non-authenticated users
   const LoginPrompt = () => (
     <View style={styles.loginPromptContainer}>
       <Ionicons name="lock-closed" size={40} color={COLORS.primary} />
@@ -640,6 +672,7 @@ export default function Home() {
   return (
     <View style={styles.container}>
       {/* {renderSearchBar()} */}
+      
       {renderFilterModal()}
       <FlatList
         data={filteredBooks}
@@ -663,14 +696,15 @@ export default function Home() {
             <Text style={styles.headerSubtitle}>
               Discover great reads from the community
             </Text>
-            <View style={styles.filterbutton}>
+            {/* <View style={styles.filterbutton}>
               <TouchableOpacity
                 style={styles.sortButton}
                 onPress={() => setShowFilterModal(true)}
               >
                 <Ionicons name="filter" size={20} color={COLORS.white} />
               </TouchableOpacity>
-            </View>
+            </View> */}
+            {renderRecommendationBar()}
           </View>
         }
         ListFooterComponent={

@@ -3,7 +3,7 @@ import {
   View,
   Text,
   TextInput,
-  FlatList,
+  // FlatList,
   TouchableOpacity,
   ActivityIndicator,
   Image,
@@ -17,7 +17,7 @@ import { router } from "expo-router";
 import { useAuthStore } from "../../store/authStore";
 import { API_URL } from "../../constants/api";
 import styles from "../../assets/styles/search.styles";
-import defaultAvatar from "../../assets/images/default-avatar.png";
+// import defaultAvatar from "../../assets/images/user-128.svg";
 
 export default function SearchScreen() {
   const { token } = useAuthStore();
@@ -242,11 +242,7 @@ export default function SearchScreen() {
             >
               <View style={styles.avatarContainer}>
                 <Image
-                  source={
-                    user.profileImage
-                      ? { uri: user.profileImage }
-                      : defaultAvatar
-                  }
+                  source={{ uri: user.profileImage.replace('/svg?', '/png?') }}
                   style={styles.avatarImage}
                 />
               </View>
@@ -270,7 +266,7 @@ export default function SearchScreen() {
         onPress={() => handleSelectUser(item)}
       >
         <Image
-          source={item.profileImage ? { uri: item.profileImage } : defaultAvatar}
+          source={{ uri: item.profileImage.replace('/svg?', '/png?') }}
           style={styles.resultUserAvatar}
         />
         <View style={styles.resultUserInfo}>

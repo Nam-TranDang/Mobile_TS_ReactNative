@@ -52,18 +52,18 @@ export default function TabLayout() {
         }}
       />
       
-      {/* Create tab - only visible when authenticated */}
+      {/* Notifications tab -  only visible when authenticated */}
       <Tabs.Screen
-        name="create"
+        name="notifications"
         options={{
-          title: "Create",
+          title: "Notifications",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="add-circle-outline" size={size} color={color} />
+            <Ionicons name="notifications-outline" size={size} color={color} />
           ),
-          href: isAuthenticated ? "/create" : null,
+          href: isAuthenticated ? "/notifications" : null,
         }}
       />
-      
+
       {/* Profile tab - only visible when authenticated */}
       <Tabs.Screen
         name="profile"
@@ -109,6 +109,13 @@ export default function TabLayout() {
         options={{
           href: null,
           title: "Edit Book",
+        }}
+      />
+      <Tabs.Screen
+        name="create"
+        options={{
+          href: null,
+          title: "Create",
         }}
       />
     </Tabs>

@@ -135,16 +135,12 @@ const styles = StyleSheet.create({
   // Search bar
   searchContainer: {
     flexDirection: "row",
-    paddingHorizontal: 16,
+    paddingHorizontal: 5,
     paddingVertical: 10,
     backgroundColor: COLORS.background,
     alignItems: "center",
     zIndex: 1,
-    shadowColor: COLORS.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
+    marginTop: 20,
   },
   searchInputContainer: {
     flex: 1,
@@ -181,7 +177,7 @@ const styles = StyleSheet.create({
   searchPlaceholder: {
     flex: 1,
     fontSize: 16,
-    color: COLORS.textSecondary,
+    color: COLORS.textPrimary,
     paddingVertical: 10,
   },
 
