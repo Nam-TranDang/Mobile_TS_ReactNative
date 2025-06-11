@@ -428,19 +428,14 @@ export default function EditBook() {
                 onPress={() => setShowGenreModal(true)}
               >
                 <Ionicons
-                  name="albums-outline"
+                  name="list-outline"
                   size={20}
                   color={COLORS.textSecondary}
-                  style={style.inputIcon}
+                  style={style.genreSelectorIcon}
                 />
-                <Text
-                  style={[
-                    style.genreText,
-                    !selectedGenre && style.placeholderText,
-                  ]}
-                >
-                  {selectedGenre ? selectedGenre.genre_name : "Select a genre"}
-                </Text>
+                  <Text style={selectedGenre ? style.selectedGenreName : style.genrePlaceholder}>
+                    {selectedGenre ? selectedGenre.genre_name : "Select a genre"}
+                  </Text>
                 <Ionicons
                   name="chevron-down"
                   size={20}
@@ -487,34 +482,34 @@ export default function EditBook() {
               />
             </View>
 
-            {/* Submit Button */}
-            <TouchableOpacity
-              style={style.button}
-              onPress={handleSubmit}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator size="small" color={COLORS.white} />
-              ) : (
-                <Text style={style.buttonText}>Update Book</Text>
-              )}
-            </TouchableOpacity>
+            {/* Submit and Cancel Buttons in a Row */}
+            <View style={style.twoBtnInline}>
+              {/* Cancel Button */}
+              <TouchableOpacity
+                style={[
+                  style.button,
+                  { backgroundColor: COLORS.background, flex: 1 },
+                ]}
+                onPress={() => router.back()}
+                disabled={loading}
+              >
+                <Text style={style.buttonText1}>Cancel</Text>
+              </TouchableOpacity>
 
-            {/* Cancel Button */}
-            <TouchableOpacity
-              style={[
-                style.button,
-                { backgroundColor: COLORS.primary, marginTop: 10 },
-              ]}
-              onPress={() => router.back()} // Using router.back() is better than router.push("/profile")
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator size="small" color={COLORS.white} />
-              ) : (
-                <Text style={style.buttonText}>Cancel</Text>
-              )}
-            </TouchableOpacity>
+              {/* Update Button */}
+              <TouchableOpacity
+                style={[style.button, { flex: 1 }]}
+                onPress={handleSubmit}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator size="small" color={COLORS.white} />
+                ) : (
+                  <Text style={style.buttonText}>Update Book</Text>
+                )}
+              </TouchableOpacity>
+
+            </View>
           </View>
         </View>
       </ScrollView>

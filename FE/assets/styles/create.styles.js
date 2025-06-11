@@ -133,6 +133,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
   },
+  buttonText1: {
+    color: COLORS.placeholderText,
+    fontSize: 16,
+    fontWeight: "600",
+  },
   buttonIcon: {
     marginRight: 8,
   },
@@ -237,6 +242,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: COLORS.background,
   },
+  twoBtnInline:{
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center',
+    marginTop: 10,
+    gap: 10
+  }
 });
 
 export default styles;
