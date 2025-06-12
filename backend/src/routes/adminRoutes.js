@@ -35,14 +35,12 @@ const normalizeGenreName = (name) => {
 
 router.get("/genres", protectRoute, isAdmin, async (req, res) => {
   try {
-    const genres = await Genre.find({ soft_delete: false }) // neu chua xoa mem thi get 
-      .select("genre_name _id") // select ten va id tu mongo
+    // THAY ĐỔI: Bỏ filter soft_delete để lấy TẤT CẢ genres
+    const genres = await Genre.find({}) // Lấy tất cả genres không phân biệt soft_delete
+      .select("genre_name _id soft_delete") // Thêm soft_delete vào select để frontend biết trạng thái
       .sort({ genre_name: 1 }); // Sort alphabetically 
 
-    if (!genres || genres.length === 0) {
-      return res.status(404).json({ message: "No genres found" });
-    }
-
+    // Không cần check empty vì admin cần thấy tất cả kể cả khi không có genre
     res.status(200).json(genres);
   } catch (error) {
     console.error("Error fetching genres:", {
@@ -427,6 +425,206 @@ Trân trọng,
   }
 });
 
+
+// API để bỏ khóa user
+router.post("/users/:userId/unsuspend", protectRoute, isAdmin, async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Validate ID
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: "Invalid user ID format." });
+    }
+
+    const userToUnsuspend = await User.findById(userId);
+    if (!userToUnsuspend) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    // Kiểm tra user có đang bị khóa không
+    if (!userToUnsuspend.isSuspended) {
+      return res.status(400).json({ 
+        message: `User ${userToUnsuspend.username} is not currently suspended.` 
+      });
+    }
+
+    // Bỏ khóa user
+    userToUnsuspend.isSuspended = false;
+    userToUnsuspend.suspensionEndDate = null;
+    userToUnsuspend.suspensionReason = null;
+    await userToUnsuspend.save();
+
+    console.log(`User ${userToUnsuspend.username} (ID: ${userId}) has been unsuspended by admin.`);
+
+    let message = `User ${userToUnsuspend.username} has been unsuspended successfully.`;
+
+    // Gửi email thông báo bỏ khóa
+    if (userToUnsuspend.email) {
+      const appName = process.env.SENDGRID_FROM_NAME || 'Bookworm App';
+      const emailSubject = `Thông báo: Tài khoản của bạn đã được mở khóa trên ${appName}`;
+      const emailMessage = 
+`Chào ${userToUnsuspend.username},
+
+Chúng tôi vui mừng thông báo rằng tài khoản của bạn trên ${appName} đã được mở khóa và hoạt động bình thường trở lại.
+
+Bạn có thể tiếp tục sử dụng tất cả các tính năng của ứng dụng. Chúng tôi hy vọng bạn sẽ tuân thủ các quy tắc cộng đồng để tránh các vấn đề tương tự trong tương lai.
+
+Cảm ơn bạn đã hiểu và hợp tác với chúng tôi.
+
+Trân trọng,
+Đội ngũ ${appName}`;
+
+      try {
+        await sendEmail({
+          email: userToUnsuspend.email,
+          subject: emailSubject,
+          message: emailMessage,
+        });
+        console.log(`Unsuspension notification sent to ${userToUnsuspend.email}.`);
+        message += " Notification email sent to user.";
+      } catch (emailError) {
+        console.error(`Failed to send unsuspension email to ${userToUnsuspend.email}:`, emailError);
+        message += " Failed to send email notification.";
+      }
+    } else {
+      message += " User has no email for notification.";
+    }
+
+    res.status(200).json({ 
+      message,
+      user: {
+        id: userToUnsuspend._id,
+        username: userToUnsuspend.username,
+        email: userToUnsuspend.email,
+        isSuspended: userToUnsuspend.isSuspended,
+        suspensionEndDate: userToUnsuspend.suspensionEndDate,
+        suspensionReason: userToUnsuspend.suspensionReason
+      }
+    });
+
+  } catch (error) {
+    console.error("Error unsuspending user:", error);
+    if (error.kind === 'ObjectId') {
+      return res.status(404).json({ message: "User not found or invalid ID." });
+    }
+    res.status(500).json({ message: "Internal server error during unsuspension." });
+  }
+});
+
+// API để kiểm tra trạng thái khóa của user (optional - để admin dễ kiểm tra)
+router.get("/users/:userId/suspension-status", protectRoute, isAdmin, async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: "Invalid user ID format." });
+    }
+
+    const user = await User.findById(userId).select('username email isSuspended suspensionEndDate suspensionReason');
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    // Kiểm tra xem thời gian khóa đã hết chưa (nếu có)
+    const now = new Date();
+    let isCurrentlySuspended = user.isSuspended;
+    
+    if (user.isSuspended && user.suspensionEndDate && user.suspensionEndDate <= now) {
+      // Tự động bỏ khóa nếu thời gian đã hết
+      user.isSuspended = false;
+      user.suspensionEndDate = null;
+      user.suspensionReason = null;
+      await user.save();
+      isCurrentlySuspended = false;
+      console.log(`User ${user.username} automatically unsuspended due to expired suspension time.`);
+    }
+
+    res.status(200).json({
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        isSuspended: isCurrentlySuspended,
+        suspensionEndDate: user.suspensionEndDate,
+        suspensionReason: user.suspensionReason,
+        suspensionExpired: user.suspensionEndDate ? user.suspensionEndDate <= now : null
+      },
+      message: "User suspension status retrieved successfully."
+    });
+
+  } catch (error) {
+    console.error("Error checking user suspension status:", error);
+    if (error.kind === 'ObjectId') {
+      return res.status(404).json({ message: "User not found or invalid ID." });
+    }
+    res.status(500).json({ message: "Internal server error." });
+  }
+});
+
+// api đổi role 
+
+router.patch("/users/:userId/role", protectRoute, isAdmin, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { role } = req.body;
+
+    // Validate ID
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: "Invalid user ID format." });
+    }
+
+    // Validate role
+    const validRoles = ['user', 'admin'];
+    if (!role || !validRoles.includes(role)) {
+      return res.status(400).json({ 
+        message: `Invalid role. Must be one of: ${validRoles.join(', ')}` 
+      });
+    }
+
+    // Không cho phép admin tự thay đổi role của chính mình
+    if (req.user._id.toString() === userId) {
+      return res.status(400).json({ 
+        message: "Admin cannot change their own role" 
+      });
+    }
+
+    const userToUpdate = await User.findById(userId);
+    if (!userToUpdate) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    // Kiểm tra nếu role đã giống rồi thì không cần thay đổi
+    if (userToUpdate.role === role) {
+      return res.status(400).json({ 
+        message: `User ${userToUpdate.username} already has role: ${role}` 
+      });
+    }
+
+    const oldRole = userToUpdate.role;
+    userToUpdate.role = role;
+    await userToUpdate.save();
+
+    console.log(`User ${userToUpdate.username} role changed from ${oldRole} to ${role} by admin.`);
+
+    res.status(200).json({ 
+      message: `User ${userToUpdate.username} role changed from ${oldRole} to ${role} successfully.`,
+      user: {
+        id: userToUpdate._id,
+        username: userToUpdate.username,
+        email: userToUpdate.email,
+        role: userToUpdate.role,
+        oldRole: oldRole
+      }
+    });
+
+  } catch (error) {
+    console.error("Error changing user role:", error);
+    if (error.kind === 'ObjectId') {
+      return res.status(404).json({ message: "User not found or invalid ID." });
+    }
+    res.status(500).json({ message: "Internal server error during role change." });
+  }
+});
 
 router.delete("/books/:bookId", protectRoute, isAdmin, async (req, res) => {
   try {

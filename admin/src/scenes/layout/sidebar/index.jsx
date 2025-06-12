@@ -30,7 +30,7 @@ const SideBar = () => {
   // Sử dụng theme colors thay vì hard-code
   const textColor = colors.gray[100]
   const primaryColor = colors.blueAccent[500]
-  const bgColor = colors.primary[400]
+  const bgColor = colors.primary[500]
   const secondaryBgColor = colors.primary[500]
   const borderColor = colors.primary[300]
 

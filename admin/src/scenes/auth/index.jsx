@@ -1,8 +1,7 @@
-"use client"
-
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
-import { useAuth } from "../../context/AuthContext"
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import LoadingPage from "../loading/index.jsx";
 import {
   Box,
   Button,
@@ -11,82 +10,113 @@ import {
   Paper,
   InputAdornment,
   IconButton,
-  CircularProgress,
   Alert,
   GlobalStyles,
-} from "@mui/material"
-import { Visibility, VisibilityOff, LoginOutlined } from "@mui/icons-material"
+} from "@mui/material";
+import { Visibility, VisibilityOff, LoginOutlined } from "@mui/icons-material";
 
 const Login = () => {
-  const { login } = useAuth()
-  const navigate = useNavigate()
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const timerRef = useRef(null);
 
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  })
-  const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState("")
+  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [showLoading, setShowLoading] = useState(false);
+
+  const startTimer = useCallback(() => {
+    console.log("=== BẮT ĐẦU COUNTDOWN 3 GIÂY ===");
+    console.log("Thời gian bắt đầu:", new Date().getTime());
+    
+    timerRef.current = setTimeout(() => {
+      console.log("=== 3 GIÂY ĐÃ TRÔI QUA ===");
+      console.log("Thời gian kết thúc:", new Date().getTime());
+      console.log("Chuyển hướng đến dashboard...");
+      setShowLoading(false); // Tắt loading trước khi navigate
+      navigate("/");
+    }, 3000); // Đổi từ 5000 thành 3000 (3 giây)
+  }, [navigate]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target
-    setFormData({ ...formData, [name]: value })
-  }
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
 
-  const handleClickShowPassword = () => {
-    setShowPassword(!showPassword)
-  }
+  const handleClickShowPassword = () => setShowPassword(!showPassword);
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError("")
-    setIsLoading(true)
+    e.preventDefault();
+    setError("");
+    setIsLoading(true);
 
     try {
-      const result = await login(formData.email, formData.password)
-      console.log("Kết quả đăng nhập:", result)
+      console.log("Bắt đầu đăng nhập...");
+      const result = await login(formData.email, formData.password);
+      console.log("Kết quả đăng nhập:", result);
 
-      if (!result.success) {
-        setError(result.error)
+      if (result.success === false) {
+        setError(result.error || "Đăng nhập thất bại");
+        setIsLoading(false);
+        return;
       } else {
-        console.log("Đăng nhập thành công, chuyển hướng...")
-        navigate("/")
+        console.log("Đăng nhập thành công!");
+        // KHÔNG tắt isLoading ngay - chuyển sang showLoading
+        setIsLoading(false);
+        setShowLoading(true); // Bắt đầu hiển thị loading
+        
+        // BẮT BUỘC CHỜ 3 GIÂY RỒI MỚI CHUYỂN TRANG
+        console.log("=== BẮT ĐẦU COUNTDOWN 3 GIÂY ===");
+        console.log("Thời gian bắt đầu:", new Date().getTime());
+        
+        timerRef.current = setTimeout(() => {
+          console.log("=== 3 GIÂY ĐÃ TRÔI QUA ===");
+          console.log("Thời gian kết thúc:", new Date().getTime());
+          console.log("Chuyển hướng đến dashboard...");
+          setShowLoading(false); // Tắt loading trước khi navigate
+          navigate("/");
+        }, 3000); // 3 giây thay vì 5 giây
       }
     } catch (error) {
-      console.error("Lỗi khi đăng nhập:", error)
-      setError(error.message || "Đăng nhập thất bại. Vui lòng thử lại sau.")
-    } finally {
-      setIsLoading(false)
+      console.error("Lỗi khi đăng nhập:", error);
+      setError(error.message || "Đăng nhập thất bại. Vui lòng thử lại sau.");
+      setIsLoading(false);
+      return;
     }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        console.log("=== CLEANUP TIMER ===");
+        clearTimeout(timerRef.current);
+      }
+    };
+  }, []);
+
+  // Comment tạm thời
+  // const { isAuthenticated } = useAuth();
+
+  if (isLoading || showLoading) {
+    console.log("=== HIỂN THỊ LOADING PAGE ===");
+    console.log("Timestamp:", new Date().getTime());
+    console.log("isLoading:", isLoading, "showLoading:", showLoading);
+    
+    // Khác biệt message dựa vào trạng thái
+    const message = isLoading ? "Đang đăng nhập..." : "Đang chuẩn bị dashboard...";
+    return <LoadingPage message={message} />;
   }
 
   return (
     <>
-      {/* Global CSS Reset */}
       <GlobalStyles
         styles={{
-          "*": {
-            margin: 0,
-            padding: 0,
-            boxSizing: "border-box",
-          },
-          "html, body": {
-            margin: 0,
-            padding: 0,
-            overflow: "hidden",
-            height: "100%",
-            width: "100%",
-          },
-          "#root": {
-            margin: 0,
-            padding: 0,
-            height: "100vh",
-            width: "100vw",
-          },
+          "*": { margin: 0, padding: 0, boxSizing: "border-box" },
+          "html, body": { margin: 0, padding: 0, overflow: "hidden", height: "100%", width: "100%" },
+          "#root": { margin: 0, padding: 0, height: "100%", width: "100%" },
         }}
       />
-
       <Box
         sx={{
           position: "fixed",
@@ -105,13 +135,7 @@ const Login = () => {
           overflow: "hidden",
         }}
       >
-        <Box
-          sx={{
-            width: "100%",
-            maxWidth: "450px",
-            margin: "0 20px",
-          }}
-        >
+        <Box sx={{ width: "100%", maxWidth: "450px", margin: "0 20px" }}>
           <Paper
             elevation={0}
             sx={{
@@ -124,7 +148,6 @@ const Login = () => {
               margin: 0,
             }}
           >
-            {/* Header với icon */}
             <Box sx={{ textAlign: "center", mb: 3 }}>
               <Box
                 sx={{
@@ -155,13 +178,7 @@ const Login = () => {
               >
                 Đăng nhập Admin
               </Typography>
-              <Typography
-                variant="body2"
-                sx={{
-                  color: "#666",
-                  fontSize: "0.9rem",
-                }}
-              >
+              <Typography variant="body2" sx={{ color: "#666", fontSize: "0.9rem" }}>
                 Chào mừng trở lại! Vui lòng đăng nhập để tiếp tục.
               </Typography>
             </Box>
@@ -191,36 +208,20 @@ const Login = () => {
                 onChange={handleChange}
                 required
                 autoComplete="email"
+                disabled={isLoading}
                 sx={{
                   mb: 2,
                   "& .MuiOutlinedInput-root": {
                     borderRadius: "10px",
                     backgroundColor: "#f8f9fa",
-                    "& fieldset": {
-                      borderColor: "#e0e0e0",
-                      borderWidth: "1px",
-                    },
-                    "&:hover fieldset": {
-                      borderColor: "#667eea",
-                    },
-                    "&.Mui-focused fieldset": {
-                      borderColor: "#667eea",
-                      borderWidth: "2px",
-                    },
+                    "& fieldset": { borderColor: "#e0e0e0", borderWidth: "1px" },
+                    "&:hover fieldset": { borderColor: "#667eea" },
+                    "&.Mui-focused fieldset": { borderColor: "#667eea", borderWidth: "2px" },
                   },
-                  "& .MuiInputLabel-root": {
-                    color: "#666",
-                    "&.Mui-focused": {
-                      color: "#667eea",
-                    },
-                  },
-                  "& .MuiOutlinedInput-input": {
-                    color: "#333",
-                    padding: "14px",
-                  },
+                  "& .MuiInputLabel-root": { color: "#666", "&.Mui-focused": { color: "#667eea" } },
+                  "& .MuiOutlinedInput-input": { color: "#333", padding: "14px" },
                 }}
               />
-
               <TextField
                 fullWidth
                 label="Mật khẩu"
@@ -231,6 +232,7 @@ const Login = () => {
                 onChange={handleChange}
                 required
                 autoComplete="current-password"
+                disabled={isLoading}
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
@@ -238,12 +240,8 @@ const Login = () => {
                         aria-label="toggle password visibility"
                         onClick={handleClickShowPassword}
                         edge="end"
-                        sx={{
-                          color: "#666",
-                          "&:hover": {
-                            color: "#667eea",
-                          },
-                        }}
+                        disabled={isLoading}
+                        sx={{ color: "#666", "&:hover": { color: "#667eea" } }}
                       >
                         {showPassword ? <VisibilityOff /> : <Visibility />}
                       </IconButton>
@@ -255,31 +253,36 @@ const Login = () => {
                   "& .MuiOutlinedInput-root": {
                     borderRadius: "10px",
                     backgroundColor: "#f8f9fa",
-                    "& fieldset": {
-                      borderColor: "#e0e0e0",
-                      borderWidth: "1px",
-                    },
-                    "&:hover fieldset": {
-                      borderColor: "#667eea",
-                    },
-                    "&.Mui-focused fieldset": {
-                      borderColor: "#667eea",
-                      borderWidth: "2px",
-                    },
+                    "& fieldset": { borderColor: "#e0e0e0", borderWidth: "1px" },
+                    "&:hover fieldset": { borderColor: "#667eea" },
+                    "&.Mui-focused fieldset": { borderColor: "#667eea", borderWidth: "2px" },
                   },
-                  "& .MuiInputLabel-root": {
-                    color: "#666",
-                    "&.Mui-focused": {
-                      color: "#667eea",
-                    },
-                  },
-                  "& .MuiOutlinedInput-input": {
-                    color: "#333",
-                    padding: "14px",
-                  },
+                  "& .MuiInputLabel-root": { color: "#666", "&.Mui-focused": { color: "#667eea" } },
+                  "& .MuiOutlinedInput-input": { color: "#333", padding: "14px" },
                 }}
               />
-
+              <Button
+                onClick={() => {
+                  console.log("=== TEST LOADING BUTTON ===");
+                  setShowLoading(true);
+                  
+                  console.log("=== BẮT ĐẦU COUNTDOWN 3 GIÂY ===");
+                  console.log("Thời gian bắt đầu:", new Date().getTime());
+                  
+                  timerRef.current = setTimeout(() => {
+                    console.log("=== 3 GIÂY ĐÃ TRÔI QUA ===");
+                    console.log("Thời gian kết thúc:", new Date().getTime());
+                    console.log("Chuyển hướng đến dashboard...");
+                    setShowLoading(false);
+                    navigate("/");
+                  }, 3000); // Đổi thành 3 giây
+                }}
+                variant="outlined"
+                fullWidth
+                sx={{ mb: 2 }}
+              >
+                Test Loading Page (3s)
+              </Button>
               <Button
                 type="submit"
                 variant="contained"
@@ -300,33 +303,14 @@ const Login = () => {
                     boxShadow: "0 12px 35px rgba(102, 126, 234, 0.4)",
                     transform: "translateY(-1px)",
                   },
-                  "&:disabled": {
-                    background: "#ccc",
-                    boxShadow: "none",
-                    transform: "none",
-                  },
+                  "&:disabled": { background: "#ccc", boxShadow: "none", transform: "none" },
                 }}
               >
-                {isLoading ? (
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <CircularProgress size={18} color="inherit" />
-                    <span>Đang đăng nhập...</span>
-                  </Box>
-                ) : (
-                  "Đăng nhập"
-                )}
+                Đăng nhập
               </Button>
             </Box>
-
-            {/* Footer */}
             <Box sx={{ textAlign: "center", mt: 3 }}>
-              <Typography
-                variant="body2"
-                sx={{
-                  color: "#999",
-                  fontSize: "0.8rem",
-                }}
-              >
+              <Typography variant="body2" sx={{ color: "#999", fontSize: "0.8rem" }}>
                 © 2025 Thư viện tan vỡ. Tất cả quyền được bảo lưu.
               </Typography>
             </Box>
@@ -334,7 +318,7 @@ const Login = () => {
         </Box>
       </Box>
     </>
-  )
-}
+  );
+};
 
-export default Login
+export default Login;

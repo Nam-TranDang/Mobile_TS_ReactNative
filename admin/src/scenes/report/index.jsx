@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import {
   Box,
@@ -20,6 +18,7 @@ import { Header } from "../../components"
 import { DataGrid, GridToolbar } from "@mui/x-data-grid"
 import { tokens } from "../../theme"
 import useAdminSocket from "../../hooks/useAdminSocket" // Import custom hook for socket
+import { useNavigate } from "react-router-dom"
 
 const Report = () => {
   const theme = useTheme()
@@ -35,6 +34,45 @@ const Report = () => {
   const [suspensionDays, setSuspensionDays] = useState("")
   const [error, setError] = useState(null)
   const [successMessage, setSuccessMessage] = useState("")
+
+  const navigate = useNavigate()
+
+const handleViewBookDetail = () => {
+  console.log("=== EXTRACTING BOOK ID ===");
+  console.log("selectedReport:", selectedReport);
+  console.log("reportedItemObject:", selectedReport.reportedItemObject);
+  
+  let bookId;
+  
+  // Sử dụng reportedItemObject thay vì reportedItemId
+  const reportedItem = selectedReport.reportedItemObject;
+  
+  if (typeof reportedItem === "object" && reportedItem !== null) {
+    // Lấy ID từ object gốc
+    bookId = reportedItem._id || reportedItem.id;
+    console.log("Object case - extracted ID:", bookId);
+  } else if (typeof reportedItem === "string") {
+    // Kiểm tra xem có phải là ObjectId không
+    if (reportedItem.length === 24 && /^[a-f\d]{24}$/i.test(reportedItem)) {
+      bookId = reportedItem;
+    } else {
+      console.warn("Received book title instead of ID:", reportedItem);
+      alert("Lỗi: Không thể xác định ID của sách. Dữ liệu báo cáo có thể bị lỗi.");
+      return;
+    }
+  } else {
+    bookId = String(reportedItem);
+  }
+  
+  console.log("Final book ID to navigate:", bookId);
+  
+  if (bookId && bookId !== "undefined" && bookId !== "null") {
+    navigate(`/book?viewBook=${bookId}`);
+  } else {
+    alert("Không thể xác định ID của sách");
+  }
+};
+
 
   // Neumorphism styles
   const getNeumorphicShadow = () => {
@@ -54,6 +92,7 @@ const Report = () => {
       ? `inset 2px 2px 5px ${colors.primary[600]}, inset -2px -2px 5px ${colors.primary[400]}`
       : `inset 2px 2px 5px rgba(0, 0, 0, 0.05), inset -2px -2px 5px rgba(255, 255, 255, 0.8)`
   }
+
 
   // Socket event handler cho report mới
   const handleNewReport = (data) => {
@@ -123,19 +162,23 @@ const Report = () => {
         reason: String(report.reason || ""),
         status: String(report.status || ""),
         // Xử lý reportedItemId để lấy tên thay vì ID
-        reportedItemId:
-          typeof report.reportedItemId === "object"
-            ? report.reportedItemId?.username ||
-              report.reportedItemId?.name ||
-              report.reportedItemId?.title ||
-              report.reportedItemId?._id ||
-              "Unknown"
-            : String(report.reportedItemId || ""),
-        description: String(report.description || ""),
-        adminNotes: String(report.adminNotes || ""),
-        createdAt: report.createdAt,
-        // Lưu object riêng cho dialog
-        reporterObject: report.reporter,
+       // THAY ĐỔI: Hiển thị tên nhưng lưu cả object gốc
+  reportedItemId:
+    typeof report.reportedItemId === "object"
+      ? report.reportedItemId?.username ||
+        report.reportedItemId?.name ||
+        report.reportedItemId?.title ||
+        report.reportedItemId?._id ||
+        "Unknown"
+      : String(report.reportedItemId || ""),
+  
+  description: String(report.description || ""),
+  adminNotes: String(report.adminNotes || ""),
+  createdAt: report.createdAt,
+  
+  // Lưu object riêng cho dialog
+  reporterObject: report.reporter,
+  reportedItemObject: report.reportedItemId, // <-- THÊM DÒNG NÀY để lưu object gốc
       }))
 
       setReports(formattedReports)
@@ -624,21 +667,188 @@ const Report = () => {
                     mb: 1,
                   }}
                 >
-                  ID mục bị báo cáo:
+                    {selectedReport.reportedItemType === "Comment" 
+                    ? "Comment bị báo cáo:" 
+                    : selectedReport.reportedItemType === "Book" 
+                    ? "Sách bị báo cáo:" 
+                    : selectedReport.reportedItemType === "User"
+                    ? "Người dùng bị báo cáo:"
+                    : "Mục bị báo cáo:"}
                 </Typography>
-                <Box
-                  sx={{
-                    backgroundColor: colors.primary[500],
-                    padding: "15px",
-                    borderRadius: "12px",
-                    boxShadow: getNeumorphicInsetShadow(),
-                    color: colors.gray[100],
-                    fontSize: "15px",
-                    mb: 2,
-                  }}
-                >
-                  {selectedReport.reportedItemId}
-                </Box>
+
+                {/* Hiển thị cho Comment */}
+                {selectedReport.reportedItemType === "Comment" && (
+                  <Box
+                    sx={{
+                      backgroundColor: colors.primary[500],
+                      padding: "15px",
+                      borderRadius: "12px",
+                      boxShadow: getNeumorphicInsetShadow(),
+                      color: colors.gray[100],
+                      fontSize: "15px",
+                      mb: 2,
+                      border: `1px solid ${colors.redAccent[400]}`,
+                    }}
+                  >
+                    {/* Hiển thị comment content và user */}
+                    {typeof selectedReport.reportedItemId === "object" && selectedReport.reportedItemId?.content ? (
+                      <div>
+                        <Typography 
+                          variant="body2" 
+                          sx={{ 
+                            color: colors.gray[300], 
+                            mb: 1,
+                            fontWeight: "bold"
+                          }}
+                        >
+                           Người viết: {selectedReport.reportedItemId.user?.username || selectedReport.reportedItemId.user?.name || "Unknown"}
+                        </Typography>
+                        <Typography 
+                          variant="body1" 
+                          sx={{ 
+                            fontStyle: "italic",
+                            backgroundColor: colors.primary[700],
+                            padding: "10px",
+                            borderRadius: "8px",
+                            color: colors.redAccent[200]
+                          }}
+                        >
+                           "{selectedReport.reportedItemId.content}"
+                        </Typography>
+                        {selectedReport.reportedItemId.createdAt && (
+                          <Typography 
+                            variant="caption" 
+                            sx={{ 
+                              color: colors.gray[400], 
+                              mt: 1, 
+                              display: "block" 
+                            }}
+                          >
+                            📅 {new Date(selectedReport.reportedItemId.createdAt).toLocaleString("vi-VN")}
+                          </Typography>
+                        )}
+                      </div>
+                    ) : (
+                      <Typography sx={{ color: colors.gray[400], fontStyle: "italic" }}>
+                        Comment ID: {selectedReport.reportedItemId}
+                        <br />
+                        <small>(Nội dung comment có thể đã bị xóa hoặc không tải được)</small>
+                      </Typography>
+                    )}
+                  </Box>
+                )}
+
+                {/* Hiển thị cho Book */}
+                {selectedReport.reportedItemType === "Book" && (
+                  <Box
+                    sx={{
+                      backgroundColor: colors.primary[500],
+                      padding: "15px",
+                      borderRadius: "12px",
+                      boxShadow: getNeumorphicInsetShadow(),
+                      color: colors.gray[100],
+                      fontSize: "15px",
+                      mb: 2,
+                      border: `1px solid ${colors.redAccent[400]}`,
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      gap: 2,
+                    }}
+                  >
+                    <div style={{ flex: 1 }}>
+                      {typeof selectedReport.reportedItemId === "object" && selectedReport.reportedItemId?.title ? (
+                        <div>
+                          <Typography variant="body1" sx={{ fontWeight: "bold", mb: 0.5 }}>
+                            📚 {selectedReport.reportedItemId.title}
+                          </Typography>
+                          {selectedReport.reportedItemId.user && (
+                            <Typography variant="body2" sx={{ color: colors.gray[400], mb: 0.5 }}>
+                              👤 Tác giả: {selectedReport.reportedItemId.user.username || selectedReport.reportedItemId.user.name}
+                            </Typography>
+                          )}
+                          {selectedReport.reportedItemId.caption && (
+                            <Typography variant="caption" sx={{ color: colors.gray[300] }}>
+                              📝 {selectedReport.reportedItemId.caption.substring(0, 100)}
+                              {selectedReport.reportedItemId.caption.length > 100 ? "..." : ""}
+                            </Typography>
+                          )}
+                        </div>
+                      ) : (
+                        <div>
+                          <Typography>📚 Book ID: {selectedReport.reportedItemId}</Typography>
+                          <Typography variant="caption" sx={{ color: colors.gray[400] }}>
+                            Click "Xem chi tiết" để tải thông tin sách
+                          </Typography>
+                        </div>
+                      )}
+                    </div>
+    <Button
+    onClick={() => {
+      const bookId = typeof selectedReport.reportedItemId === "object" 
+        ? selectedReport.reportedItemId._id || selectedReport.reportedItemId.id
+        : selectedReport.reportedItemId;
+      handleViewBookDetail(bookId);
+    }}
+    sx={{
+      backgroundColor: colors.primary[500],
+      color: colors.blueAccent[400],
+      padding: "10px 20px",
+      borderRadius: "8px",
+      boxShadow: getNeumorphicShadow(),
+      fontSize: "12px",
+      fontWeight: "bold",
+      minWidth: "120px",
+      whiteSpace: "nowrap",
+      "&:hover": {
+        transform: "translateY(-2px)",
+        backgroundColor: colors.primary[500],
+        boxShadow: `${getNeumorphicShadow()}, 0 0 15px ${colors.blueAccent[400]}40`,
+      },
+    }}
+  >
+    🔍 Xem chi tiết
+  </Button>
+                  </Box>
+                )}
+
+                {/* Hiển thị cho User */}
+                {selectedReport.reportedItemType === "User" && (
+                  <Box
+                    sx={{
+                      backgroundColor: colors.primary[500],
+                      padding: "15px",
+                      borderRadius: "12px",
+                      boxShadow: getNeumorphicInsetShadow(),
+                      color: colors.gray[100],
+                      fontSize: "15px",
+                      mb: 2,
+                      border: `1px solid ${colors.redAccent[400]}`,
+                    }}
+                  >
+                    {typeof selectedReport.reportedItemId === "object" && selectedReport.reportedItemId?.username ? (
+                      <div>
+                        <Typography variant="body1" sx={{ fontWeight: "bold", mb: 0.5 }}>
+                          👤 {selectedReport.reportedItemId.username}
+                        </Typography>
+                        {selectedReport.reportedItemId.email && (
+                          <Typography variant="body2" sx={{ color: colors.gray[400] }}>
+                            📧 {selectedReport.reportedItemId.email}
+                          </Typography>
+                        )}
+                        {selectedReport.reportedItemId.role && (
+                          <Typography variant="caption" sx={{ color: colors.gray[300] }}>
+                            🔑 Vai trò: {selectedReport.reportedItemId.role}
+                          </Typography>
+                        )}
+                      </div>
+                    ) : (
+                      <Typography>
+                        👤 User: {selectedReport.reportedItemId}
+                      </Typography>
+                    )}
+                  </Box>
+                )}
               </Grid>
 
               <Grid item xs={12}>
