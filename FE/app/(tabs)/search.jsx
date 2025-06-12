@@ -17,7 +17,8 @@ import { router } from "expo-router";
 import { useAuthStore } from "../../store/authStore";
 import { API_URL } from "../../constants/api";
 import styles from "../../assets/styles/search.styles";
-// import defaultAvatar from "../../assets/images/user-128.svg";
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 
 // Thêm currentUser vào top level
 export default function SearchScreen() {
@@ -560,6 +561,18 @@ export default function SearchScreen() {
       </ScrollView>
     );
   };
+
+  useFocusEffect(
+    useCallback(() => {
+      // Refresh follow states khi user quay lại trang search
+      if (searchResults.users.length > 0) {
+        fetchUserDetails(searchResults.users);
+      }
+      
+      // Refresh suggested users để cập nhật follow status
+      fetchSuggestedUsers();
+    }, [searchResults.users])
+  );
 
   return (
     <SafeAreaView style={styles.container}>
