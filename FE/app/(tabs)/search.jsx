@@ -3,7 +3,6 @@ import {
   View,
   Text,
   TextInput,
-  // FlatList,
   TouchableOpacity,
   ActivityIndicator,
   Image,
@@ -11,6 +10,7 @@ import {
   Keyboard,
   ScrollView,
   SafeAreaView,
+  Alert, // Thêm Alert
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -19,8 +19,9 @@ import { API_URL } from "../../constants/api";
 import styles from "../../assets/styles/search.styles";
 // import defaultAvatar from "../../assets/images/user-128.svg";
 
+// Thêm currentUser vào top level
 export default function SearchScreen() {
-  const { token } = useAuthStore();
+  const { token, user: currentUser } = useAuthStore(); // Thêm currentUser vào đây
   const [searchText, setSearchText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [searchResults, setSearchResults] = useState({
@@ -33,6 +34,8 @@ export default function SearchScreen() {
   const [loadingUserBooks, setLoadingUserBooks] = useState(false);
   const [userDetails, setUserDetails] = useState({});
   const [loadingUserDetails, setLoadingUserDetails] = useState(false);
+  const [followStates, setFollowStates] = useState({}); // Track follow status cho từng user
+  const [followingUsers, setFollowingUsers] = useState({}); // Track loading state khi follow/unfollow
   const searchInputRef = useRef(null);
   const searchTimeoutRef = useRef(null);
 
@@ -159,13 +162,15 @@ export default function SearchScreen() {
     }
   };
 
-  // Thêm hàm fetchUserDetails sau fetchUserBooks
+  // Sửa lại hàm fetchUserDetails
   const fetchUserDetails = async (users) => {
     if (!users || users.length === 0) return;
 
     setLoadingUserDetails(true);
     const userDetailsMap = {};
-    const { id: currentUserId } = useAuthStore.getState();
+    const followStatesMap = {};
+    // Xóa dòng này: const { user: currentUser } = useAuthStore.getState();
+    // Sử dụng currentUser từ top level
 
     try {
       // Lấy thông tin chi tiết của mỗi người dùng
@@ -176,23 +181,136 @@ export default function SearchScreen() {
 
         if (response.ok) {
           const userData = await response.json();
+          
+          // Kiểm tra follow status bằng cách check trong followers array
+          const isFollowing = userData.followers && 
+            Array.isArray(userData.followers) &&
+            userData.followers.some(follower => {
+              if (typeof follower === 'string') {
+                return follower === currentUser?.id;
+              } else if (typeof follower === 'object' && follower._id) {
+                return follower._id === currentUser?.id;
+              }
+              return false;
+            });
+
           userDetailsMap[user._id] = {
             ...userData,
-            followersCount: userData.followersCount || 0,
-            followingCount: userData.followingCount || 0,
-            postsCount: userData.postsCount || 0,
-            isFollowing: userData.followers?.includes(currentUserId) || false,
+            followersCount: userData.followers ? userData.followers.length : 0,
+            followingCount: userData.following ? userData.following.length : 0,
           };
+          
+          followStatesMap[user._id] = isFollowing;
         }
         return null;
       });
 
       await Promise.all(promises);
       setUserDetails(userDetailsMap);
+      setFollowStates(followStatesMap);
     } catch (error) {
       console.error("Error fetching user details:", error);
     } finally {
       setLoadingUserDetails(false);
+    }
+  };
+
+  // Theo dõi hoặc bỏ theo dõi người dùng
+  const handleFollowUser = async (userId) => {
+    const isFollowing = followStates[userId] || false;
+    const url = `${API_URL}/users/${isFollowing ? "unfollow" : "follow"}/${userId}`;
+
+    setFollowingUsers((prev) => ({
+      ...prev,
+      [userId]: true, // Bắt đầu theo dõi trạng thái loading
+    }));
+
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({}),
+      });
+
+      if (response.ok) {
+        // Cập nhật trạng thái follow thành công
+        setFollowStates((prev) => ({
+          ...prev,
+          [userId]: !isFollowing,
+        }));
+
+        // Cập nhật lại danh sách người dùng gợi ý sau khi theo dõi
+        fetchSuggestedUsers();
+      } else {
+        // Xử lý khi theo dõi thất bại (ví dụ: hiển thị thông báo lỗi)
+        Alert.alert("Lỗi", "Không thể thực hiện hành động này. Vui lòng thử lại.");
+      }
+    } catch (error) {
+      console.error("Error following/unfollowing user:", error);
+      Alert.alert("Lỗi", "Đã xảy ra lỗi. Vui lòng thử lại.");
+    } finally {
+      setFollowingUsers((prev) => ({
+        ...prev,
+        [userId]: false, // Kết thúc trạng thái loading
+      }));
+    }
+  };
+
+  // Sửa lại hàm handleFollow để sử dụng đúng endpoint
+  const handleFollow = async (userId, currentFollowStatus) => {
+    if (followingUsers[userId]) return; // Tránh multiple calls
+
+    try {
+      setFollowingUsers((prev) => ({ ...prev, [userId]: true }));
+
+      const endpoint = `${API_URL}/users/${userId}/${
+        currentFollowStatus ? "unfollow" : "follow"
+      }`;
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `Không thể ${currentFollowStatus ? "hủy theo dõi" : "theo dõi"} người dùng`
+        );
+      }
+
+      // Cập nhật trạng thái follow
+      setFollowStates((prev) => ({
+        ...prev,
+        [userId]: !currentFollowStatus,
+      }));
+
+      // Cập nhật followers count trong userDetails
+      setUserDetails((prev) => ({
+        ...prev,
+        [userId]: {
+          ...prev[userId],
+          followersCount: currentFollowStatus
+            ? Math.max(0, (prev[userId]?.followersCount || 0) - 1)
+            : (prev[userId]?.followersCount || 0) + 1,
+        },
+      }));
+
+      console.log(
+        currentFollowStatus
+          ? `Unfollowed user ${userId}`
+          : `Following user ${userId}`
+      );
+    } catch (error) {
+      console.error("Error following/unfollowing user:", error);
+      Alert.alert("Lỗi", "Không thể thực hiện thao tác. Vui lòng thử lại sau.");
+    } finally {
+      setFollowingUsers((prev) => ({ ...prev, [userId]: false }));
     }
   };
 
@@ -258,89 +376,95 @@ export default function SearchScreen() {
   };
 
   // Hiển thị kết quả người dùng
-  const renderUserResult = ({ item }) => (
-    <View style={styles.expandedResultContainer}>
-      {/* User Header */}
-      <TouchableOpacity
-        style={styles.resultItem}
-        onPress={() => handleSelectUser(item)}
-      >
-        <Image
-          source={{ uri: item.profileImage.replace('/svg?', '/png?') }}
-          style={styles.resultUserAvatar}
-        />
-        <View style={styles.resultUserInfo}>
-          <Text style={styles.resultUsername}>{item.username}</Text>
+  const renderUserResult = ({ item }) => {
+    // Xóa dòng này: const { user: currentUser } = useAuthStore();
+    const isOwnProfile = currentUser?.id === item._id;
+    const isFollowing = followStates[item._id] || false;
+    const isFollowLoading = followingUsers[item._id] || false;
 
-          {/* Sửa phần này: Luôn sử dụng bookCount từ kết quả tìm kiếm */}
-          <View style={styles.userStats}>
-            <Text style={styles.userStat}>{item.bookCount || 0} sách</Text>
-            {userDetails[item._id] && (
-              <>
-                <Text style={styles.userStatDot}>•</Text>
-                <Text style={styles.userStat}>
-                  {userDetails[item._id].followersCount} người theo dõi
-                </Text>
-                <Text style={styles.userStatDot}>•</Text>
-                <Text style={styles.userStat}>
-                  {userDetails[item._id].followingCount} đang theo dõi
-                </Text>
-              </>
-            )}
+    return (
+      <View style={styles.expandedResultContainer}>
+        {/* Giữ nguyên phần User Header hiện tại */}
+        <TouchableOpacity
+          style={styles.resultItem}
+          onPress={() => handleSelectUser(item)}
+        >
+          <Image
+            source={{ uri: item.profileImage.replace('/svg?', '/png?') }}
+            style={styles.resultUserAvatar}
+          />
+          <View style={styles.resultUserInfo}>
+            <Text style={styles.resultUsername}>{item.username}</Text>
+
+            <View style={styles.userStats}>
+              <Text style={styles.userStat}>{item.bookCount || 0} sách</Text>
+              {userDetails[item._id] && (
+                <>
+                  <Text style={styles.userStatDot}>•</Text>
+                  <Text style={styles.userStat}>
+                    {userDetails[item._id].followersCount} người theo dõi
+                  </Text>
+                  <Text style={styles.userStatDot}>•</Text>
+                  <Text style={styles.userStat}>
+                    {userDetails[item._id].followingCount} đang theo dõi
+                  </Text>
+                </>
+              )}
+            </View>
           </View>
-        </View>
-        <Ionicons name="chevron-forward" size={20} color={styles.iconColor} />
-      </TouchableOpacity>
+          <Ionicons name="chevron-forward" size={20} color={styles.iconColor} />
+        </TouchableOpacity>
 
-      {/* User's Books */}
-      {loadingUserBooks && !userBooks[item._id] ? (
-        <View style={styles.userBooksLoading}>
-          <ActivityIndicator size="small" color={styles.loading.color} />
-          <Text style={styles.userBooksLoadingText}>Đang tải sách...</Text>
-        </View>
-      ) : userBooks[item._id] && userBooks[item._id].length > 0 ? (
-        <View style={styles.userBooksContainer}>
-          <Text style={styles.userBooksTitle}>Sách đã đăng</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.userBooksScrollContent}
-          >
-            {userBooks[item._id].map((book) => (
-              <TouchableOpacity
-                key={book._id}
-                style={styles.userBookItem}
-                onPress={() => handleSelectBook(book)}
-              >
-                <Image
-                  source={{
-                    uri: book.image || "https://via.placeholder.com/100",
-                  }}
-                  style={styles.userBookCover}
-                />
-                <Text numberOfLines={2} style={styles.userBookTitle}>
-                  {book.title}
-                </Text>
-              </TouchableOpacity>
-            ))}
-            <TouchableOpacity
-              style={styles.viewAllBooks}
-              onPress={() => handleSelectUser(item)}
+        {/* Giữ nguyên phần User's Books hiện tại */}
+        {loadingUserBooks && !userBooks[item._id] ? (
+          <View style={styles.userBooksLoading}>
+            <ActivityIndicator size="small" color={styles.loading.color} />
+            <Text style={styles.userBooksLoadingText}>Đang tải sách...</Text>
+          </View>
+        ) : userBooks[item._id] && userBooks[item._id].length > 0 ? (
+          <View style={styles.userBooksContainer}>
+            <Text style={styles.userBooksTitle}>Sách đã đăng</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.userBooksScrollContent}
             >
-              <View style={styles.viewAllBooksCircle}>
-                <Ionicons
-                  name="arrow-forward"
-                  size={20}
-                  color={styles.iconColor}
-                />
-              </View>
-              <Text style={styles.viewAllBooksText}>Xem tất cả</Text>
-            </TouchableOpacity>
-          </ScrollView>
-        </View>
-      ) : null}
-    </View>
-  );
+              {userBooks[item._id].map((book) => (
+                <TouchableOpacity
+                  key={book._id}
+                  style={styles.userBookItem}
+                  onPress={() => handleSelectBook(book)}
+                >
+                  <Image
+                    source={{
+                      uri: book.image || "https://via.placeholder.com/100",
+                    }}
+                    style={styles.userBookCover}
+                  />
+                  <Text numberOfLines={2} style={styles.userBookTitle}>
+                    {book.title}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+              <TouchableOpacity
+                style={styles.viewAllBooks}
+                onPress={() => handleSelectUser(item)}
+              >
+                <View style={styles.viewAllBooksCircle}>
+                  <Ionicons
+                    name="arrow-forward"
+                    size={20}
+                    color={styles.iconColor}
+                  />
+                </View>
+                <Text style={styles.viewAllBooksText}>Xem tất cả</Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        ) : null}
+      </View>
+    );
+  };
 
   // Hiển thị kết quả sách
   const renderBookResult = ({ item }) => (
