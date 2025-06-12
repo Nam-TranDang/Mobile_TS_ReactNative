@@ -18,6 +18,8 @@ import { formatMemberSince, formatPublishDate } from "../lib/utils";
 import { useAuthStore } from "../store/authStore";
 import { sleep } from "../lib/helper";
 import styles from "../assets/styles/userprofile.styles";
+import { useFocusEffect } from "@react-navigation/native";
+import { useCallback } from "react";
 
 const { width } = Dimensions.get("window");
 const imageSize = (width - 48) / 3; // 3 columns với padding
@@ -32,6 +34,7 @@ export default function UserProfile() {
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [postsCount, setPostsCount] = useState(0);
+  const [isFollowLoading, setIsFollowLoading] = useState(false); // THÊM TRẠNG THÁI TẢI CHO FOLLOW
 
   const { token, user: currentUser } = useAuthStore();
   const router = useRouter();
@@ -52,13 +55,72 @@ export default function UserProfile() {
 
       const userData = await userResponse.json();
       setUser(userData);
-      setFollowersCount(userData.followersCount || 0);
-      setFollowingCount(userData.followingCount || 0);
-      setPostsCount(userData.postsCount || 0);
 
-      // Check if current user is following this user
-      if (!isOwnProfile) {
-        setIsFollowing(userData.followers?.includes(currentUser?.id) || false);
+      // SỬA: Sử dụng length của mảng thay vì virtual field
+      const actualFollowersCount = userData.followers
+        ? userData.followers.length
+        : 0;
+      const actualFollowingCount = userData.following
+        ? userData.following.length
+        : 0;
+
+      setFollowersCount(actualFollowersCount);
+      setFollowingCount(actualFollowingCount);
+
+      // Check follow status - PHƯƠNG PHÁP MỚI
+      if (!isOwnProfile && currentUser?.id) {
+        // Fetch current user data để lấy danh sách following mới nhất
+        try {
+          const currentUserResponse = await fetch(
+            `${API_URL}/users/${currentUser.id}`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+
+          if (currentUserResponse.ok) {
+            const currentUserData = await currentUserResponse.json();
+            // Kiểm tra xem userId có trong danh sách following của current user không
+            const isUserFollowing =
+              currentUserData.following &&
+              Array.isArray(currentUserData.following) &&
+              currentUserData.following.some((followedUser) => {
+                // Kiểm tra cả trường hợp ID string và object
+                if (typeof followedUser === "string") {
+                  return followedUser === userId;
+                } else if (
+                  typeof followedUser === "object" &&
+                  followedUser._id
+                ) {
+                  return followedUser._id === userId;
+                }
+                return false;
+              });
+
+            // console.log("Following check result:", {
+            //   currentUserFollowing: currentUserData.following,
+            //   targetUserId: userId,
+            //   isFollowing: isUserFollowing,
+            // });
+
+            setIsFollowing(isUserFollowing);
+          }
+        } catch (followCheckError) {
+          // console.error("Error checking follow status:", followCheckError);
+          // Fallback: kiểm tra từ userData.followers
+          const fallbackCheck =
+            userData.followers &&
+            Array.isArray(userData.followers) &&
+            userData.followers.some((follower) => {
+              if (typeof follower === "string") {
+                return follower === currentUser.id;
+              } else if (typeof follower === "object" && follower._id) {
+                return follower._id === currentUser.id;
+              }
+              return false;
+            });
+          setIsFollowing(fallbackCheck);
+        }
       }
 
       // Fetch user's books
@@ -75,33 +137,74 @@ export default function UserProfile() {
       setBooks(userBooks);
       setPostsCount(userBooks.length);
     } catch (error) {
-      console.error("Error fetching user profile:", error);
+      // console.error("Error fetching user profile:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleFollow = async () => {
-    try {
-      const endpoint = isFollowing
-        ? `${API_URL}/users/${userId}/follow`
-        : `${API_URL}/users/${userId}/follow`;
+    if (isFollowLoading) return; // Tránh multiple calls
 
-      const method = isFollowing ? "DELETE" : "POST";
+    try {
+      setIsFollowLoading(true);
+
+      // Lưu trạng thái hiện tại để tránh confusion
+      const currentFollowStatus = isFollowing;
+      const currentFollowersCount = followersCount;
+
+      // Endpoint cho follow/unfollow
+      const endpoint = `${API_URL}/users/${userId}/${
+        currentFollowStatus ? "unfollow" : "follow"
+      }`;
 
       const response = await fetch(endpoint, {
-        method,
-        headers: { Authorization: `Bearer ${token}` },
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        setIsFollowing(data.isFollowing);
-        setFollowersCount(data.followersCount);
+      if (!response.ok) {
+        throw new Error(
+          `Không thể ${
+            currentFollowStatus ? "hủy theo dõi" : "theo dõi"
+          } người dùng`
+        );
       }
+
+      const data = await response.json();
+      // console.log("Follow/Unfollow response:", data);
+
+      // Cập nhật state ngay lập tức
+      const newFollowStatus = !currentFollowStatus;
+      setIsFollowing(newFollowStatus);
+
+      // Cập nhật followers count
+      if (currentFollowStatus) {
+        // Vừa unfollow
+        setFollowersCount(Math.max(0, currentFollowersCount - 1));
+      } else {
+        // Vừa follow
+        setFollowersCount(currentFollowersCount + 1);
+      }
+
+      // // Sau 1 giây, refresh lại data để đảm bảo sync với server
+      // setTimeout(() => {
+      //   fetchUserData();
+      // }, 1000);
+
+      // console.log(
+      //   currentFollowStatus
+      //     ? `Unfollowed ${user?.username}`
+      //     : `Following ${user?.username}`
+      // );
     } catch (error) {
-      console.error("Error following/unfollowing user:", error);
-      Alert.alert("Error", "Failed to follow/unfollow user");
+      // console.error("Error following/unfollowing user:", error);
+      Alert.alert("Lỗi", "Không thể thực hiện thao tác. Vui lòng thử lại sau.");
+    } finally {
+      setIsFollowLoading(false);
     }
   };
 
@@ -111,11 +214,24 @@ export default function UserProfile() {
     }
   }, [userId]);
 
+  useFocusEffect(
+    useCallback(() => {
+      if (userId) {
+        fetchUserData();
+      }
+    }, [userId])
+  );
+
   const handleRefresh = async () => {
     setRefreshing(true);
-    await sleep(500);
-    await fetchUserData();
-    setRefreshing(false);
+    try {
+      await sleep(500);
+      await fetchUserData();
+    } catch (error) {
+      // console.error("Error refreshing user profile:", error);
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const renderBookItem = ({ item, index }) => (
@@ -161,31 +277,17 @@ export default function UserProfile() {
             <Text style={styles.statLabel}>Posts</Text>
           </View>
 
-          <TouchableOpacity
-            style={styles.statItem}
-            onPress={() =>
-              router.push({
-                pathname: "/followers",
-                params: { userId, type: "followers" },
-              })
-            }
-          >
+          {/* Chỉ hiển thị số Followers - không có TouchableOpacity */}
+          <View style={styles.statItem}>
             <Text style={styles.statNumber}>{followersCount}</Text>
             <Text style={styles.statLabel}>Followers</Text>
-          </TouchableOpacity>
+          </View>
 
-          <TouchableOpacity
-            style={styles.statItem}
-            onPress={() =>
-              router.push({
-                pathname: "/followers",
-                params: { userId, type: "following" },
-              })
-            }
-          >
+          {/* Chỉ hiển thị số Following - không có TouchableOpacity */}
+          <View style={styles.statItem}>
             <Text style={styles.statNumber}>{followingCount}</Text>
             <Text style={styles.statLabel}>Following</Text>
-          </TouchableOpacity>
+          </View>
         </View>
       </View>
 
@@ -214,25 +316,23 @@ export default function UserProfile() {
                 isFollowing && styles.followingButton,
               ]}
               onPress={handleFollow}
+              disabled={isFollowLoading}
             >
-              <Text
-                style={[
-                  styles.followButtonText,
-                  isFollowing && styles.followingButtonText,
-                ]}
-              >
-                {isFollowing ? "Following" : "Follow"}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.messageButton}
-              onPress={() => {
-                // Navigate to message screen
-                Alert.alert("Message", "Message feature coming soon!");
-              }}
-            >
-              <Text style={styles.messageButtonText}>Message</Text>
+              {isFollowLoading ? (
+                <ActivityIndicator
+                  size="small"
+                  color={isFollowing ? COLORS.primary : COLORS.white}
+                />
+              ) : (
+                <Text
+                  style={[
+                    styles.followButtonText,
+                    isFollowing && styles.followingButtonText,
+                  ]}
+                >
+                  {isFollowing ? "Following" : "Follow"}
+                </Text>
+              )}
             </TouchableOpacity>
 
             <TouchableOpacity
