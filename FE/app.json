@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "BookApp",
-    "slug": "BookApp",
+    "name": "Thư viện tan vỡ",
+    "slug": "Thư viện tan vỡ",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "bookapp",
+    "scheme": "Thư viện tan vỡ",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -28,7 +28,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/logo.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"

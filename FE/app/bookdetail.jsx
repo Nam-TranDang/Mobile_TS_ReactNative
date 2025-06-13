@@ -14,6 +14,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Pressable,
 } from "react-native";
 import styles from "../assets/styles/bookdetail.styles";
 import COLORS from "../constants/colors";
@@ -38,6 +39,34 @@ export default function BookDetail() {
   const [isDisliking, setIsDisliking] = useState(false);
   const [newCommentId, setNewCommentId] = useState(null);
   const socketRef = useRef(null);
+
+  const handleReportComment = (comment) => {
+    Alert.alert(
+      "Report Comment",
+      "Do you want to report this comment?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        {
+          text: "Report",
+          style: "destructive",
+          onPress: () => {
+            router.push({
+              pathname: "/(tabs)/report",
+              params: {
+                id: comment._id,
+                type: "Comment",
+                commentText: comment.text,
+                commentAuthor: comment.user.username,
+              },
+            });
+          }
+        }
+      ]
+    );
+  };
 
   // Thiết lập kết nối Socket.IO
   useEffect(() => {
@@ -119,6 +148,7 @@ export default function BookDetail() {
       Alert.alert("Error", "Failed to load book details");
     }
   };
+
 
   const fetchComments = async (page = 1, append = false) => {
     try {
@@ -221,7 +251,11 @@ export default function BookDetail() {
   };
 
   const renderCommentItem = ({ item }) => (
-    <View style={styles.commentItem}>
+    <Pressable
+      style={styles.commentItem}
+      onLongPress={() => handleReportComment(item)}
+      delayLongPress={750} // 0.5s
+    >
       <TouchableOpacity
         onPress={() =>
           router.push({
@@ -251,26 +285,10 @@ export default function BookDetail() {
           <Text style={styles.commentDate}>
             {formatPublishDate(item.createdAt)}
           </Text>
-          <TouchableOpacity
-            style={styles.commentReportButton}
-            onPress={() =>
-              router.push({
-                pathname: "/(tabs)/report",
-                params: {
-                  id: item._id,
-                  type: "Comment",
-                  commentText: item.text,
-                  commentAuthor: item.user.username,
-                },
-              })
-            }
-          >
-            <Ionicons name="flag-outline" size={16} color={COLORS.red} />
-          </TouchableOpacity>
         </View>
         <Text style={styles.commentText}>{item.text}</Text>
       </View>
-    </View>
+    </Pressable>
   );
 
   if (isLoading && !book) {

@@ -56,9 +56,10 @@ export default function Login() {
             </Text>
           </View>
           <Image
-            source={require("../../assets/images/Reading_glasses.png")}
+            source={require("../../assets/images/logo.png")}
             style={styles.illustrationImage}
             resizeMode="contain"
+            bottom={30}
           />
         </View>
 

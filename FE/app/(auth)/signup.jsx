@@ -38,7 +38,7 @@ export default function Signup() {
                     {/* HEADER */}
                     <View style={styles.header}>
                         <Text style={styles.title}>
-                            BookWorm
+                            Thư viện tan vỡ
                         </Text>
                         <Text style={styles.subtitle}>
                             Share your favorite reads

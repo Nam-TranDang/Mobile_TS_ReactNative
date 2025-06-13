@@ -22,16 +22,32 @@ const styles = StyleSheet.create({
 
   // Header components
   header: {
-    marginBottom: 20,
+    marginBottom: 10,
     alignItems: "center",
   },
+
+  
   headerTitle: {
     fontSize: 24,
     fontFamily: "JetBrainsMono-Medium",
-    letterSpacing: 0.5,
+    letterSpacing: 0.2,
     color: COLORS.primary,
     marginBottom: 8,
+    right: 55,
+    top: 23,
   },
+
+    headerTitle2: {
+    fontSize: 24,
+    fontFamily: "JetBrainsMono-Medium",
+    letterSpacing: 0.2,
+    color: COLORS.primary,
+    marginBottom: 8,
+    right: 60,
+    top: 23,
+  },
+
+
   headerSubtitle: {
     fontSize: 14,
     color: COLORS.textSecondary,

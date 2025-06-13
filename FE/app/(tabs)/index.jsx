@@ -20,6 +20,7 @@ import { API_URL } from "../../constants/api";
 import COLORS from "../../constants/colors";
 import { formatPublishDate } from "../../lib/utils";
 import { useAuthStore } from "../../store/authStore";
+import logo from "../../assets/images/logo.png"
 
 export const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -692,18 +693,13 @@ export default function Home() {
         onEndReachedThreshold={0.1}
         ListHeaderComponent={
           <View style={styles.header}>
-            <Text style={styles.headerTitle}>BookWorm</Text>
-            <Text style={styles.headerSubtitle}>
-              Discover great reads from the community
-            </Text>
-            {/* <View style={styles.filterbutton}>
-              <TouchableOpacity
-                style={styles.sortButton}
-                onPress={() => setShowFilterModal(true)}
-              >
-                <Ionicons name="filter" size={20} color={COLORS.white} />
-              </TouchableOpacity>
-            </View> */}
+            <Text style={styles.headerTitle}>Chào mừng </Text>
+          <Image 
+            source={logo} 
+            style={{ width: 120, height: 110 ,position: "absolute" ,right: 0,}}
+            resizeMode="contain"
+          />
+            <Text style={styles.headerTitle2 }>bạn đã đến với</Text>
             {renderRecommendationBar()}
           </View>
         }
