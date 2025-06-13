@@ -215,12 +215,14 @@ const Genre = () => {
     }
   }
 
-  const handleCellDoubleClick = (params) => {
-    if (params.field === "genre_name" && !params.row.soft_delete) {
-      setEditingRowId(params.id)
-      setTempEditValue(params.value)
-    }
+const handleCellDoubleClick = (params) => {
+  // Chỉ cho phép chỉnh sửa khi genre không bị ẩn (soft_delete = false)
+  if (params.field === "genre_name" && !params.row.soft_delete) {
+    setEditingRowId(params.id)
+    setTempEditValue(params.value)
   }
+}
+
 
   const handleEditSave = async (genreId) => {
     if (!tempEditValue.trim()) {
@@ -266,135 +268,150 @@ const Genre = () => {
     setTempEditValue("")
   }
 
-  const columns = [
-    { field: "stt", headerName: "STT", flex: 0.5 },
-    {
-      field: "genre_name",
-      headerName: "Tên thể loại",
-      flex: 2,
-      renderCell: ({ row, value }) => {
-        if (editingRowId === row.id) {
-          return (
-            <Box sx={{ display: "flex", alignItems: "center", width: "100%" }}>
-              <TextField
-                value={tempEditValue}
-                onChange={(e) => setTempEditValue(e.target.value)}
-                onKeyPress={(e) => {
-                  if (e.key === "Enter") {
-                    handleEditSave(row.id)
-                  } else if (e.key === "Escape") {
-                    handleEditCancel()
-                  }
-                }}
-                onBlur={() => handleEditCancel()}
-                autoFocus
-                size="small"
-                sx={{
-                  mr: 1,
-                  "& .MuiOutlinedInput-root": {
-                    backgroundColor: colors.primary[500],
-                    borderRadius: "8px",
-                    boxShadow: getNeumorphicInsetShadow(),
-                    "& fieldset": { border: "none" },
-                  },
-                  "& .MuiInputBase-input": {
-                    color: colors.gray[100],
-                    padding: "8px 12px",
-                    fontSize: "14px",
-                  },
-                }}
-              />
-            </Box>
-          )
-        }
+const columns = [
+  { field: "stt", headerName: "STT", flex: 0.5 },
+  {
+    field: "genre_name",
+    headerName: "Tên thể loại",
+    flex: 2,
+    renderCell: ({ row, value }) => {
+      if (editingRowId === row.id) {
         return (
-          <Box
-            sx={{
-              opacity: row.soft_delete ? 0.5 : 1,
-              cursor: !row.soft_delete ? "pointer" : "not-allowed",
-              display: "flex",
-              alignItems: "center",
-              padding: "8px 12px",
-              borderRadius: "8px",
-              backgroundColor: colors.primary[500],
-              boxShadow: getNeumorphicInsetShadow(),
-              transition: "all 0.2s ease",
-              "&:hover": {
-                transform: !row.soft_delete ? "translateY(-2px)" : "none",
-              },
-            }}
-            title={!row.soft_delete ? "Double-click để chỉnh sửa" : "Không thể chỉnh sửa khi ẩn"}
-          >
-            <span style={{ color: colors.gray[100], fontSize: "14px", fontWeight: "500" }}>{value}</span>
-            {!row.soft_delete && (
-              <EditIcon
-                sx={{
-                  ml: 1,
+          <Box sx={{ display: "flex", alignItems: "center", width: "100%" }}>
+            <TextField
+              value={tempEditValue}
+              onChange={(e) => setTempEditValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleEditSave(row.id)
+                } else if (e.key === "Escape") {
+                  handleEditCancel()
+                }
+              }}
+              onBlur={() => handleEditCancel()}
+              autoFocus
+              size="small"
+              sx={{
+                mr: 1,
+                "& .MuiOutlinedInput-root": {
+                  backgroundColor: colors.primary[500],
+                  borderRadius: "8px",
+                  boxShadow: getNeumorphicInsetShadow(),
+                  "& fieldset": { border: "none" },
+                },
+                "& .MuiInputBase-input": {
+                  color: colors.gray[100],
+                  padding: "8px 12px",
                   fontSize: "14px",
-                  opacity: 0.6,
-                  color: colors.greenAccent[400],
-                }}
-              />
-            )}
+                },
+              }}
+            />
           </Box>
         )
-      },
-    },
-    {
-      field: "status",
-      headerName: "Trạng thái",
-      flex: 1,
-      renderCell: ({ row }) => (
+      }
+      return (
         <Box
           sx={{
-            backgroundColor: colors.primary[500],
-            color: row.soft_delete ? colors.redAccent[400] : colors.greenAccent[400],
-            padding: "6px 16px",
-            borderRadius: "12px",
-            textAlign: "center",
-            fontSize: "13px",
-            fontWeight: "bold",
-            minWidth: "80px",
+            opacity: row.soft_delete ? 0.5 : 1, // Giảm opacity khi bị ẩn
+            cursor: !row.soft_delete ? "pointer" : "not-allowed",
+            display: "flex",
+            alignItems: "center",
+            padding: "8px 12px",
+            borderRadius: "8px",
+            backgroundColor: row.soft_delete ? colors.primary[500] : colors.primary[500], // Đổi màu nền khi bị ẩn
             boxShadow: getNeumorphicInsetShadow(),
+            transition: "all 0.2s ease",
+            "&:hover": {
+              transform: !row.soft_delete ? "translateY(-2px)" : "none",
+            },
           }}
+          title={!row.soft_delete ? "Double-click để chỉnh sửa" : "Không thể chỉnh sửa khi thể loại đang bị ẩn"}
         >
-          {row.soft_delete ? "Ẩn" : "Hiển thị"}
-        </Box>
-      ),
-    },
-    {
-      field: "action",
-      headerName: "Hành động",
-      flex: 1,
-      renderCell: ({ row }) => (
-        <Box sx={{ display: "flex", gap: 1 }}>
-          <IconButton
-            onClick={() => handleToggleVisibility(row.id, row.soft_delete)}
-            className="neumorphic-btn"
-            sx={{
-              backgroundColor: colors.primary[500],
-              color: row.soft_delete ? colors.greenAccent[400] : colors.redAccent[400],
-              padding: "8px",
-              borderRadius: "12px",
-              boxShadow: getNeumorphicShadow(),
-              transition: "all 0.2s ease",
-              "&:hover": {
-                backgroundColor: colors.primary[500],
-                transform: "translateY(-3px)",
-              },
-              "&:active": {
-                boxShadow: getNeumorphicPressedShadow(),
-                transform: "translateY(1px)",
-              },
+          <span 
+            style={{ 
+              color: row.soft_delete ? colors.gray[400] : colors.gray[100], // Đổi màu text khi bị ẩn
+              fontSize: "14px", 
+              fontWeight: "500",
+              textDecoration: row.soft_delete ? "line-through" : "none" // Gạch ngang khi bị ẩn
             }}
-            title={row.soft_delete ? "Hiển thị" : "Ẩn"}
           >
-            {row.soft_delete ? <VisibilityIcon fontSize="small" /> : <VisibilityOffIcon fontSize="small" />}
-          </IconButton>
+            {value}
+          </span>
+          {!row.soft_delete && (
+            <EditIcon
+              sx={{
+                ml: 1,
+                fontSize: "14px",
+                opacity: 0.6,
+                color: colors.greenAccent[400],
+              }}
+            />
+          )}
         </Box>
-      ),
+      )
     },
-  ]
+  },
+  {
+    field: "status",
+    headerName: "Trạng thái",
+    flex: 1,
+    renderCell: ({ row }) => (
+      <Box
+        sx={{
+          backgroundColor: colors.primary[500],
+          color: row.soft_delete ? colors.redAccent[400] : colors.greenAccent[400],
+          padding: "6px 16px",
+          borderRadius: "12px",
+          textAlign: "center",
+          fontSize: "13px",
+          fontWeight: "bold",
+          minWidth: "80px",
+          boxShadow: getNeumorphicInsetShadow(),
+          border: row.soft_delete ? `1px solid ${colors.redAccent[400]}` : `1px solid ${colors.greenAccent[400]}`,
+        }}
+      >
+        {row.soft_delete ? "Đã ẩn" : "Hiển thị"}
+      </Box>
+    ),
+  },
+   {
+    field: "action",
+    headerName: "Hành động",
+    flex: 1,
+    renderCell: ({ row }) => (
+      <Box sx={{ display: "flex", gap: 1 }}>
+        <IconButton
+          onClick={() => handleToggleVisibility(row.id, row.soft_delete)}
+          className="neumorphic-btn"
+          sx={{
+            backgroundColor: colors.primary[500],
+            color: row.soft_delete ? colors.greenAccent[400] : colors.redAccent[400],
+            padding: "8px",
+            borderRadius: "12px",
+            boxShadow: getNeumorphicShadow(),
+            transition: "all 0.2s ease",
+            border: row.soft_delete 
+              ? `1px solid ${colors.greenAccent[400]}` 
+              : `1px solid ${colors.redAccent[400]}`,
+            "&:hover": {
+              backgroundColor: colors.primary[500],
+              transform: "translateY(-3px)",
+              boxShadow: `${getNeumorphicShadow()}, 0 0 15px ${row.soft_delete ? colors.greenAccent[400] : colors.redAccent[400]}40`,
+            },
+            "&:active": {
+              boxShadow: getNeumorphicPressedShadow(),
+              transform: "translateY(1px)",
+            },
+          }}
+          title={row.soft_delete ? "Click để hiển thị lại thể loại" : "Click để ẩn thể loại"}
+        >
+          {row.soft_delete ? <VisibilityIcon fontSize="small" /> : <VisibilityOffIcon fontSize="small" />}
+        </IconButton>
+      </Box>
+    ),
+  },
+]
+
 
   return (
     <Box m="30px">

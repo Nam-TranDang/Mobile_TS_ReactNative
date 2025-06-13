@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import {
   Box,
@@ -16,6 +14,8 @@ import { Header } from "../../components"
 import { DataGrid, GridToolbar } from "@mui/x-data-grid"
 import { tokens } from "../../theme"
 import useAdminSocket from "../../hooks/useAdminSocket" // Import custom hook for socket connection
+import { useLocation, useSearchParams } from "react-router-dom" // navigate từ rp
+
 
 const Book = () => {
   const theme = useTheme()
@@ -30,6 +30,10 @@ const Book = () => {
   const [imageDialogOpen, setImageDialogOpen] = useState(false)
   const [selectedImage, setSelectedImage] = useState("")
   const [successMessage, setSuccessMessage] = useState("")
+  const [searchParams] = useSearchParams() // Thêm này để đọc URL params
+  const [highlightedBookId, setHighlightedBookId] = useState(null) // Thêm state để highlight book
+
+
 
   // Neumorphism styles
   const getNeumorphicShadow = () => {
@@ -79,6 +83,48 @@ const Book = () => {
   useEffect(() => {
     fetchBooks()
   }, [])
+
+   // Thêm useEffect để xử lý khi có viewBook param từ URL
+useEffect(() => {
+    const viewBookId = searchParams.get('viewBook');
+    console.log("Book page - Received viewBook parameter:", viewBookId); // Debug log
+    
+    if (viewBookId && books.length > 0) {
+      console.log("Book page - Looking for book with ID:", viewBookId);
+      console.log("Book page - Available books:", books.map(b => ({ 
+        id: b.id, 
+        _id: b._id, 
+        shortId: b.shortId 
+      })));
+      
+      // Tìm book tương ứng với nhiều cách khác nhau
+      const bookToView = books.find(book => 
+        book.id === viewBookId || 
+        book._id === viewBookId ||
+        book.shortId === viewBookId ||
+        String(book.id) === String(viewBookId) ||
+        String(book._id) === String(viewBookId)
+      );
+      
+      console.log("Book page - Found book:", bookToView);
+      
+      if (bookToView) {
+        console.log("Book page - Opening dialog for book:", bookToView.title || bookToView.id);
+        // Tự động mở dialog chi tiết
+        setSelectedBook(bookToView);
+        setDialogOpen(true);
+        
+        // Clear URL parameter sau khi mở dialog
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, '', newUrl);
+      } else {
+        console.log("Book page - Book not found with ID:", viewBookId);
+        // Có thể hiển thị thông báo lỗi
+        setError(`Không tìm thấy sách với ID: ${viewBookId}`);
+        setTimeout(() => setError(null), 5000);
+      }
+    }
+  }, [searchParams, books]);
 
   const fetchBooks = async () => {
     try {
@@ -151,14 +197,19 @@ const Book = () => {
     }
   }
 
-  const handleActionClick = (row) => {
+ const handleActionClick = (row) => {
     setSelectedBook(row)
     setDialogOpen(true)
+    // Clear highlight nếu có
+    if (highlightedBookId) {
+      setHighlightedBookId(null)
+    }
   }
 
-  const handleCloseDialog = () => {
+ const handleCloseDialog = () => {
     setDialogOpen(false)
     setSelectedBook(null)
+    setHighlightedBookId(null) // Clear highlight khi đóng dialog
   }
 
   const handleDeleteBook = async () => {

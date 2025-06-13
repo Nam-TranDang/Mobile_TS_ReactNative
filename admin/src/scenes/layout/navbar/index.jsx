@@ -1,4 +1,3 @@
-"use client"
 
 import { Box, IconButton, useMediaQuery, useTheme, Menu, MenuItem, Avatar, Typography, Divider } from "@mui/material"
 import { tokens, ColorModeContext } from "../../../theme"
@@ -307,6 +306,7 @@ const Navbar = () => {
           open={open}
           onClose={handleClose}
           className="neumorphic-dropdown"
+          
           PaperProps={{
             sx: {
               backgroundColor: colors.primary[500],

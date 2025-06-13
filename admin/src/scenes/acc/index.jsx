@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import {
   Box,
@@ -154,7 +152,7 @@ const Acc = () => {
     }))
   }
 
-  // Hàm lưu thay đổi
+// Hàm lưu thay đổi (sửa user)
   const handleSaveEdit = async () => {
     try {
       setEditLoading(true)
@@ -166,24 +164,27 @@ const Acc = () => {
       }
 
       const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000"
-      const response = await fetch(`${API_URL}/api/users/${editUser.id}`, {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username: editFormData.username,
-          role: editFormData.role,
-        }),
-      })
+      
+      // SỬA: Gọi API đổi role riêng biệt nếu role thay đổi
+      if (editFormData.role !== editUser.status) {
+        const roleResponse = await fetch(`${API_URL}/api/admin/users/${editUser.id}/role`, {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            role: editFormData.role,
+          }),
+        })
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || "Không thể cập nhật thông tin người dùng")
+        if (!roleResponse.ok) {
+          const errorData = await roleResponse.json()
+          throw new Error(errorData.message || "Không thể cập nhật vai trò người dùng")
+        }
       }
 
-      // Cập nhật danh sách người dùng
+        // Cập nhật danh sách người dùng
       setUsers(
         users.map((user) =>
           user.id === editUser.id
@@ -224,7 +225,7 @@ const Acc = () => {
     setUserToLock(null)
   }
 
-  // Hàm thực hiện khóa/mở khóa tài khoản
+   // Hàm thực hiện khóa/mở khóa tài khoản
   const handleToggleLock = async () => {
     try {
       setLockLoading(true)
@@ -235,16 +236,32 @@ const Acc = () => {
       }
 
       const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000"
-      const response = await fetch(`${API_URL}/api/users/${userToLock.id}/toggle-status`, {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          isSuspended: userToLock.isActive, // Nếu đang active thì chuyển thành suspended
-        }),
-      })
+      
+      let response;
+      
+      if (userToLock.isActive) {
+        // SỬA: Gọi API suspend user với thông tin cần thiết
+        response = await fetch(`${API_URL}/api/admin/users/${userToLock.id}/suspend`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            durationDays: 30, // Khóa 30 ngày mặc định, bạn có thể thêm input để admin chọn
+            reason: "Khóa bởi quản trị viên", // Lý do mặc định, bạn có thể thêm input
+          }),
+        })
+      } else {
+        // SỬA: Gọi API unsuspend user
+        response = await fetch(`${API_URL}/api/admin/users/${userToLock.id}/unsuspend`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        })
+      }
 
       if (!response.ok) {
         const errorData = await response.json()
@@ -252,7 +269,15 @@ const Acc = () => {
       }
 
       // Cập nhật danh sách người dùng
-      setUsers(users.map((user) => (user.id === userToLock.id ? { ...user, isActive: !user.isActive } : user)))
+      setUsers(users.map((user) => 
+        user.id === userToLock.id 
+          ? { 
+              ...user, 
+              isActive: !user.isActive,
+              accountStatus: !user.isActive ? "Active" : "Khóa"
+            } 
+          : user
+      ))
 
       setSuccessMessage(`Đã ${userToLock.isActive ? "khóa" : "mở khóa"} tài khoản thành công`)
 
@@ -293,7 +318,9 @@ const Acc = () => {
       }
 
       const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000"
-      const response = await fetch(`${API_URL}/api/users/${userToDelete.id}`, {
+      
+      // SỬA: Gọi đúng API delete user từ backend
+      const response = await fetch(`${API_URL}/api/admin/users/${userToDelete.id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -436,7 +463,7 @@ const Acc = () => {
               }}
               onClick={() => handleOpenLockDialog(row)}
             >
-              {row.isActive ? "Khóa" : "Mở khóa"}
+              {row.isActive ? "Khóa" : "Mở"}
             </button>
 
             <button
@@ -761,22 +788,15 @@ const Acc = () => {
               variant="outlined"
               sx={{
                 "& .MuiOutlinedInput-root": {
-                  backgroundColor: colors.primary[600],
+                  backgroundColor: colors.primary[500],
                   borderRadius: "12px",
                   boxShadow: getNeumorphicInsetShadow(),
                   "& fieldset": { border: "none" },
-                  "&.Mui-disabled": {
-                    backgroundColor: colors.primary[600],
-                  },
                 },
                 "& .MuiInputBase-input": {
-                  color: colors.gray[400],
+                  color: colors.gray[100],
                   padding: "15px",
                   fontSize: "15px",
-                  "&.Mui-disabled": {
-                    WebkitTextFillColor: colors.gray[400],
-                    color: colors.gray[400],
-                  },
                 },
               }}
             />
@@ -828,7 +848,6 @@ const Acc = () => {
                           backgroundColor: colors.primary[500],
                         },
                         "&.Mui-selected": {
-                          backgroundColor: colors.primary[600],
                           color: colors.greenAccent[400],
                           fontWeight: "bold",
                         },

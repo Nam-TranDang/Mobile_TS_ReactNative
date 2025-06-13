@@ -279,6 +279,19 @@ const styles = StyleSheet.create({
   loading: {
     color: COLORS.primary,
   },
+  emptyStateContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 32,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    color: "#666",
+    textAlign: "center",
+    marginTop: 16,
+    lineHeight: 24,
+  },
 });
 
 export default styles;

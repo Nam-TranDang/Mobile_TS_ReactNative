@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   View,
   Text,
@@ -10,33 +10,24 @@ import {
   Keyboard,
   ScrollView,
   SafeAreaView,
-  Alert, // Thêm Alert
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useAuthStore } from "../../store/authStore";
 import { API_URL } from "../../constants/api";
 import styles from "../../assets/styles/search.styles";
-import { useFocusEffect } from '@react-navigation/native';
-import { useCallback } from 'react';
 
-// Thêm currentUser vào top level
 export default function SearchScreen() {
-  const { token, user: currentUser } = useAuthStore(); // Thêm currentUser vào đây
+  const { token } = useAuthStore();
   const [searchText, setSearchText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [searchResults, setSearchResults] = useState({
     users: [],
     books: [],
   });
-  const [suggestedUsers, setSuggestedUsers] = useState([]);
-  const [loadingSuggestions, setLoadingSuggestions] = useState(true);
   const [userBooks, setUserBooks] = useState({});
   const [loadingUserBooks, setLoadingUserBooks] = useState(false);
   const [userDetails, setUserDetails] = useState({});
-  const [loadingUserDetails, setLoadingUserDetails] = useState(false);
-  const [followStates, setFollowStates] = useState({}); // Track follow status cho từng user
-  const [followingUsers, setFollowingUsers] = useState({}); // Track loading state khi follow/unfollow
   const searchInputRef = useRef(null);
   const searchTimeoutRef = useRef(null);
 
@@ -47,28 +38,7 @@ export default function SearchScreen() {
         searchInputRef.current.focus();
       }
     }, 300);
-
-    fetchSuggestedUsers();
   }, []);
-
-  // Lấy danh sách người dùng gợi ý
-  const fetchSuggestedUsers = async () => {
-    try {
-      setLoadingSuggestions(true);
-      const response = await fetch(`${API_URL}/users/suggestions`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setSuggestedUsers(data || []);
-      }
-    } catch (error) {
-      console.error("Error fetching suggested users:", error);
-    } finally {
-      setLoadingSuggestions(false);
-    }
-  };
 
   // Xử lý tìm kiếm
   const handleSearch = (text) => {
@@ -163,15 +133,11 @@ export default function SearchScreen() {
     }
   };
 
-  // Sửa lại hàm fetchUserDetails
+  // Lấy user details
   const fetchUserDetails = async (users) => {
     if (!users || users.length === 0) return;
 
-    setLoadingUserDetails(true);
     const userDetailsMap = {};
-    const followStatesMap = {};
-    // Xóa dòng này: const { user: currentUser } = useAuthStore.getState();
-    // Sử dụng currentUser từ top level
 
     try {
       // Lấy thông tin chi tiết của mỗi người dùng
@@ -182,136 +148,20 @@ export default function SearchScreen() {
 
         if (response.ok) {
           const userData = await response.json();
-          
-          // Kiểm tra follow status bằng cách check trong followers array
-          const isFollowing = userData.followers && 
-            Array.isArray(userData.followers) &&
-            userData.followers.some(follower => {
-              if (typeof follower === 'string') {
-                return follower === currentUser?.id;
-              } else if (typeof follower === 'object' && follower._id) {
-                return follower._id === currentUser?.id;
-              }
-              return false;
-            });
 
           userDetailsMap[user._id] = {
             ...userData,
             followersCount: userData.followers ? userData.followers.length : 0,
             followingCount: userData.following ? userData.following.length : 0,
           };
-          
-          followStatesMap[user._id] = isFollowing;
         }
         return null;
       });
 
       await Promise.all(promises);
       setUserDetails(userDetailsMap);
-      setFollowStates(followStatesMap);
     } catch (error) {
       console.error("Error fetching user details:", error);
-    } finally {
-      setLoadingUserDetails(false);
-    }
-  };
-
-  // Theo dõi hoặc bỏ theo dõi người dùng
-  const handleFollowUser = async (userId) => {
-    const isFollowing = followStates[userId] || false;
-    const url = `${API_URL}/users/${isFollowing ? "unfollow" : "follow"}/${userId}`;
-
-    setFollowingUsers((prev) => ({
-      ...prev,
-      [userId]: true, // Bắt đầu theo dõi trạng thái loading
-    }));
-
-    try {
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({}),
-      });
-
-      if (response.ok) {
-        // Cập nhật trạng thái follow thành công
-        setFollowStates((prev) => ({
-          ...prev,
-          [userId]: !isFollowing,
-        }));
-
-        // Cập nhật lại danh sách người dùng gợi ý sau khi theo dõi
-        fetchSuggestedUsers();
-      } else {
-        // Xử lý khi theo dõi thất bại (ví dụ: hiển thị thông báo lỗi)
-        Alert.alert("Lỗi", "Không thể thực hiện hành động này. Vui lòng thử lại.");
-      }
-    } catch (error) {
-      console.error("Error following/unfollowing user:", error);
-      Alert.alert("Lỗi", "Đã xảy ra lỗi. Vui lòng thử lại.");
-    } finally {
-      setFollowingUsers((prev) => ({
-        ...prev,
-        [userId]: false, // Kết thúc trạng thái loading
-      }));
-    }
-  };
-
-  // Sửa lại hàm handleFollow để sử dụng đúng endpoint
-  const handleFollow = async (userId, currentFollowStatus) => {
-    if (followingUsers[userId]) return; // Tránh multiple calls
-
-    try {
-      setFollowingUsers((prev) => ({ ...prev, [userId]: true }));
-
-      const endpoint = `${API_URL}/users/${userId}/${
-        currentFollowStatus ? "unfollow" : "follow"
-      }`;
-
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(
-          `Không thể ${currentFollowStatus ? "hủy theo dõi" : "theo dõi"} người dùng`
-        );
-      }
-
-      // Cập nhật trạng thái follow
-      setFollowStates((prev) => ({
-        ...prev,
-        [userId]: !currentFollowStatus,
-      }));
-
-      // Cập nhật followers count trong userDetails
-      setUserDetails((prev) => ({
-        ...prev,
-        [userId]: {
-          ...prev[userId],
-          followersCount: currentFollowStatus
-            ? Math.max(0, (prev[userId]?.followersCount || 0) - 1)
-            : (prev[userId]?.followersCount || 0) + 1,
-        },
-      }));
-
-      console.log(
-        currentFollowStatus
-          ? `Unfollowed user ${userId}`
-          : `Following user ${userId}`
-      );
-    } catch (error) {
-      console.error("Error following/unfollowing user:", error);
-      Alert.alert("Lỗi", "Không thể thực hiện thao tác. Vui lòng thử lại sau.");
-    } finally {
-      setFollowingUsers((prev) => ({ ...prev, [userId]: false }));
     }
   };
 
@@ -331,57 +181,9 @@ export default function SearchScreen() {
     });
   };
 
-  // Hiển thị danh sách người dùng gợi ý (avatar)
-  const renderUserAvatars = () => {
-    if (loadingSuggestions) {
-      return (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="small" color={styles.loading.color} />
-        </View>
-      );
-    }
-
-    if (suggestedUsers.length === 0) {
-      return null;
-    }
-
-    return (
-      <View style={styles.avatarsSection}>
-        <Text style={styles.sectionTitle}>Gợi ý cho bạn</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.avatarsContainer}
-        >
-          {suggestedUsers.map((user) => (
-            <TouchableOpacity
-              key={user._id}
-              style={styles.avatarItem}
-              onPress={() => handleSelectUser(user)}
-            >
-              <View style={styles.avatarContainer}>
-                <Image
-                  source={{ uri: user.profileImage.replace('/svg?', '/png?') }}
-                  style={styles.avatarImage}
-                />
-              </View>
-              <Text style={styles.avatarUsername} numberOfLines={1}>
-                {user.username}
-              </Text>
-              <Text style={styles.bookCount}>{user.bookCount || 0} sách</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
-    );
-  };
-
   // Hiển thị kết quả người dùng
   const renderUserResult = ({ item }) => {
-    // Xóa dòng này: const { user: currentUser } = useAuthStore();
-    const isOwnProfile = currentUser?.id === item._id;
-    const isFollowing = followStates[item._id] || false;
-    const isFollowLoading = followingUsers[item._id] || false;
+    // Xóa các biến không sử dụng để tránh warning
 
     return (
       <View style={styles.expandedResultContainer}>
@@ -391,7 +193,7 @@ export default function SearchScreen() {
           onPress={() => handleSelectUser(item)}
         >
           <Image
-            source={{ uri: item.profileImage.replace('/svg?', '/png?') }}
+            source={{ uri: item.profileImage.replace("/svg?", "/png?") }}
             style={styles.resultUserAvatar}
           />
           <View style={styles.resultUserInfo}>
@@ -515,8 +317,15 @@ export default function SearchScreen() {
     }
 
     if (searchText.trim() === "") {
-      // Hiển thị gợi ý người dùng khi chưa tìm kiếm
-      return renderUserAvatars();
+      // Hiển thị màn hình trống khi chưa tìm kiếm
+      return (
+        <View style={styles.emptyStateContainer}>
+          <Ionicons name="search-outline" size={80} color={styles.iconColor} />
+          <Text style={styles.emptyStateText}>
+            Nhập từ khóa để tìm kiếm người dùng và sách
+          </Text>
+        </View>
+      );
     }
 
     const { users, books } = searchResults;
@@ -562,18 +371,6 @@ export default function SearchScreen() {
     );
   };
 
-  useFocusEffect(
-    useCallback(() => {
-      // Refresh follow states khi user quay lại trang search
-      if (searchResults.users.length > 0) {
-        fetchUserDetails(searchResults.users);
-      }
-      
-      // Refresh suggested users để cập nhật follow status
-      fetchSuggestedUsers();
-    }, [searchResults.users])
-  );
-
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
@@ -583,7 +380,7 @@ export default function SearchScreen() {
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => {
-            Keyboard.dismiss(); // Ẩn bàn phím trước khi quay lại
+            Keyboard.dismiss();
             router.back();
           }}
         >
