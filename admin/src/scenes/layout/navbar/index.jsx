@@ -173,9 +173,9 @@ const Navbar = () => {
           }
           
           .neumorphic-dropdown {
-            background-color: ${colors.primary[500]} !important;
+            background-color: rgba(0, 0, 0, 0.5) !important;
+            backdrop-filter: blur(5px) !important;
             box-shadow: ${getNeumorphicShadow()} !important;
-            border-radius: 20px !important;
             border: none !important;
             overflow: hidden !important;
           }
