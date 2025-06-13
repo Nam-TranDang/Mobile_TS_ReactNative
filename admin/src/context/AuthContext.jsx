@@ -58,9 +58,9 @@ const login = async (email, password) => {
 
     // SỬA: Cập nhật state ngay sau khi đăng nhập thành công
     setUser(userData);
-    setIsAuthenticated(true);
+    const completeLogin = () => setIsAuthenticated(true);
 
-    return { success: true, user: userData, token: data.token };
+    return { success: true, user: userData, token: data.token, completeLogin };
   } catch (error) {
     console.error("Lỗi đăng nhập:", error);
     return { success: false, error: error.message };

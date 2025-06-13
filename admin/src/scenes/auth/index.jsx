@@ -75,6 +75,7 @@ const Login = () => {
           console.log("Thời gian kết thúc:", new Date().getTime());
           console.log("Chuyển hướng đến dashboard...");
           setShowLoading(false); // Tắt loading trước khi navigate
+          if (result.completeLogin) result.completeLogin(); // Gọi sau loading
           navigate("/");
         }, 3000); // 3 giây thay vì 5 giây
       }
