@@ -5,6 +5,7 @@ import Book from "../models/book.js";
 import Genre from "../models/genre.js";
 import protectRoute from "../middleware/auth.middleware.js";
 import mongoose from "mongoose"; // Import mongoose here
+import { createAndSendNotification } from "../lib/notificationHelper.js";
 
 const router = express.Router();
 
@@ -324,6 +325,7 @@ router.post("/:bookId/comments", protectRoute, async (req, res) => {
     const { text } = req.body;
     const { bookId } = req.params;
     const io = req.io;
+    const currentUser = req.user;
 
     if (!text || text.trim() === "") {
       return res.status(400).json({ message: "Comment text is required" });
@@ -351,8 +353,8 @@ router.post("/:bookId/comments", protectRoute, async (req, res) => {
     // Populate user info before sending response
     await newComment.populate("user", "username profileImage _id");
     if (io) {
+      io.to(bookId.toString()).emit("newComment", newComment.toJSON());
       // Kiểm tra io có tồn tại không
-      io.to(bookId.toString()).emit("newComment", newComment.toJSON()); // Gửi newComment đã populate và transform
       console.log(
         `Emitted 'newComment' to room ${bookId} for comment ${newComment._id}`
       );
@@ -361,7 +363,23 @@ router.post("/:bookId/comments", protectRoute, async (req, res) => {
         "Socket.io instance (req.io) not found. Cannot emit 'newComment'."
       );
     }
-    res.status(201).json(newComment);
+     // Gửi newComment đã populate và transform
+      if (book.user.toString() !== currentUser._id.toString()) {
+        const notificationMessage = `${currentUser.username} đã bình luận về sách "${book.title}".`;
+        // Link đến comment cụ thể có thể phức tạp, tạm thời link đến sách
+        const notificationLink = `/books/${bookId}?commentId=${newComment._id}`; // Ví dụ link
+        await createAndSendNotification(
+            io,
+            book.user, // Người nhận là chủ sở hữu sách
+            currentUser._id,
+            "new_comment",
+            notificationMessage,
+            notificationLink,
+            "Comment",     // relatedItemType là Comment
+            newComment._id // relatedItemId là ID của comment mới
+        );
+    }
+    res.status(201).json(newComment.toJSON());
   } catch (error) {
     console.error("Create comment error:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -554,7 +572,9 @@ router.put("/:id/like", protectRoute, async (req, res) => {
     const book = await Book.findById(req.params.id);
     if (!book) return res.status(404).json({ message: "Book not found" });
 
-    const userId = req.user._id;
+    const currentUser = req.user; // <--- LẤY currentUser ---
+    const userId = currentUser._id; // <--- SỬ DỤNG currentUser._id ---
+    const io = req.io; // <--- LẤY io ---
     let updated = false;
     if (!book.likedBy.includes(userId)) {
       book.likedBy.push(userId);
@@ -565,14 +585,29 @@ router.put("/:id/like", protectRoute, async (req, res) => {
         book.dislikedBy.pull(userId);
         book.dislike_count -= 1;
       }
+      if (updated && book.user.toString() !== userId.toString()) { // Chỉ gửi nếu có thay đổi và không phải tự like
+        const notificationMessage = `${currentUser.username} đã thích sách "${book.title}".`;
+        const notificationLink = `/books/${book._id}`;
+        await createAndSendNotification(
+            io,
+            book.user, // Người nhận là chủ sở hữu sách
+            userId,    // Người gửi là currentUser
+            "new_like_on_book",
+            notificationMessage,
+            notificationLink,
+            "Book",      // relatedItemType là Book
+            book._id     // relatedItemId là ID của sách được like
+        );
+      }
     }
+    
     if (updated) {
       await book.save();
       emitBookUpdate(req, book); // <--- THÊM: Emit sự kiện
     }
     res.status(200).json(book);
   } catch (error) {
-    console.error(error);
+    console.error("Like book error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });

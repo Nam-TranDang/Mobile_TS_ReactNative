@@ -6,6 +6,7 @@ import protectRoute from "../middleware/auth.middleware.js";
 import Book from "../models/book.js"; // Add this import
 import Comment from "../models/comment.js"; // Add this import
 import mongoose from "mongoose";
+import { createAndSendNotification } from "../lib/notificationHelper.js";
 
 const router = express.Router();
 
@@ -363,8 +364,18 @@ router.post("/:userIdToFollow/follow", protectRoute, async (req, res) => {
 
     await currentUser.save();
     await userToFollow.save();
-
-    // Dữ liệu user cơ bản để gửi qua socket
+    const notificationMessage = `${currentUser.username} đã bắt đầu theo dõi bạn.`;
+    const notificationLink = `/profile/${currentUserId.toString()}`; // Link đến profile người follow
+    await createAndSendNotification(
+        io,
+        userIdToFollow, // Người nhận là userToFollow
+        currentUserId,  // Người gửi là currentUser
+        "new_follower",
+        notificationMessage,
+        notificationLink,
+        "User",         // relatedItemType là User (sender)
+        currentUserId   
+    );
     const simplifiedCurrentUser = {
       _id: currentUser._id,
       username: currentUser.username,
