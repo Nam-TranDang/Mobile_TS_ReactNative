@@ -1,4 +1,3 @@
-// src/routes/reportRoutes.js
 import express from "express";
 import protectRoute from "../middleware/auth.middleware.js";
 import isAdmin from "../middleware/admin.middleware.js";
@@ -98,6 +97,8 @@ router.get("/", protectRoute, isAdmin, async (req, res) => {
         res.status(500).json({ message: "Internal server error." });
     }
 });
+
+
 
 router.put("/:reportId", protectRoute, isAdmin, async (req, res) => {
     try {

@@ -15,6 +15,11 @@ export const login = async (email, password) => {
     if (!response.ok) {
       throw new Error(data.message || "Đăng nhập thất bại");
     }
+
+    // THÊM: Kiểm tra role admin
+    if (data.user && data.user.role !== "admin") {
+      throw new Error("Bạn không có quyền truy cập vào trang quản trị");
+    }
     
     return data;
   } catch (error) {
