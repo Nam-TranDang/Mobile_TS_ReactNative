@@ -677,67 +677,40 @@ const handleViewBookDetail = () => {
                 </Typography>
 
                 {/* Hiển thị cho Comment */}
-                {selectedReport.reportedItemType === "Comment" && (
-                  <Box
-                    sx={{
-                      backgroundColor: colors.primary[500],
-                      padding: "15px",
-                      borderRadius: "12px",
-                      boxShadow: getNeumorphicInsetShadow(),
-                      color: colors.gray[100],
-                      fontSize: "15px",
-                      mb: 2,
-                      border: `1px solid ${colors.redAccent[400]}`,
-                    }}
-                  >
-                    {/* Hiển thị comment content và user */}
-                    {typeof selectedReport.reportedItemId === "object" && selectedReport.reportedItemId?.content ? (
-                      <div>
-                        <Typography 
-                          variant="body2" 
-                          sx={{ 
-                            color: colors.gray[300], 
-                            mb: 1,
-                            fontWeight: "bold"
-                          }}
-                        >
-                           Người viết: {selectedReport.reportedItemId.user?.username || selectedReport.reportedItemId.user?.name || "Unknown"}
-                        </Typography>
-                        <Typography 
-                          variant="body1" 
-                          sx={{ 
-                            fontStyle: "italic",
-                            backgroundColor: colors.primary[700],
-                            padding: "10px",
-                            borderRadius: "8px",
-                            color: colors.redAccent[200]
-                          }}
-                        >
-                           "{selectedReport.reportedItemId.content}"
-                        </Typography>
-                        {selectedReport.reportedItemId.createdAt && (
-                          <Typography 
-                            variant="caption" 
-                            sx={{ 
-                              color: colors.gray[400], 
-                              mt: 1, 
-                              display: "block" 
-                            }}
-                          >
-                            📅 {new Date(selectedReport.reportedItemId.createdAt).toLocaleString("vi-VN")}
-                          </Typography>
-                        )}
-                      </div>
-                    ) : (
-                      <Typography sx={{ color: colors.gray[400], fontStyle: "italic" }}>
-                        Comment ID: {selectedReport.reportedItemId}
-                        <br />
-                        <small>(Nội dung comment có thể đã bị xóa hoặc không tải được)</small>
+               {selectedReport.reportedItemType === "Comment" && (
+                <Box
+                  sx={{
+                    backgroundColor: colors.primary[500],
+                    padding: "15px",
+                    borderRadius: "12px",
+                    boxShadow: getNeumorphicInsetShadow(),
+                    color: colors.gray[100],
+                    fontSize: "15px",
+                    mb: 2,
+                    border: `1px solid ${colors.redAccent[400]}`,
+                  }}
+                >
+                  {typeof selectedReport.reportedItemObject === "object" && selectedReport.reportedItemObject?.text ? (
+                    <div>
+                      <Typography sx={{ fontWeight: "bold", mb: 0.5 }}>
+                        📝 Nội dung: "{selectedReport.reportedItemObject.text}"
                       </Typography>
-                    )}
-                  </Box>
-                )}
-
+                      <Typography>
+                        👤 Người viết: {selectedReport.reportedItemObject.user?.username || "Unknown"}
+                      </Typography>
+                      <Typography>
+                        📚 Sách: {selectedReport.reportedItemObject.book.title || "Không xác định"}
+                      </Typography>
+                    </div>
+                  ) : (
+                    <Typography sx={{ color: colors.gray[400], fontStyle: "italic" }}>
+                      Comment ID: {selectedReport.reportedItemId}
+                      <br />
+                      <small>(Nội dung comment có thể đã bị xóa hoặc không tải được)</small>
+                    </Typography>
+                  )}
+                </Box>
+              )}
                 {/* Hiển thị cho Book */}
                 {selectedReport.reportedItemType === "Book" && (
                   <Box
