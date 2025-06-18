@@ -4,11 +4,11 @@ import { Ionicons } from '@expo/vector-icons';
 import COLORS from '../constants/colors';
 
 const NotificationOptionsMenu = ({ visible, onClose, onAction }) => {
+  // Bổ sung thêm tùy chọn Delete All
   const options = [
     { id: 'filter', label: 'Filter notifications', icon: 'filter' },
     { id: 'mark_all_read', label: 'Mark all as read', icon: 'checkmark-done-circle' },
-    { id: 'mark_all_unread', label: 'Mark all as unread', icon: 'radio-button-off' },
-    { id: 'delete_all', label: 'Delete all notifications', icon: 'trash', danger: true },
+    { id: 'delete_all', label: 'Delete all notifications', icon: 'trash-outline', danger: true },
   ];
   
   return (
@@ -53,24 +53,36 @@ const NotificationOptionsMenu = ({ visible, onClose, onAction }) => {
 };
 
 const NotificationItemMenu = ({ visible, onClose, onAction, notification }) => {
-  // Determine which read/unread option to show based on the notification's read status
+  // Bổ sung thêm delete option
   const getOptions = () => {
     const baseOptions = [];
     
-    // Add either Mark as read or Mark as unread based on current read status
-    if (notification && notification.read) {
-      baseOptions.push({ id: 'mark_unread', label: 'Mark as unread', icon: 'radio-button-off' });
-    } else {
+    if (notification && !notification.isRead) {
       baseOptions.push({ id: 'mark_read', label: 'Mark as read', icon: 'checkmark-circle' });
     }
     
-    // Always add delete option
-    baseOptions.push({ id: 'delete', label: 'Delete notification', icon: 'trash', danger: true });
+    // Thêm tùy chọn mark as unread nếu notification đã đọc
+    if (notification && notification.isRead) {
+      baseOptions.push({ id: 'mark_unread', label: 'Mark as unread', icon: 'eye-off-outline' });
+    }
+    
+    // Thêm tùy chọn delete cho tất cả notification
+    if (notification) {
+      baseOptions.push({ id: 'delete', label: 'Delete notification', icon: 'trash-outline', danger: true });
+    }
     
     return baseOptions;
   };
   
   const options = getOptions();
+  
+  // If there are no options, don't show the menu
+  if (options.length === 0) {
+    if (visible) {
+      onClose();
+    }
+    return null;
+  }
   
   return (
     <Modal
@@ -113,7 +125,7 @@ const NotificationItemMenu = ({ visible, onClose, onAction, notification }) => {
   );
 };
 
-// Filter options modal
+// Filter options modal stays the same
 const FilterOptionsModal = ({ visible, onClose, onFilter }) => {
   const [selectedFilter, setSelectedFilter] = useState('all');
   
