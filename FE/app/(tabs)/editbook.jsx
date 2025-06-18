@@ -44,6 +44,8 @@ export default function EditBook() {
   const [showGenreModal, setShowGenreModal] = useState(false);
   const [loadingGenres, setLoadingGenres] = useState(false);
 
+  const params = useLocalSearchParams();
+  
   // Fetch book details and genres when component mounts
   useEffect(() => {
     if (!bookId || !token) return;
@@ -236,11 +238,27 @@ export default function EditBook() {
         {
           text: "OK",
           onPress: () => {
-            // Thêm một tham số ngẫu nhiên vào route để đảm bảo component Profile được tạo lại
-            router.replace({
-              pathname: "/(tabs)",
-              params: { refresh: Date.now() },
-            });
+            // Lấy tham số để xác định trang nguồn (nếu có)
+            const source = params.source;
+            if (source === "bookdetail") {
+              // Nếu đến từ trang chi tiết sách, quay lại trang đó với sách ID
+              router.push({
+                pathname: "/bookdetail",
+                params: { bookId: bookId, refresh: Date.now() },
+              });
+            } else if (source === "profile") {
+              // Nếu đến từ trang profile
+              router.push({
+                pathname: "/(tabs)/profile",
+                params: { refresh: Date.now() },
+              });
+            } else {
+              // Mặc định quay về trang chủ
+              router.replace({
+                pathname: "/(tabs)",
+                params: { refresh: Date.now() },
+              });
+            }
           },
         },
       ]);
@@ -490,7 +508,25 @@ export default function EditBook() {
                   style.button,
                   { backgroundColor: COLORS.background, flex: 1 },
                 ]}
-                onPress={() => router.back()}
+                onPress={() => {
+                  // Lấy tham số để xác định trang nguồn (nếu có)
+                  const source = params.source;
+                  if (source === "bookdetail") {
+                    // Nếu đến từ trang chi tiết sách, quay lại trang đó với sách ID
+                    router.push({
+                      pathname: "/bookdetail",
+                      params: { bookId: bookId },
+                    });
+                  } else if (source === "profile") {
+                    // Nếu đến từ trang profile
+                    router.push({
+                      pathname: "/(tabs)/profile",
+                    });
+                  } else {
+                    // Mặc định quay về trang trước đó
+                    router.back();
+                  }
+                }}
                 disabled={loading}
               >
                 <Text style={style.buttonText1}>Cancel</Text>

@@ -64,7 +64,7 @@ useEffect(() => {
     Alert.alert(
       "Lỗi",
       "Không tìm thấy ID của mục cần báo cáo",
-      [{ text: "Quay lại", onPress: () => router.back() }]
+      [{ text: "Quay lại", onPress: () => navigateBack() }]
     );
     return;
   }
@@ -161,7 +161,7 @@ useEffect(() => {
       Alert.alert(
         "Thành công",
         "Báo cáo của bạn đã được gửi thành công. Chúng tôi sẽ xem xét sớm nhất có thể.",
-        [{ text: "OK", onPress: () => router.back() }]
+        [{ text: "OK", onPress: navigateBack }]
       );
     } catch (error) {
       console.error('Error submitting report:', error);
@@ -211,6 +211,32 @@ useEffect(() => {
     return null;
   };
 
+  const navigateBack = () => {
+    const source = params.source;
+    const bookId = params.bookId;
+    const userId = params.userId;
+    
+    if (source === "bookdetail" && bookId) {
+      router.replace({
+        pathname: "/bookdetail",
+        params: { 
+          bookId: bookId,
+          resetHistory: 'true'  // Thêm tham số này
+        }
+      });
+    } else if (source === "userprofile" && userId) {
+      router.replace({
+        pathname: "/userprofile",
+        params: { 
+          userId: userId,
+          resetHistory: 'true'  // Thêm tham số này
+        }
+      });
+    } else {
+      router.back();
+    }
+  };
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -220,7 +246,7 @@ useEffect(() => {
         <View style={styles.header}>
           <TouchableOpacity 
             style={styles.backButton} 
-            onPress={() => router.back()}
+            onPress={navigateBack}
           >
             <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
           </TouchableOpacity>

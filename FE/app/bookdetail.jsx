@@ -60,6 +60,8 @@ export default function BookDetail() {
                 type: "Comment",
                 commentText: comment.text,
                 commentAuthor: comment.user.username,
+                source: "bookdetail",
+                bookId: book._id,
               },
             });
           }
@@ -519,7 +521,11 @@ export default function BookDetail() {
                   onPress={() =>
                     router.push({
                       pathname: "/(tabs)/report",
-                      params: { id: bookId, type: "Book" },
+                      params: { 
+                        id: bookId, 
+                        type: "Book",  
+                        source: "bookdetail",
+                        bookId: book._id },
                     })
                   }
                 >

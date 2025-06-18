@@ -5,7 +5,7 @@ import { useEffect, useState, useCallback } from "react";
 import {
   ActivityIndicator,
   Alert,
-  Dimensions,
+  // Dimensions,
   FlatList,
   Modal,
   RefreshControl,
@@ -18,14 +18,14 @@ import {
 } from "react-native";
 import COLORS from "../../constants/colors";
 import { API_URL } from "../../constants/api";
-import { formatMemberSince, formatPublishDate } from "../../lib/utils";
+import { formatMemberSince } from "../../lib/utils";
 import { useAuthStore } from "../../store/authStore";
 import { sleep } from "../../lib/helper";
 import styles from "../../assets/styles/userprofile.styles"; // Use userprofile styles
 import { useFocusEffect } from "@react-navigation/native";
 
-const { width } = Dimensions.get("window");
-const imageSize = (width - 48) / 3; // 3 columns with padding
+// const { width } = Dimensions.get("window");
+// const imageSize = (width - 48) / 3; // 3 columns with padding
 
 export default function Profile() {
   const [user, setUser] = useState(null);
@@ -36,8 +36,8 @@ export default function Profile() {
   const [followingCount, setFollowingCount] = useState(0);
   const [postsCount, setPostsCount] = useState(0);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
-  const [isDeleteAccountModalVisible, setIsDeleteAccountModalVisible] =
-    useState(false);
+  const [deleteBookId, setDeleteBookId] = useState(null);
+  const [isDeleteAccountModalVisible, setIsDeleteAccountModalVisible] = useState(false);
   const [confirmationText, setConfirmationText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -113,12 +113,81 @@ export default function Profile() {
     setRefreshing(false);
   };
 
+  const handleDeleteBook = async (bookId) => {
+    setDeleteBookId(bookId);
+    try {
+      const response = await fetch(`${API_URL}/books/${bookId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+      if (!response.ok)
+        throw new Error(data.message || "Failed to delete book");
+
+      setBooks(books.filter((book) => book._id !== bookId));
+      Alert.alert("Success", "Recommendation deleted successfully");
+    } catch (error) {
+      Alert.alert("Error", error.message || "Failed to delete recommendation");
+    } finally {
+      setDeleteBookId(null);
+    }
+  };
+
+  const confirmDelete = (bookId) => {
+    Alert.alert(
+      "Delete Recommendation",
+      "Are you sure you want to delete this recommendation?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => handleDeleteBook(bookId),
+        },
+      ]
+    );
+  };
+
   const showDeleteAccountConfirmation = () => {
-    setIsDeleteAccountModalVisible(true);
+    Alert.alert(
+      "Delete Account",
+      "Are you sure you want to delete your account? This action CANNOT be undone and all your data will be permanently removed.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Continue",
+          style: "destructive",
+          onPress: () => setIsDeleteAccountModalVisible(true),
+        },
+      ]
+    );
   };
 
   const handleDeleteAccount = async () => {
-    if (confirmationText !== "DELETE") return;
+    // Check if user and token are available
+    if (!user) {
+      Alert.alert("Error", "User information not available");
+      return;
+    }
+
+    const userId = user._id || user.id;
+    if (!userId) {
+      Alert.alert("Error", "User ID is missing");
+      return;
+    }
+
+    if (!token) {
+      Alert.alert("Error", "Authentication token not available");
+      return;
+    }
+
+    if (confirmationText !== "DELETE") {
+      Alert.alert("Error", "Please type DELETE to confirm");
+      return;
+    }
 
     try {
       setIsDeleting(true);
@@ -133,11 +202,10 @@ export default function Profile() {
 
       const data = await response.json();
       console.log("Delete account response:", data);
+      
+      if (!response.ok) throw new Error(data.message || "Failed to delete account");
 
-      if (!response.ok)
-        throw new Error(data.message || "Failed to delete account");
-
-      // Close modal and logout
+      // Đóng modal và đăng xuất
       setIsDeleteAccountModalVisible(false);
       Alert.alert("Success", "Your account has been deleted successfully", [
         {
@@ -170,22 +238,6 @@ export default function Profile() {
             <TouchableWithoutFeedback>
               <View style={styles.menuContainer}>
                 <View style={styles.menuDivider} />
-
-                {/* <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={() => {
-                    setShowSettingsMenu(false);
-                    router.push("/(tabs)/editprofile");
-                  }}
-                >
-                  <Ionicons
-                    name="pencil-outline"
-                    size={22}
-                    color={COLORS.textPrimary}
-                  />
-                  <Text style={styles.menuText}>Edit Profile</Text>
-                </TouchableOpacity> */}
-
                 <TouchableOpacity
                   style={styles.menuItem}
                   onPress={() => {
@@ -240,22 +292,64 @@ export default function Profile() {
     );
   };
 
-  const renderRatingStars = (rating) => {
-    const stars = [];
-    const fullStars = Math.floor(rating);
-    for (let i = 0; i < 5; i++) {
-      stars.push(
-        <Ionicons
-          key={i}
-          name={i < fullStars ? "star" : "star-outline"}
-          size={12}
-          color="#FFD700"
-          style={{ marginRight: 2 }}
-        />
-      );
-    }
-    return stars;
+  // Thêm menu tùy chọn cho sách
+  const BookOptionsMenu = ({visible, bookId, onClose}) => {
+    return (
+      <Modal
+        transparent={true}
+        visible={visible}
+        animationType="fade"
+        onRequestClose={onClose}
+      >
+        <TouchableWithoutFeedback onPress={onClose}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={[styles.menuContainer, {width: 200}]}>
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => {
+                    onClose();
+                    router.push({
+                      pathname: "/(tabs)/editbook",
+                      params: { bookId: bookId },
+                      source: "profile"
+                    });
+                  }}
+                >
+                  <Ionicons
+                    name="pencil-outline"
+                    size={22}
+                    color={COLORS.textPrimary}
+                  />
+                  <Text style={styles.menuText}>Edit Book</Text>
+                </TouchableOpacity>
+                
+                <View style={styles.menuDivider} />
+                
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => {
+                    onClose();
+                    confirmDelete(bookId);
+                  }}
+                >
+                  <Ionicons
+                    name="trash-outline"
+                    size={22}
+                    color={COLORS.danger}
+                  />
+                  <Text style={[styles.menuText, {color: COLORS.danger}]}>Delete Book</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+    );
   };
+
+  const [selectedBookId, setSelectedBookId] = useState(null);
+  const [showBookOptionsMenu, setShowBookOptionsMenu] = useState(false);
 
   const renderBookItem = ({ item, index }) => (
     <TouchableOpacity
@@ -272,6 +366,11 @@ export default function Profile() {
           params: { bookId: item._id },
         })
       }
+      onLongPress={() => {
+        setSelectedBookId(item._id);
+        setShowBookOptionsMenu(true);
+      }}
+      delayLongPress={500}
     >
       <Image
         source={{ uri: item.image }}
@@ -282,6 +381,14 @@ export default function Profile() {
         <Ionicons name="star" size={12} color="#FFD700" />
         <Text style={styles.ratingText}>{item.rating}</Text>
       </View>
+
+      {/* Thêm indicator cho delete status khi đang xóa */}
+      {deleteBookId === item._id && (
+        <View style={styles.deletingOverlay}>
+          <ActivityIndicator size="small" color={COLORS.white} />
+          <Text style={styles.deletingText}>Deleting...</Text>
+        </View>
+      )}
     </TouchableOpacity>
   );
 
@@ -331,10 +438,10 @@ export default function Profile() {
       </View>
 
       {/* Books Grid Header */}
-      <View style={styles.gridHeader}>
+      {/* <View style={styles.gridHeader}>
         <Ionicons name="grid-outline" size={24} color={COLORS.textPrimary} />
         <Text style={styles.gridHeaderText}>Books</Text>
-      </View>
+      </View> */}
     </View>
   );
 
@@ -346,10 +453,33 @@ export default function Profile() {
     );
   }
 
+  // Thêm style cho overlay khi đang xóa
+  const additionalStyles = {
+    deletingOverlay: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.7)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderRadius: 8,
+    },
+    deletingText: {
+      color: COLORS.white,
+      marginTop: 8,
+      fontSize: 12,
+    },
+  };
+
+  // Kết hợp style mới với style cũ
+  Object.assign(styles, additionalStyles);
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Profile</Text>
+        <Text style={styles.headerTitle}>Your Profile</Text>
         <TouchableOpacity
           style={styles.settingButton}
           onPress={() => setShowSettingsMenu(true)}
@@ -411,8 +541,7 @@ export default function Profile() {
               <Text style={styles.modalTitle}>Delete Account</Text>
 
               <Text style={styles.modalText}>
-                This action will permanently delete your account and all
-                associated data. This action CANNOT be undone.
+                This action will permanently delete your account and all associated data. This action CANNOT be undone.
               </Text>
 
               <Text style={styles.confirmInstructionText}>
@@ -460,6 +589,16 @@ export default function Profile() {
           </View>
         </View>
       </Modal>
+
+      {/* Book Options Menu */}
+      <BookOptionsMenu
+        visible={showBookOptionsMenu}
+        bookId={selectedBookId}
+        onClose={() => {
+          setShowBookOptionsMenu(false);
+          setSelectedBookId(null);
+        }}
+      />
 
       {/* Add Settings Menu */}
       <SettingsMenu />

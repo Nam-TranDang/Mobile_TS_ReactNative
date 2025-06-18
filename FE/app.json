@@ -4,7 +4,7 @@
     "slug": "Thư viện tan vỡ",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/logo.png",
     "scheme": "Thư viện tan vỡ",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,

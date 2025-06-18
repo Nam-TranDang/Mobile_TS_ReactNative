@@ -348,7 +348,8 @@ export default function UserProfile() {
               onPress={() =>
                 router.push({
                   pathname: "/(tabs)/report",
-                  params: { id: userId, type: "User" },
+                  params: { id: userId, type: "User",
+                            source: "userprofile", userId: user._id },
                 })
               }
             >

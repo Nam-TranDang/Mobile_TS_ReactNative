@@ -307,7 +307,7 @@ const styles = StyleSheet.create({
   modalWrapper: {
     width: "100%",
     alignItems: "center",
-    marginTop: 150, // This pushes the modal down from the top
+    marginTop: 250, // This pushes the modal down from the top
   },
 });
 

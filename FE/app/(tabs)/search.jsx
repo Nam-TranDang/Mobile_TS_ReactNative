@@ -7,7 +7,7 @@ import {
   ActivityIndicator,
   Image,
   StatusBar,
-  Keyboard,
+  // Keyboard,
   ScrollView,
   SafeAreaView,
 } from "react-native";
@@ -377,7 +377,7 @@ export default function SearchScreen() {
 
       {/* Header with Search Bar */}
       <View style={styles.header}>
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={styles.backButton}
           onPress={() => {
             Keyboard.dismiss();
@@ -385,7 +385,7 @@ export default function SearchScreen() {
           }}
         >
           <Ionicons name="arrow-back" size={24} color={styles.textColor} />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         <View style={styles.searchContainer}>
           <Ionicons
