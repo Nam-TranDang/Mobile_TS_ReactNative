@@ -1,130 +1,124 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Dimensions,
   FlatList,
-  RefreshControl,
-  Text,
-  TouchableOpacity,
-  View,
   Modal,
+  RefreshControl,
+  SafeAreaView,
+  Text,
   TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
 } from "react-native";
-import { sleep } from ".";
-import Loader from "../../components/Loader";
-import LogoutButton from "../../components/LogoutButton";
-import ProfileHeader from "../../components/ProfileHeader";
 import COLORS from "../../constants/colors";
+import { API_URL } from "../../constants/api";
+import { formatMemberSince, formatPublishDate } from "../../lib/utils";
 import { useAuthStore } from "../../store/authStore";
-import styles from "./../../assets/styles/profile.styles";
-import { API_URL } from "./../../constants/api";
-import defaultAvatar from "../../assets/images/default-avatar.png";
+import { sleep } from "../../lib/helper";
+import styles from "../../assets/styles/userprofile.styles"; // Use userprofile styles
+import { useFocusEffect } from "@react-navigation/native";
+
+const { width } = Dimensions.get("window");
+const imageSize = (width - 48) / 3; // 3 columns with padding
 
 export default function Profile() {
+  const [user, setUser] = useState(null);
   const [books, setBooks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [deleteBookId, setDeleteBookId] = useState(null);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
+  const [postsCount, setPostsCount] = useState(0);
+  const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [isDeleteAccountModalVisible, setIsDeleteAccountModalVisible] =
     useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [confirmationText, setConfirmationText] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  const { token, user, logout } = useAuthStore();
-
+  const { token, user: currentUser, logout } = useAuthStore();
   const router = useRouter();
+  const userId = currentUser?.id;
 
   const fetchData = async () => {
     try {
       setIsLoading(true);
 
-      const response = await fetch(`${API_URL}/books/user`, {
+      // Fetch user data
+      const userResponse = await fetch(`${API_URL}/users/${userId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      const data = await response.json();
-      if (!response.ok)
-        throw new Error(data.message || "Failed to fetch user books");
+      if (!userResponse.ok) {
+        throw new Error("Failed to fetch user data");
+      }
 
-      setBooks(data);
+      const userData = await userResponse.json();
+      setUser(userData);
+
+      // Set follower and following counts
+      const actualFollowersCount = userData.followers
+        ? userData.followers.length
+        : 0;
+      const actualFollowingCount = userData.following
+        ? userData.following.length
+        : 0;
+
+      setFollowersCount(actualFollowersCount);
+      setFollowingCount(actualFollowingCount);
+
+      // Fetch user's books
+      const booksResponse = await fetch(`${API_URL}/books?user=${userId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!booksResponse.ok) {
+        throw new Error("Failed to fetch user books");
+      }
+
+      const booksData = await booksResponse.json();
+      const userBooks = booksData.books || [];
+      setBooks(userBooks);
+      setPostsCount(userBooks.length);
     } catch (error) {
-      console.error("Error fetching data:", error);
-      Alert.alert(
-        "Error",
-        "Failed to load profile data. Pull down to refresh."
-      );
+      console.error("Error fetching profile data:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
-
-  const handleDeleteBook = async (bookId) => {
-    setDeleteBookId(bookId);
-    try {
-      const response = await fetch(`${API_URL}/books/${bookId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const data = await response.json();
-      if (!response.ok)
-        throw new Error(data.message || "Failed to delete book");
-
-      setBooks(books.filter((book) => book._id !== bookId));
-      Alert.alert("Success", "Recommendation deleted successfully");
-    } catch (error) {
-      Alert.alert("Error", error.message || "Failed to delete recommendation");
-    } finally {
-      setDeleteBookId(null);
+    if (userId) {
+      fetchData();
     }
+  }, [userId]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (userId) {
+        fetchData();
+      }
+    }, [userId])
+  );
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await sleep(500);
+    await fetchData();
+    setRefreshing(false);
   };
 
-  const confirmDelete = (bookId) => {
-    Alert.alert(
-      "Delete Recommendation",
-      "Are you sure you want to delete this recommendation?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: () => handleDeleteBook(bookId),
-        },
-      ]
-    );
+  const showDeleteAccountConfirmation = () => {
+    setIsDeleteAccountModalVisible(true);
   };
 
   const handleDeleteAccount = async () => {
-    // Check if user and token are available
-    if (!user) {
-      Alert.alert("Error", "User information not available");
-      return;
-    }
-
-    const userId = user._id || user.id;
-    if (!userId) {
-      Alert.alert("Error", "User ID is missing");
-      return;
-    }
-
-    if (!token) {
-      Alert.alert("Error", "Authentication token not available");
-      return;
-    }
-
-    if (confirmationText !== "DELETE") {
-      Alert.alert("Error", "Please type DELETE to confirm");
-      return;
-    }
+    if (confirmationText !== "DELETE") return;
 
     try {
       setIsDeleting(true);
@@ -143,7 +137,7 @@ export default function Profile() {
       if (!response.ok)
         throw new Error(data.message || "Failed to delete account");
 
-      // Đóng modal và đăng xuất
+      // Close modal and logout
       setIsDeleteAccountModalVisible(false);
       Alert.alert("Success", "Your account has been deleted successfully", [
         {
@@ -161,70 +155,101 @@ export default function Profile() {
       setIsDeleting(false);
     }
   };
-  const showDeleteAccountConfirmation = () => {
-    Alert.alert(
-      "Delete Account",
-      "Are you sure you want to delete your account? This action CANNOT be undone and all your data will be permanently removed.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Continue",
-          style: "destructive",
-          onPress: () => setIsDeleteAccountModalVisible(true),
-        },
-      ]
+
+  // Settings Menu Component
+  const SettingsMenu = () => {
+    return (
+      <Modal
+        transparent={true}
+        visible={showSettingsMenu}
+        animationType="fade"
+        onRequestClose={() => setShowSettingsMenu(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setShowSettingsMenu(false)}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={styles.menuContainer}>
+                <View style={styles.menuDivider} />
+
+                {/* <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => {
+                    setShowSettingsMenu(false);
+                    router.push("/(tabs)/editprofile");
+                  }}
+                >
+                  <Ionicons
+                    name="pencil-outline"
+                    size={22}
+                    color={COLORS.textPrimary}
+                  />
+                  <Text style={styles.menuText}>Edit Profile</Text>
+                </TouchableOpacity> */}
+
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => {
+                    setShowSettingsMenu(false);
+                    Alert.alert("Logout", "Are you sure you want to log out?", [
+                      {
+                        text: "Cancel",
+                        style: "cancel",
+                      },
+                      {
+                        text: "Logout",
+                        onPress: () => {
+                          logout();
+                          router.replace("/(auth)");
+                        },
+                        style: "destructive",
+                      },
+                    ]);
+                  }}
+                >
+                  <Ionicons
+                    name="log-out-outline"
+                    size={22}
+                    color={COLORS.textPrimary}
+                  />
+                  <Text style={styles.menuText}>Logout</Text>
+                </TouchableOpacity>
+
+                <View style={styles.menuDivider} />
+
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => {
+                    setShowSettingsMenu(false);
+                    showDeleteAccountConfirmation();
+                  }}
+                >
+                  <Ionicons
+                    name="trash-outline"
+                    size={22}
+                    color={COLORS.danger}
+                  />
+                  <Text style={[styles.menuText, { color: COLORS.danger }]}>
+                    Delete Account
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     );
   };
 
-  const renderBookItem = ({ item }) => (
-    <View style={styles.bookItem}>
-      <Image source={{ uri: item.image }} style={styles.bookImage} />
-
-      <View style={styles.bookInfo}>
-        <Text style={styles.bookTitle}>{item.title}</Text>
-        <View style={styles.ratingContainer}>
-          {renderRatingStars(item.rating)}
-        </View>
-
-        <Text style={styles.bookCaption} numberOfLines={2}>
-          {item.caption}
-        </Text>
-        <Text style={styles.bookDate}>
-          {new Date(item.createdAt).toLocaleDateString()}
-        </Text>
-      </View>
-
-      <View style={styles.bookActions}>
-        <TouchableOpacity
-          style={styles.editButtonBook}
-          onPress={() => router.push(`/editbook?bookId=${item._id}`)}
-        >
-          <Ionicons name="create-outline" size={20} color={COLORS.primary} />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.deleteButton}
-          onPress={() => confirmDelete(item._id)}
-        >
-          {deleteBookId === item._id ? (
-            <ActivityIndicator size="small" color={COLORS.primary} />
-          ) : (
-            <Ionicons name="trash-outline" size={20} color={COLORS.primary} />
-          )}
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-
   const renderRatingStars = (rating) => {
     const stars = [];
+    const fullStars = Math.floor(rating);
     for (let i = 0; i < 5; i++) {
       stars.push(
         <Ionicons
           key={i}
-          name={i < rating ? "star" : "star-outline"}
-          size={14}
-          color={i <= rating ? "#f4b400" : COLORS.textSecondary}
+          name={i < fullStars ? "star" : "star-outline"}
+          size={12}
+          color="#FFD700"
           style={{ marginRight: 2 }}
         />
       );
@@ -232,46 +257,126 @@ export default function Profile() {
     return stars;
   };
 
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    await sleep(500);
-    await fetchData();
-    setRefreshing(false);
-  };
+  const renderBookItem = ({ item, index }) => (
+    <TouchableOpacity
+      style={[
+        styles.gridItem,
+        {
+          marginRight: (index + 1) % 3 === 0 ? 0 : 8,
+          marginBottom: 8,
+        },
+      ]}
+      onPress={() =>
+        router.push({
+          pathname: "/bookdetail",
+          params: { bookId: item._id },
+        })
+      }
+    >
+      <Image
+        source={{ uri: item.image }}
+        style={styles.gridImage}
+        contentFit="cover"
+      />
+      <View style={styles.ratingOverlay}>
+        <Ionicons name="star" size={12} color="#FFD700" />
+        <Text style={styles.ratingText}>{item.rating}</Text>
+      </View>
+    </TouchableOpacity>
+  );
 
-  if (isLoading && !refreshing) return <Loader />;
+  const renderHeader = () => (
+    <View style={styles.profileContainer}>
+      {/* Profile Info Section */}
+      <View style={styles.profileInfoSection}>
+        <Image
+          source={{ uri: user?.profileImage }}
+          style={styles.profileImage}
+        />
 
-  return (
-    <View style={styles.container}>
-      <ProfileHeader />
-      <View style={styles.accountActionsContainer}>
-        <LogoutButton />
+        <View style={styles.statsContainer}>
+          <View style={styles.statItem}>
+            <Text style={styles.statNumber}>{postsCount}</Text>
+            <Text style={styles.statLabel}>Posts</Text>
+          </View>
 
+          <View style={styles.statItem}>
+            <Text style={styles.statNumber}>{followersCount}</Text>
+            <Text style={styles.statLabel}>Followers</Text>
+          </View>
+
+          <View style={styles.statItem}>
+            <Text style={styles.statNumber}>{followingCount}</Text>
+            <Text style={styles.statLabel}>Following</Text>
+          </View>
+        </View>
+      </View>
+
+      {/* User Details */}
+      <View style={styles.userDetails}>
+        <Text style={styles.username}>{user?.username}</Text>
+        <Text style={styles.memberSince}>
+          Member since {formatMemberSince(user?.createdAt)}
+        </Text>
+      </View>
+
+      {/* Action Buttons */}
+      <View style={styles.actionButtonsContainer}>
         <TouchableOpacity
-          style={styles.deleteAccountButton}
-          onPress={showDeleteAccountConfirmation}
+          style={styles.editButton}
+          onPress={() => router.push("/(tabs)/editprofile")}
         >
-          <Ionicons name="trash-outline" size={20} color={COLORS.white} />
-          <Text style={styles.deleteAccountButtonText}>Delete Account</Text>
+          <Text style={styles.editButtonText}>Edit Profile</Text>
         </TouchableOpacity>
       </View>
-      {/* Your Recommendations*/}
-      <View style={styles.booksHeader}>
-        <Text style={styles.booksTitle}>Your Recommendations</Text>
-        <Text style={styles.booksCount}>{books.length} books</Text>
+
+      {/* Books Grid Header */}
+      <View style={styles.gridHeader}>
+        <Ionicons name="grid-outline" size={24} color={COLORS.textPrimary} />
+        <Text style={styles.gridHeaderText}>Books</Text>
+      </View>
+    </View>
+  );
+
+  if (isLoading && !refreshing) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Profile</Text>
+        <TouchableOpacity
+          style={styles.settingButton}
+          onPress={() => setShowSettingsMenu(true)}
+        >
+          <Ionicons
+            name="settings-outline"
+            size={24}
+            color={COLORS.textPrimary}
+          />
+        </TouchableOpacity>
       </View>
 
       <FlatList
         data={books}
         renderItem={renderBookItem}
         keyExtractor={(item) => item._id}
+        numColumns={3}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.booksList}
+        ListHeaderComponent={renderHeader}
+        style={styles.booksList}
+        contentContainerStyle={styles.flatListContent}
+        columnWrapperStyle={styles.booksRow}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            color={[COLORS.primary]}
+            colors={[COLORS.primary]}
             tintColor={COLORS.primary}
           />
         }
@@ -282,10 +387,10 @@ export default function Profile() {
               size={50}
               color={COLORS.textSecondary}
             />
-            <Text style={styles.emptyText}>No recommendations yet</Text>
+            <Text style={styles.emptyText}>No books shared yet</Text>
             <TouchableOpacity
               style={styles.addButton}
-              onPress={() => router.push("/create")}
+              onPress={() => router.push("/(tabs)/create")}
             >
               <Text style={styles.addButtonText}>Add Your First Book </Text>
             </TouchableOpacity>
@@ -353,6 +458,9 @@ export default function Profile() {
           </View>
         </View>
       </Modal>
-    </View>
+
+      {/* Add Settings Menu */}
+      <SettingsMenu />
+    </SafeAreaView>
   );
 }

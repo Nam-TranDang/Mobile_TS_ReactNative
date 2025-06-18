@@ -8,6 +8,7 @@ import {
   Dimensions,
   FlatList,
   RefreshControl,
+  SafeAreaView,
   Text,
   TouchableOpacity,
   View,
@@ -35,10 +36,17 @@ export default function UserProfile() {
   const [followingCount, setFollowingCount] = useState(0);
   const [postsCount, setPostsCount] = useState(0);
   const [isFollowLoading, setIsFollowLoading] = useState(false); // THÊM TRẠNG THÁI TẢI CHO FOLLOW
+  const [showSettingsMenu, setShowSettingsMenu] = useState(false);
+  const [isOwnProfile, setIsOwnProfile] = useState(false);
 
   const { token, user: currentUser } = useAuthStore();
   const router = useRouter();
-  const isOwnProfile = currentUser?.id === userId;
+
+  useEffect(() => {
+    if (currentUser && userId) {
+      setIsOwnProfile(currentUser.id === userId);
+    }
+  }, [currentUser, userId]);
 
   const fetchUserData = async () => {
     try {
@@ -371,7 +379,7 @@ export default function UserProfile() {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -381,13 +389,20 @@ export default function UserProfile() {
           <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{user?.username}</Text>
-        <TouchableOpacity style={styles.moreButton}>
-          <Ionicons
-            name="ellipsis-vertical"
-            size={24}
-            color={COLORS.textPrimary}
-          />
-        </TouchableOpacity>
+
+        {/* Only show settings icon if this is the current user's profile */}
+        {isOwnProfile && (
+          <TouchableOpacity
+            style={styles.settingButton}
+            onPress={() => setShowSettingsMenu(true)}
+          >
+            <Ionicons
+              name="settings-outline"
+              size={24}
+              color={COLORS.textPrimary}
+            />
+          </TouchableOpacity>
+        )}
       </View>
 
       <FlatList
@@ -419,6 +434,6 @@ export default function UserProfile() {
           </View>
         }
       />
-    </View>
+    </SafeAreaView>
   );
 }

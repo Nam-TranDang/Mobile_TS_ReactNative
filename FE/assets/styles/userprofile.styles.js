@@ -31,6 +31,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     color: COLORS.textPrimary,
+    textAlign: "center", // Thêm thuộc tính này để căn giữa text
+    flex: 1, // Sử dụng flex để text chiếm không gian ở giữa
   },
   moreButton: {
     padding: 8,
@@ -194,6 +196,42 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.textSecondary,
     marginTop: 12,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-start",
+    alignItems: "flex-end",
+  },
+  menuContainer: {
+    backgroundColor: "white",
+    borderRadius: 8,
+    marginTop: 100,
+    marginRight: 15,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    minWidth: 180,
+  },
+  menuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 15,
+  },
+  menuText: {
+    fontSize: 16,
+    marginLeft: 10,
+    color: COLORS.textPrimary,
+  },
+  menuDivider: {
+    height: 1,
+    backgroundColor: "#f0f0f0",
+    marginHorizontal: 10,
   },
 });
 
