@@ -203,6 +203,77 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
     alignItems: "flex-end",
   },
+  modalContent: {
+    backgroundColor: COLORS.cardBackground,
+    borderRadius: 12,
+    padding: 24,
+    width: "100%",
+    maxWidth: 400,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 16,
+    color: COLORS.error,
+    textAlign: "center",
+  },
+  modalText: {
+    fontSize: 14,
+    color: COLORS.textPrimary,
+    marginBottom: 20,
+    textAlign: "center",
+    lineHeight: 22,
+  },
+  confirmInstructionText: {
+    fontSize: 14,
+    color: COLORS.textPrimary,
+    marginBottom: 10,
+    fontWeight: "500",
+  },
+  confirmationInput: {
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    marginBottom: 20,
+    backgroundColor: COLORS.inputBackground,
+    color: COLORS.textPrimary,
+  },
+  modalDeleteButtonDisabled: {
+    backgroundColor: COLORS.textSecondary,
+  },
+  modalButtonsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  modalCancelButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginRight: 8,
+    backgroundColor: COLORS.cardBackground,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  modalCancelButtonText: {
+    color: COLORS.textPrimary,
+    fontWeight: "500",
+  },
+  modalDeleteButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    backgroundColor: COLORS.red,
+    color: COLORS.white,
+    marginLeft: 8,
+  },
+  modalDeleteButtonText: {
+    color: COLORS.white,
+    fontWeight: "500",
+  },
   menuContainer: {
     backgroundColor: "white",
     borderRadius: 8,
@@ -232,6 +303,11 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: "#f0f0f0",
     marginHorizontal: 10,
+  },
+  modalWrapper: {
+    width: "100%",
+    alignItems: "center",
+    marginTop: 150, // This pushes the modal down from the top
   },
 });
 

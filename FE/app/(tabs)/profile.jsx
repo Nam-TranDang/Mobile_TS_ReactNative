@@ -406,54 +406,56 @@ export default function Profile() {
         onRequestClose={() => setIsDeleteAccountModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Delete Account</Text>
+          <View style={styles.modalWrapper}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Delete Account</Text>
 
-            <Text style={styles.modalText}>
-              This action will permanently delete your account and all
-              associated data. This action CANNOT be undone.
-            </Text>
+              <Text style={styles.modalText}>
+                This action will permanently delete your account and all
+                associated data. This action CANNOT be undone.
+              </Text>
 
-            <Text style={styles.confirmInstructionText}>
-              To confirm, please type DELETE in the field below:
-            </Text>
+              <Text style={styles.confirmInstructionText}>
+                To confirm, please type DELETE in the field below:
+              </Text>
 
-            <TextInput
-              style={styles.confirmationInput}
-              value={confirmationText}
-              onChangeText={setConfirmationText}
-              placeholder="Type DELETE"
-              placeholderTextColor={COLORS.textSecondary}
-            />
+              <TextInput
+                style={styles.confirmationInput}
+                value={confirmationText}
+                onChangeText={setConfirmationText}
+                placeholder="Type DELETE"
+                placeholderTextColor={COLORS.textSecondary}
+              />
 
-            <View style={styles.modalButtonsContainer}>
-              <TouchableOpacity
-                style={styles.modalCancelButton}
-                onPress={() => {
-                  setIsDeleteAccountModalVisible(false);
-                  setConfirmationText("");
-                }}
-              >
-                <Text style={styles.modalCancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
+              <View style={styles.modalButtonsContainer}>
+                <TouchableOpacity
+                  style={styles.modalCancelButton}
+                  onPress={() => {
+                    setIsDeleteAccountModalVisible(false);
+                    setConfirmationText("");
+                  }}
+                >
+                  <Text style={styles.modalCancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[
-                  styles.modalDeleteButton,
-                  confirmationText !== "DELETE" &&
-                    styles.modalDeleteButtonDisabled,
-                ]}
-                onPress={handleDeleteAccount}
-                disabled={confirmationText !== "DELETE" || isDeleting}
-              >
-                {isDeleting ? (
-                  <ActivityIndicator size="small" color="white" />
-                ) : (
-                  <Text style={styles.modalDeleteButtonText}>
-                    Delete Account
-                  </Text>
-                )}
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.modalDeleteButton,
+                    confirmationText !== "DELETE" &&
+                      styles.modalDeleteButtonDisabled,
+                  ]}
+                  onPress={handleDeleteAccount}
+                  disabled={confirmationText !== "DELETE" || isDeleting}
+                >
+                  {isDeleting ? (
+                    <ActivityIndicator size="small" color="white" />
+                  ) : (
+                    <Text style={styles.modalDeleteButtonText}>
+                      Delete Account
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </View>
