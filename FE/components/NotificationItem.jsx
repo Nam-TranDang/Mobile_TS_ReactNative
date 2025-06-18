@@ -81,17 +81,17 @@ const NotificationItem = ({ notification, onLongPress, onNotificationRead }) => 
       case 'new_follower':
         return {
           type: 'avatar',
-          source: notification.sender?.profileImage.replace("/svg?", "/png?")
+          source: { uri: notification.sender?.profileImage.replace("/svg?", "/png?") }
         };
       case 'new_like_on_book':
         return {
           type: 'avatar',
-          source: notification.sender?.profileImage.replace("/svg?", "/png?")
+          source: { uri: notification.sender?.profileImage.replace("/svg?", "/png?") }
         };
       case 'new_comment':
         return {
           type: 'avatar',
-          source: notification.sender?.profileImage.replace("/svg?", "/png?")
+          source: { uri: notification.sender?.profileImage.replace("/svg?", "/png?") }
         };
       default:
         return {
