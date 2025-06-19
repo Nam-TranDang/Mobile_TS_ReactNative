@@ -8,6 +8,7 @@ import {
   Alert,
   FlatList,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   ScrollView,
   Text,
@@ -15,6 +16,7 @@ import {
   TouchableOpacity,
   View,
   Pressable,
+  TouchableWithoutFeedback,
 } from "react-native";
 import styles from "../assets/styles/bookdetail.styles";
 import COLORS from "../constants/colors";
@@ -38,36 +40,33 @@ export default function BookDetail() {
   const [isLiking, setIsLiking] = useState(false);
   const [isDisliking, setIsDisliking] = useState(false);
   const [newCommentId, setNewCommentId] = useState(null);
+  const [showBookOptionsMenu, setShowBookOptionsMenu] = useState(false);
   const socketRef = useRef(null);
 
   const handleReportComment = (comment) => {
-    Alert.alert(
-      "Report Comment",
-      "Do you want to report this comment?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel"
+    Alert.alert("Report Comment", "Do you want to report this comment?", [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "Report",
+        style: "destructive",
+        onPress: () => {
+          router.push({
+            pathname: "/(tabs)/report",
+            params: {
+              id: comment._id,
+              type: "Comment",
+              commentText: comment.text,
+              commentAuthor: comment.user.username,
+              source: "bookdetail",
+              bookId: book._id,
+            },
+          });
         },
-        {
-          text: "Report",
-          style: "destructive",
-          onPress: () => {
-            router.push({
-              pathname: "/(tabs)/report",
-              params: {
-                id: comment._id,
-                type: "Comment",
-                commentText: comment.text,
-                commentAuthor: comment.user.username,
-                source: "bookdetail",
-                bookId: book._id,
-              },
-            });
-          }
-        }
-      ]
-    );
+      },
+    ]);
   };
 
   // Thiết lập kết nối Socket.IO
@@ -107,22 +106,22 @@ export default function BookDetail() {
     });
 
     socket.on("bookInteractionUpdate", (updatedBookData) => {
-    // Kiểm tra xem có phải là sách hiện tại không
-    if (updatedBookData._id === bookId) {
-      // Cập nhật state của sách với thông tin tương tác mới
-      setBook((prevBook) => {
-        if (!prevBook) return prevBook;
-        
-        return {
-          ...prevBook,
-          like_count: updatedBookData.like_count,
-          dislike_count: updatedBookData.dislike_count,
-          likedBy: updatedBookData.likedBy,
-          dislikedBy: updatedBookData.dislikedBy,
-        };
-      });
-    }
-  });
+      // Kiểm tra xem có phải là sách hiện tại không
+      if (updatedBookData._id === bookId) {
+        // Cập nhật state của sách với thông tin tương tác mới
+        setBook((prevBook) => {
+          if (!prevBook) return prevBook;
+
+          return {
+            ...prevBook,
+            like_count: updatedBookData.like_count,
+            dislike_count: updatedBookData.dislike_count,
+            likedBy: updatedBookData.likedBy,
+            dislikedBy: updatedBookData.dislikedBy,
+          };
+        });
+      }
+    });
 
     // Cleanup when component unmounts
     return () => {
@@ -150,7 +149,6 @@ export default function BookDetail() {
       Alert.alert("Error", "Failed to load book details");
     }
   };
-
 
   const fetchComments = async (page = 1, append = false) => {
     try {
@@ -357,16 +355,60 @@ export default function BookDetail() {
       setIsDisliking(false);
     }
   };
-  // // Add this function to check if the current user has liked or disliked the book
-  // const isLikedByUser = () => {
-  //   // Make sure types match for comparison (string vs ObjectId)
-  //   const userId = user?.id?.toString();
-  //   return book?.likedBy?.some((id) => id.toString() === userId);
-  // };
 
-  // const isDislikedByUser = () => {
-  //   return book?.dislikedBy?.includes(user?.id);
-  // };
+  // Thêm các hàm xử lý
+  const handleEditBook = () => {
+    setShowBookOptionsMenu(false);
+    router.push({
+      pathname: "/editbook",
+      params: { bookId: book?._id },
+    });
+  };
+
+  const handleDeleteConfirm = () => {
+    setShowBookOptionsMenu(false);
+    Alert.alert("Delete Book", "Are you sure you want to delete this book?", [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "Delete",
+        onPress: handleDeleteBook,
+        style: "destructive",
+      },
+    ]);
+  };
+
+  const handleDeleteBook = async () => {
+    try {
+      setIsLoading(true);
+
+      const response = await fetch(`${API_URL}/books/${book._id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        Alert.alert("Success", "Book deleted successfully", [
+          {
+            text: "OK",
+            onPress: () => router.back(),
+          },
+        ]);
+      } else {
+        const errorData = await response.json();
+        Alert.alert("Error", errorData.message || "Could not delete the book");
+      }
+    } catch (error) {
+      console.error("Error deleting book:", error);
+      Alert.alert("Error", "An error occurred while deleting the book");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <KeyboardAvoidingView
@@ -411,12 +453,18 @@ export default function BookDetail() {
                   Joined {formatMemberSince(book.user.createdAt)}
                 </Text>
               </View>
-              {/* Thêm icon để biểu thị có thể click */}
-              <Ionicons
-                name="chevron-forward"
-                size={20}
-                color={COLORS.textSecondary}
-              />
+              {user && book && book.user && book.user._id === user.id && (
+                <TouchableOpacity
+                  style={styles.ellipsisButton}
+                  onPress={() => setShowBookOptionsMenu(true)}
+                >
+                  <Ionicons
+                    name="ellipsis-horizontal"
+                    size={24}
+                    color={COLORS.textPrimary}
+                  />
+                </TouchableOpacity>
+              )}
             </TouchableOpacity>
 
             {/* Book Image */}
@@ -498,40 +546,31 @@ export default function BookDetail() {
               </View>
 
               <View style={styles.actionsRow}>
-                {/* Edit Button - Chỉ hiển thị nếu người dùng hiện tại là tác giả */}
-                {user && book && book.user && book.user._id === user.id && (
+                {/* Report Button */}
+                {/* Người dùng không phải tác giả mới hiện report bài*/}
+                {user && book && book.user && book.user._id !== user.id && (
                   <TouchableOpacity
-                    style={styles.editButton}
+                    style={styles.reportButton}
                     onPress={() =>
-                      router.push(`/(tabs)/editbook?bookId=${bookId}`)
+                      router.push({
+                        pathname: "/(tabs)/report",
+                        params: {
+                          id: bookId,
+                          type: "Book",
+                          source: "bookdetail",
+                          bookId: book._id,
+                        },
+                      })
                     }
                   >
                     <Ionicons
-                      name="create-outline"
+                      name="flag-outline"
                       size={18}
-                      color={COLORS.primary}
+                      color={COLORS.red}
                     />
-                    <Text style={styles.editText}>Edit</Text>
+                    <Text style={styles.reportText}>Report</Text>
                   </TouchableOpacity>
                 )}
-
-                {/* Report Button */}
-                <TouchableOpacity
-                  style={styles.reportButton}
-                  onPress={() =>
-                    router.push({
-                      pathname: "/(tabs)/report",
-                      params: { 
-                        id: bookId, 
-                        type: "Book",  
-                        source: "bookdetail",
-                        bookId: book._id },
-                    })
-                  }
-                >
-                  <Ionicons name="flag-outline" size={18} color={COLORS.red} />
-                  <Text style={styles.reportText}>Report</Text>
-                </TouchableOpacity>
               </View>
             </View>
           </View>
@@ -595,6 +634,46 @@ export default function BookDetail() {
             </Text>
           )}
         </View>
+
+        {/* Book Options Menu */}
+        <Modal
+          visible={showBookOptionsMenu}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowBookOptionsMenu(false)}
+        >
+          <TouchableWithoutFeedback
+            onPress={() => setShowBookOptionsMenu(false)}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.menuContainer}>
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={handleEditBook}
+                >
+                  <Ionicons
+                    name="pencil-outline"
+                    size={22}
+                    color={COLORS.textPrimary}
+                  />
+                  <Text style={styles.menuText}>Edit Book</Text>
+                </TouchableOpacity>
+
+                <View style={styles.menuDivider} />
+
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={handleDeleteConfirm}
+                >
+                  <Ionicons name="trash-outline" size={22} color={COLORS.red} />
+                  <Text style={[styles.menuText, { color: COLORS.red }]}>
+                    Delete Book
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
       </ScrollView>
     </KeyboardAvoidingView>
   );

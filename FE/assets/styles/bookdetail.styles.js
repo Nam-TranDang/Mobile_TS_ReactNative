@@ -310,9 +310,100 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     fontWeight: "500",
   },
+  deleteText: {
+    marginLeft: 4,
+    fontSize: 14,
+    color: COLORS.black,
+    fontWeight: "500",
+  },
   actionsRow: {
     flexDirection: "row",
     alignItems: "center",
+  },
+  deleteButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: COLORS.lightBackground,
+    borderRadius: 20,
+    marginRight: 5,
+  },
+  // Thêm vào styles hiện tại
+  ellipsisButton: {
+    position: "absolute",
+    right: 16,
+    top: 5,
+    padding: 8,
+    zIndex: 10,
+  },
+  optionsMenu: {
+    position: "absolute",
+    backgroundColor: COLORS.cardBackground,
+    borderRadius: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    width: 150,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    zIndex: 1000,
+  },
+  optionItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  optionText: {
+    marginLeft: 10,
+    fontSize: 14,
+    color: COLORS.textPrimary,
+  },
+  optionDivider: {
+    height: 1,
+    backgroundColor: COLORS.border,
+  },
+  // Styles cho menu
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  menuContainer: {
+    position: "absolute",
+    top: 220, // Điều chỉnh vị trí hiển thị của menu
+    right: 16,
+    backgroundColor: COLORS.cardBackground,
+    borderRadius: 12,
+    paddingVertical: 8,
+    width: 180,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  menuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  menuText: {
+    marginLeft: 12,
+    fontSize: 16,
+  },
+  menuDivider: {
+    height: 1,
+    backgroundColor: COLORS.border,
+    marginVertical: 4,
   },
 });
 
