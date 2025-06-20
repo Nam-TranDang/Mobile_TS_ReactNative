@@ -5,7 +5,6 @@ import COLORS from "../../constants/colors";
 import { useAuthStore } from "../../store/authStore";
 import { View, Text } from "react-native";
 
-
 export default function TabLayout() {
   const inset = useSafeAreaInsets();
   const { token, user, unreadNotificationsCount = 0 } = useAuthStore();
@@ -109,6 +108,18 @@ export default function TabLayout() {
             <Ionicons name="log-in-outline" size={size} color={color} />
           ),
           href: !isAuthenticated ? "/login" : null,
+        }}
+      />
+
+      {/* Signup tab - only visible when NOT authenticated */}
+      <Tabs.Screen
+        name="signup"
+        options={{
+          title: "Sign Up",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="person-add-outline" size={size} color={color} />
+          ),
+          href: !isAuthenticated ? "/(auth)/signup" : null,
         }}
       />
 
