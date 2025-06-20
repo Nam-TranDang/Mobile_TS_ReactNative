@@ -1,6 +1,7 @@
 // styles/signup.styles.js
-import { StyleSheet } from "react-native";
+import { StyleSheet, Dimensions } from "react-native";
 import COLORS from "../../constants/colors";
+const { width } = Dimensions.get("window");
 
 const styles = StyleSheet.create({
   container: {
@@ -20,6 +21,7 @@ const styles = StyleSheet.create({
     elevation: 4,
     borderWidth: 2,
     borderColor: COLORS.border,
+    marginTop: -84,
   },
   header: {
     alignItems: "center",
@@ -91,6 +93,20 @@ const styles = StyleSheet.create({
   link: {
     color: COLORS.primary,
     fontWeight: "600",
+  },
+  backButton:{
+    marginTop: 40,
+  },
+  backHeader: {
+    flexDirection: 'row',
+    paddingHorizontal: 22,
+    backgroundColor: COLORS.background,
+  },
+  illustrationImage: {
+    width: width * 0.5,
+    height: width * 0.5,
+    alignSelf: "center",
+    backgroundColor: COLORS.background,
   },
 });
 

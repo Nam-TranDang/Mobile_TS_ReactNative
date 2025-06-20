@@ -3,11 +3,13 @@ import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import SafeScreen from "../components/SafeScreen";
 import { useFonts } from "expo-font";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useAuthStore } from "../store/authStore";
 import { View, Text } from "react-native";
 import { LanguageProvider } from "../context/LanguageContext";
 import NotificationPopup from "../components/NotificationPopup";
+import { io } from "socket.io-client"; // Thêm import socket
+import { SOCKET_URL } from "../constants/api"; // Thêm import URL socket
 
 SplashScreen.preventAutoHideAsync();
 
@@ -15,8 +17,9 @@ export default function RootLayout() {
   const router = useRouter();
   const segments = useSegments();
   const [appIsReady, setAppIsReady] = useState(false);
+  const socketRef = useRef(null); // Thêm socket ref
 
-  const { checkAuth, user, token, isCheckingAuth } = useAuthStore();
+  const { checkAuth, user, token, isCheckingAuth, incrementUnreadNotificationsCount } = useAuthStore();
 
   const [fontsLoaded] = useFonts({
     "JetBrainsMono-Medium": require("../assets/fonts/JetBrainsMono-Medium.ttf"),
@@ -38,6 +41,33 @@ export default function RootLayout() {
 
     prepare();
   }, [fontsLoaded]);
+
+   // Thiết lập kết nối socket khi đăng nhập
+  useEffect(() => {
+    if (appIsReady && token && user && !socketRef.current) {
+      // Khởi tạo socket
+      const socket = io(SOCKET_URL);
+      socketRef.current = socket;
+
+      // Tham gia vào phòng của người dùng
+      socket.on('connect', () => {
+        console.log('Layout: Connected to socket');
+        socket.emit('joinUserRoom', user.id);
+      });
+
+      // Lắng nghe sự kiện thông báo mới để cập nhật badge
+      socket.on('newNotification', () => {
+        incrementUnreadNotificationsCount();
+      });
+
+      return () => {
+        if (socketRef.current) {
+          socketRef.current.disconnect();
+          socketRef.current = null;
+        }
+      };
+    }
+  }, [appIsReady, token, user]);
 
   // Chỉ điều hướng khi app đã sẵn sàng
   // useEffect(() => {

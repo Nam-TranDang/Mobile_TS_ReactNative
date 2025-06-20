@@ -46,9 +46,9 @@ const NotificationPopup = () => {
       // Chỉ cập nhật nếu component vẫn mounted
       if (isMounted) {
         // Sử dụng setTimeout để tránh update trong render cycle
-        setTimeout(() => {
-          incrementUnreadNotificationsCount();
-        }, 0);
+        // setTimeout(() => {
+        //   incrementUnreadNotificationsCount();
+        // }, 0);
         
         // Hiển thị popup
         showNotification(newNotification);

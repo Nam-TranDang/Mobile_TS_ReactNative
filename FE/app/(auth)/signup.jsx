@@ -9,7 +9,8 @@ import {
     TextInput,
     TouchableOpacity,
     View,
-    Alert
+    Alert,
+    Image,
 } from "react-native";
 import styles from "../../assets/styles/signup.styles";
 import COLORS from "../../constants/colors";
@@ -25,7 +26,20 @@ export default function Signup() {
     
     const handleSignUp = async() => {
         const result = await register(username, email, password);
-        if(!result.success) Alert.alert("Error", result.error);
+        if(result.success) {
+            Alert.alert(
+                "Đăng ký thành công", 
+                "Tài khoản của bạn đã được tạo. Vui lòng đăng nhập để tiếp tục.",
+                [
+                    { 
+                        text: "OK", 
+                        onPress: () => router.replace("/(auth)") 
+                    }
+                ]
+            );
+        } else {
+            Alert.alert("Lỗi", result.error);
+        }
     };
 
     return (
@@ -33,12 +47,29 @@ export default function Signup() {
             style={{flex: 1}}
             behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
+            {/* Header with back button */}
+            <View style={styles.backHeader}>
+                <TouchableOpacity
+                    style={styles.backButton}
+                    onPress={() => router.replace("/(tabs)")}
+                >
+                    <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
+                </TouchableOpacity>
+            </View>
+            <View style={{backgroundColor: COLORS.background, marginTop: -5}}>
+                <Image
+                    source={require("../../assets/images/logo.png")}
+                    style={styles.illustrationImage}
+                    resizeMode="contain"
+                    bottom={30}
+                />
+            </View>
             <View style={styles.container}>
                 <View style={styles.card}>
                     {/* HEADER */}
                     <View style={styles.header}>
                         <Text style={styles.title}>
-                            Thư viện tan vỡ
+                            Sign Up
                         </Text>
                         <Text style={styles.subtitle}>
                             Share your favorite reads
@@ -138,7 +169,7 @@ export default function Signup() {
                         {/* FOOTER */}
                         <View style={styles.footer}>
                             <Text style={styles.footerText}>Already have an account?</Text>
-                            <TouchableOpacity onPress={() => router.back()}>
+                            <TouchableOpacity onPress={() => router.replace("(auth)")}>
                                 <Text style={styles.link}>Login</Text>
                             </TouchableOpacity>
                         </View>

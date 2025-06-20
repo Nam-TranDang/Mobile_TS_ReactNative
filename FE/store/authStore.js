@@ -12,8 +12,6 @@ export const useAuthStore = create((set) => ({
     // Thêm state cho số lượng thông báo chưa đọc
     unreadNotificationsCount: 0,
   
-
-    
     register: async (username, email, password) => {
         set({isLoading: true});
 
@@ -31,16 +29,16 @@ export const useAuthStore = create((set) => ({
                 throw new Error(data.message || 'Something went wrong');
             }
 
-            await AsyncStorage.setItem("user", JSON.stringify(data.user));
-            await AsyncStorage.setItem("token", data.token);
-
-            set({user: data.user, token: data.token, isLoading: false});
-            return {success : true};
+            // Don't store token or user data after registration
+            // Don't navigate automatically - we'll show a message and redirect to login instead
+            set({isLoading: false});
+            return {success: true, message: 'Registration successful! Please log in.'};
         } catch(error){
-            console.log("Registration error", error);
+            set({isLoading: false});
+            return {success: false, error: error.message};
         }
     },
-
+    
     checkAuth: async () => {
         try{
             const token = await AsyncStorage.getItem('token');
@@ -48,6 +46,23 @@ export const useAuthStore = create((set) => ({
             const user = userJson ? JSON.parse(userJson) : null;
             
             set({token, user});
+            // Nếu người dùng đã đăng nhập, lấy số lượng thông báo chưa đọc
+            if (token && user) {
+                try {
+                    const response = await fetch(`${API_URL}/notifications/count`, {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        set({ unreadNotificationsCount: data.unreadCount || 0 });
+                    }
+                } catch (err) {
+                    console.log("Error fetching unread notifications count", err);
+                }
+            }
         } catch(error){
             console.log("Auth check failed", error);
 
