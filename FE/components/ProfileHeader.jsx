@@ -6,10 +6,12 @@ import { useAuthStore } from "../store/authStore";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import COLORS from "../constants/colors";
+import { useLanguage } from "../../context/LanguageContext";
 
 export default function ProfileHeader() {
   const { user } = useAuthStore();
   const router = useRouter();
+  const { t, currentLanguage, changeLanguage } = useLanguage();
 
   if (!user) return null;
 

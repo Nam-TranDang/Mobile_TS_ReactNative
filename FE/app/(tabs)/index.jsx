@@ -21,6 +21,7 @@ import COLORS from "../../constants/colors";
 import { formatPublishDate } from "../../lib/utils";
 import { useAuthStore } from "../../store/authStore";
 import logo from "../../assets/images/logo.png"
+import { useLanguage } from "../../context/LanguageContext";
 
 export const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -50,6 +51,7 @@ export default function Home() {
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
   const [showSortOptionPicker, setShowSortOptionPicker] = useState(false);
   const [showSortDirectionPicker, setShowSortDirectionPicker] = useState(false);
+  const { t, currentLanguage, changeLanguage } = useLanguage();
 
   const fetchBooks = async (pageNum = 1, refresh = false) => {
     try {
@@ -354,7 +356,7 @@ export default function Home() {
           color={COLORS.textSecondary}
           style={styles.searchIcon}
         />
-        <Text style={styles.searchPlaceholder}> Bạn muốn giới thiệu sách gì?</Text>
+        <Text style={styles.searchPlaceholder}>{t('Notification.whb')}</Text>
       </TouchableOpacity>
       <TouchableOpacity
         style={styles.sortButton}
@@ -388,7 +390,7 @@ export default function Home() {
 
             {/* Last updated section */}
             <View style={styles.filterSection}>
-              <Text style={styles.filterSectionLabel}>Last updated:</Text>
+              <Text style={styles.filterSectionLabel}>{t('filter.anyt')}:</Text>
               <TouchableOpacity
                 style={styles.dropdown}
                 onPress={() => {
@@ -409,11 +411,11 @@ export default function Home() {
               {showTimePicker && (
                 <View style={styles.dropdownMenu}>
                   {[
-                    "Any time",
-                    "Today",
-                    "This week",
-                    "This month",
-                    "This year",
+                    t('filter.anyt'),
+                    t('filter.tday'),
+                    t('filter.thweek'),
+                    t('filter.thmonth'),
+                    t('filter.thyear'),
                   ].map((option) => (
                     <TouchableOpacity
                       key={option}
@@ -447,7 +449,7 @@ export default function Home() {
 
             {/* Book category section */}
             <View style={styles.filterSection}>
-              <Text style={styles.filterSectionLabel}>Book category:</Text>
+              <Text style={styles.filterSectionLabel}>{t('filter.category')}:</Text>
               <TouchableOpacity
                 style={styles.dropdown}
                 onPress={() => {
@@ -502,7 +504,7 @@ export default function Home() {
 
             {/* Sort by section */}
             <View style={styles.filterSection}>
-              <Text style={styles.filterSectionLabel}>Sort by:</Text>
+              <Text style={styles.filterSectionLabel}> {t('filter.sortBy')}:</Text>
               <View style={styles.sortByRow}>
                 <TouchableOpacity
                   style={[styles.dropdown, styles.sortDropdown]}
@@ -561,10 +563,10 @@ export default function Home() {
                   ]}
                 >
                   {[
-                    { value: "newest", label: "Time" },
-                    { value: "title", label: "Title" },
-                    { value: "author", label: "Author" },
-                    { value: "rating", label: "Rating" },
+                    { value: "newest", label: t('filter.time') },
+                    { value: "title", label: t('filter.title') },
+                    { value: "author", label: t('filter.author') },
+                    { value: "rating", label: t('filter.rating') },
                   ].map((option) => (
                     <TouchableOpacity
                       key={option.value}
@@ -605,8 +607,8 @@ export default function Home() {
                   ]}
                 >
                   {[
-                    { value: "asc", label: "Ascending" },
-                    { value: "desc", label: "Descending" },
+                    { value: "asc", label: t('filter.as') },
+                    { value: "desc", label: t('filter.de') },
                   ].map((option) => (
                     <TouchableOpacity
                       key={option.value}
@@ -643,7 +645,7 @@ export default function Home() {
               style={styles.filterButton}
               onPress={applyFilters}
             >
-              <Text style={styles.filterButtonText}>Filter</Text>
+              <Text style={styles.filterButtonText}>{t('filter.fil')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -693,13 +695,13 @@ export default function Home() {
         onEndReachedThreshold={0.1}
         ListHeaderComponent={
           <View style={styles.header}>
-            <Text style={styles.headerTitle}>Chào mừng </Text>
+            <Text style={styles.headerTitle}>{t('Notification.wlc1')}</Text>
           <Image 
             source={logo} 
             style={{ width: 120, height: 110 ,position: "absolute" ,right: 0,}}
             resizeMode="contain"
           />
-            <Text style={styles.headerTitle2 }>bạn đã đến với</Text>
+            <Text style={styles.headerTitle2 }>{t('Notification.wlc2')}</Text>
             {renderRecommendationBar()}
           </View>
         }

@@ -23,6 +23,7 @@ import COLORS from "../constants/colors";
 import { API_URL, SOCKET_URL } from "../constants/api";
 import { formatMemberSince, formatPublishDate } from "../lib/utils";
 import { useAuthStore } from "../store/authStore";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function BookDetail() {
   const { bookId } = useLocalSearchParams();
@@ -42,15 +43,16 @@ export default function BookDetail() {
   const [newCommentId, setNewCommentId] = useState(null);
   const [showBookOptionsMenu, setShowBookOptionsMenu] = useState(false);
   const socketRef = useRef(null);
+  const { t, currentLanguage, changeLanguage } = useLanguage();
 
   const handleReportComment = (comment) => {
-    Alert.alert("Report Comment", "Do you want to report this comment?", [
+    Alert.alert(t('settings.rpcmt'),t('settings.rcmttitle'), [
       {
-        text: "Cancel",
+        text: t('settings.cancel'),
         style: "cancel",
       },
       {
-        text: "Report",
+        text: t('settings.rp'),
         style: "destructive",
         onPress: () => {
           router.push({
@@ -367,13 +369,13 @@ export default function BookDetail() {
 
   const handleDeleteConfirm = () => {
     setShowBookOptionsMenu(false);
-    Alert.alert("Delete Book", "Are you sure you want to delete this book?", [
+    Alert.alert(t('book.delete'), t('book.aldelete'), [
       {
-        text: "Cancel",
+        text: t('book.cancel'),
         style: "cancel",
       },
       {
-        text: "Delete",
+        text: t('book.delete'),
         onPress: handleDeleteBook,
         style: "destructive",
       },
@@ -392,7 +394,7 @@ export default function BookDetail() {
       });
 
       if (response.ok) {
-        Alert.alert("Success", "Book deleted successfully", [
+        Alert.alert(t('book.sus'), t('book.susdel'), [
           {
             text: "OK",
             onPress: () => router.back(),
@@ -423,7 +425,7 @@ export default function BookDetail() {
         >
           <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Book Details</Text>
+        <Text style={styles.headerTitle}>{t('book.detail')}</Text>
       </View>
 
       <ScrollView
@@ -475,7 +477,7 @@ export default function BookDetail() {
             {/* Book Info */}
             <Text style={styles.bookTitle}>{book.title}</Text>
             <Text style={styles.bookAuthor}>
-              Tác giả: {book.author || "Không có thông tin"}
+              {t('book.author')} : {book.author || "Không có thông tin"}
             </Text>
             <View style={styles.ratingContainer}>
               {renderRatingStars(book.rating)}
@@ -568,7 +570,7 @@ export default function BookDetail() {
                       size={18}
                       color={COLORS.red}
                     />
-                    <Text style={styles.reportText}>Report</Text>
+                    <Text style={styles.reportText}>{t('settings.rp')}</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -584,7 +586,7 @@ export default function BookDetail() {
           <View style={styles.commentInputContainer}>
             <TextInput
               style={styles.commentInput}
-              placeholder="Write a comment..."
+              placeholder= {t('book.cmtsth')} 
               placeholderTextColor={COLORS.placeholderText}
               value={commentText}
               onChangeText={setCommentText}
@@ -623,14 +625,14 @@ export default function BookDetail() {
                   {loadingMoreComments ? (
                     <ActivityIndicator size="small" color={COLORS.white} />
                   ) : (
-                    <Text style={styles.loadMoreText}>Load More Comments</Text>
+                    <Text style={styles.loadMoreText}>{t('book.morecmt')}</Text>
                   )}
                 </TouchableOpacity>
               )}
             </>
           ) : (
             <Text style={styles.emptyComments}>
-              No comments yet. Be the first to comment!
+             {t('book.nocmt')}
             </Text>
           )}
         </View>
@@ -656,7 +658,7 @@ export default function BookDetail() {
                     size={22}
                     color={COLORS.textPrimary}
                   />
-                  <Text style={styles.menuText}>Edit Book</Text>
+                  <Text style={styles.menuText}>{t('book.edit')}</Text>
                 </TouchableOpacity>
 
                 <View style={styles.menuDivider} />
@@ -667,7 +669,7 @@ export default function BookDetail() {
                 >
                   <Ionicons name="trash-outline" size={22} color={COLORS.red} />
                   <Text style={[styles.menuText, { color: COLORS.red }]}>
-                    Delete Book
+                    {t('book.delete')}
                   </Text>
                 </TouchableOpacity>
               </View>

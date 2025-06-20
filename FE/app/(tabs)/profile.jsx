@@ -23,6 +23,7 @@ import { useAuthStore } from "../../store/authStore";
 import { sleep } from "../../lib/helper";
 import styles from "../../assets/styles/userprofile.styles"; // Use userprofile styles
 import { useFocusEffect } from "@react-navigation/native";
+import { useLanguage } from "../../context/LanguageContext";
 
 // const { width } = Dimensions.get("window");
 // const imageSize = (width - 48) / 3; // 3 columns with padding
@@ -46,6 +47,7 @@ export default function Profile() {
   const { token, user: currentUser, logout } = useAuthStore();
   const router = useRouter();
   const userId = currentUser?.id;
+   const { t, currentLanguage, changeLanguage } = useLanguage();
 
   const fetchData = async () => {
     try {
@@ -426,17 +428,17 @@ export default function Profile() {
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
             <Text style={styles.statNumber}>{postsCount}</Text>
-            <Text style={styles.statLabel}>Posts</Text>
+            <Text style={styles.statLabel}>{t('profile.posts')}</Text>
           </View>
 
           <View style={styles.statItem}>
             <Text style={styles.statNumber}>{followersCount}</Text>
-            <Text style={styles.statLabel}>Followers</Text>
+            <Text style={styles.statLabel}>{t('profile.followers')}</Text>
           </View>
 
           <View style={styles.statItem}>
             <Text style={styles.statNumber}>{followingCount}</Text>
-            <Text style={styles.statLabel}>Following</Text>
+            <Text style={styles.statLabel}>{t('profile.following')}</Text>
           </View>
         </View>
       </View>
@@ -501,7 +503,7 @@ export default function Profile() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Your Profile</Text>
+        <Text style={styles.headerTitle}>{t('profile.yourProfile')}</Text>
         <TouchableOpacity
           style={styles.settingButton}
           onPress={() => router.push("/settings")}
@@ -539,12 +541,12 @@ export default function Profile() {
               size={50}
               color={COLORS.textSecondary}
             />
-            <Text style={styles.emptyText}>No books shared yet</Text>
+            <Text style={styles.emptyText}>{t('profile.noBooksYet')}</Text>
             <TouchableOpacity
               style={styles.addButton}
               onPress={() => router.push("/(tabs)/create")}
             >
-              <Text style={styles.addButtonText}>Add Your First Book </Text>
+              <Text style={styles.addButtonText}>{t('profile.addFirstBook')} </Text>
             </TouchableOpacity>
           </View>
         }
@@ -587,7 +589,7 @@ export default function Profile() {
                     setConfirmationText("");
                   }}
                 >
-                  <Text style={styles.modalCancelButtonText}>Cancel</Text>
+                  <Text style={styles.modalCancelButtonText}>{t('settings.cancel')}</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity

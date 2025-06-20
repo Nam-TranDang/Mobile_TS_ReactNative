@@ -21,6 +21,7 @@ import { sleep } from "../lib/helper";
 import styles from "../assets/styles/userprofile.styles";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback } from "react";
+import { useLanguage } from "../context/LanguageContext";
 
 const { width } = Dimensions.get("window");
 const imageSize = (width - 48) / 3; // 3 columns với padding
@@ -41,6 +42,7 @@ export default function UserProfile() {
 
   const { token, user: currentUser } = useAuthStore();
   const router = useRouter();
+  const { t, currentLanguage, changeLanguage } = useLanguage();
 
   useEffect(() => {
     if (currentUser && userId) {
@@ -282,19 +284,19 @@ export default function UserProfile() {
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
             <Text style={styles.statNumber}>{postsCount}</Text>
-            <Text style={styles.statLabel}>Posts</Text>
+            <Text style={styles.statLabel}>{t('profile.posts')}</Text>
           </View>
 
           {/* Chỉ hiển thị số Followers - không có TouchableOpacity */}
           <View style={styles.statItem}>
             <Text style={styles.statNumber}>{followersCount}</Text>
-            <Text style={styles.statLabel}>Followers</Text>
+            <Text style={styles.statLabel}>{t('profile.followers')}</Text>
           </View>
 
           {/* Chỉ hiển thị số Following - không có TouchableOpacity */}
           <View style={styles.statItem}>
             <Text style={styles.statNumber}>{followingCount}</Text>
-            <Text style={styles.statLabel}>Following</Text>
+            <Text style={styles.statLabel}>{t('profile.following')}</Text>
           </View>
         </View>
       </View>
@@ -430,7 +432,7 @@ export default function UserProfile() {
               size={50}
               color={COLORS.textSecondary}
             />
-            <Text style={styles.emptyText}>No books shared yet</Text>
+            <Text style={styles.emptyText}>{t('profile.noBooksYet')}</Text>
           </View>
         }
       />
