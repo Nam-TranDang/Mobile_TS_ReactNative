@@ -29,11 +29,17 @@ export default function Notifications() {
   const [filterType, setFilterType] = useState('all');
   const [unreadCount, setUnreadCount] = useState(0);
   const router = useRouter();
-  const { token, user, setUnreadNotificationsCount, resetUnreadNotificationsCount } = useAuthStore();
+  const { 
+    token, 
+    user, 
+    setUnreadNotificationsCount, 
+    resetUnreadNotificationsCount,
+    incrementUnreadNotificationsCount,
+    decrementUnreadNotificationsCount 
+  } = useAuthStore();
   const socketRef = useRef(null);
 
-
- // Reset badge khi vào màn hình thông báo
+  // Reset badge khi vào màn hình thông báo
   useEffect(() => {
     if (token && user) {
       resetUnreadNotificationsCount();
@@ -58,9 +64,10 @@ export default function Notifications() {
       console.log('Received new notification:', notification);
       setNotifications(prev => [notification, ...prev]);
       setUnreadCount(prev => prev + 1);
-      // Cập nhật badge count
-      useAuthStore.getState().incrementUnreadNotificationsCount();
-
+      // Sử dụng setTimeout để tránh update trong render cycle
+      // setTimeout(() => {
+      //   incrementUnreadNotificationsCount();
+      // }, 0);
     });
     
     // Listen for notification status changes
@@ -72,8 +79,28 @@ export default function Notifications() {
         )
       );
       setUnreadCount(unreadCount);
-      // Cập nhật badge count
-      setUnreadNotificationsCount(unreadCount);
+      // Sử dụng setTimeout để tránh update trong render cycle
+      setTimeout(() => {
+        setUnreadNotificationsCount(unreadCount);
+      }, 0);
+    });
+    
+    // Listen for notification read from popup
+    socket.on('notificationReadFromPopup', ({ notificationId, unreadCount }) => {
+      console.log(`Notification ${notificationId} marked as read from popup`);
+      setNotifications(prev => 
+        prev.map(item => 
+          item._id === notificationId ? { ...item, isRead: true } : item
+        )
+      );
+      
+      if (typeof unreadCount === 'number') {
+        setUnreadCount(unreadCount);
+        setUnreadNotificationsCount(unreadCount); // Gọi trực tiếp
+      } else {
+        setUnreadCount(prev => Math.max(0, prev - 1));
+        decrementUnreadNotificationsCount(); // Gọi trực tiếp
+      }
     });
     
     // Listen for notifications marked as read
@@ -83,8 +110,9 @@ export default function Notifications() {
         prev.map(item => ({ ...item, isRead: true }))
       );
       setUnreadCount(newUnreadCount);
-      // Cập nhật badge count
-      setUnreadNotificationsCount(newUnreadCount);
+      setTimeout(() => {
+        setUnreadNotificationsCount(newUnreadCount);
+      }, 0);
     });
     
     // Listen for notification deletion
@@ -94,6 +122,9 @@ export default function Notifications() {
         prev.filter(item => item._id !== notificationId)
       );
       setUnreadCount(newUnreadCount);
+      setTimeout(() => {
+        setUnreadNotificationsCount(newUnreadCount);
+      }, 0);
     });
     
     // Listen for all notifications deletion
@@ -101,6 +132,9 @@ export default function Notifications() {
       console.log('All notifications deleted');
       setNotifications([]);
       setUnreadCount(0);
+      setTimeout(() => {
+        setUnreadNotificationsCount(0);
+      }, 0);
     });
 
     // Clean up socket connection when component unmounts
@@ -111,7 +145,7 @@ export default function Notifications() {
         socket.disconnect();
       }
     };
-  }, [token, user]);
+  }, [token, user, setUnreadNotificationsCount, incrementUnreadNotificationsCount, decrementUnreadNotificationsCount]);
 
   const fetchNotifications = async (isRefreshing = false) => {
     try {

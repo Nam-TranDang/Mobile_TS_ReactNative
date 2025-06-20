@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { useAuthStore } from "../store/authStore";
 import { View, Text } from "react-native";
 import { LanguageProvider } from "../context/LanguageContext";
+import NotificationPopup from "../components/NotificationPopup";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -74,6 +75,10 @@ export default function RootLayout() {
       </View>
     );
   }
+
+  // Không render component NotificationPopup nếu chưa đăng nhập
+  const shouldShowNotificationPopup = !!user && !!token;
+
   return (
     <SafeAreaProvider>
       <SafeScreen>
@@ -85,6 +90,7 @@ export default function RootLayout() {
             <Stack.Screen name="bookdetail" />
           </Stack>
         </LanguageProvider>
+        {shouldShowNotificationPopup && <NotificationPopup />}
       </SafeScreen>
       <StatusBar style="dark" />
     </SafeAreaProvider>

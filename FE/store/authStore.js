@@ -95,11 +95,16 @@ export const useAuthStore = create((set) => ({
         console.error('Error during logout:', error);
         }
     },
-    // Thêm actions để quản lý số thông báo
-  setUnreadNotificationsCount: (count) => set({ unreadNotificationsCount: count }),
-  incrementUnreadNotificationsCount: () => set((state) => ({ 
-    unreadNotificationsCount: state.unreadNotificationsCount + 1 
-  })),
-  resetUnreadNotificationsCount: () => set({ unreadNotificationsCount: 0 }),
+    // Thêm action mới:
+    decrementUnreadNotificationsCount: () => set((state) => ({ 
+        unreadNotificationsCount: Math.max(0, state.unreadNotificationsCount - 1) 
+      })),
+    
+    // Các actions đã có liên quan đến thông báo
+    setUnreadNotificationsCount: (count) => set({ unreadNotificationsCount: count }),
+    incrementUnreadNotificationsCount: () => set((state) => ({ 
+        unreadNotificationsCount: state.unreadNotificationsCount + 1 
+    })),
+    resetUnreadNotificationsCount: () => set({ unreadNotificationsCount: 0 }),
 
 }));

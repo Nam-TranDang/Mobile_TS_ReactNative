@@ -105,7 +105,16 @@ router.post("/:notificationId/mark-one-as-read", protectRoute, async (req, res) 
         const io = req.io;
         if (io) {
             const unreadCount = await Notification.countDocuments({ recipient: userId, isRead: false });
-            io.to(`userRoom_${userId.toString()}`).emit("notificationStatusChanged", { notificationId, isRead: true, unreadCount });
+            // Emit sự kiện cho trang notifications
+            io.to(`userRoom_${userId.toString()}`).emit("notificationStatusChanged", { 
+                notificationId, 
+                isRead: true, 
+                unreadCount 
+            });
+            // Emit sự kiện riêng cho popup
+            io.to(`userRoom_${userId.toString()}`).emit("notificationReadFromPopup", { 
+                notificationId 
+            });
         }
 
         res.json({ message: "Notification marked as read.", notification });
