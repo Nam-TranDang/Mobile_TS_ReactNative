@@ -18,36 +18,26 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import COLORS from "../../constants/colors";
 import { useAuthStore } from "../../store/authStore";
 import styles from "../../assets/styles/settings.styles";
+import { useLanguage } from "../../context/LanguageContext";
+
+
 
 export default function SettingsScreen() {
   const router = useRouter();
   const { logout } = useAuthStore();
   const [showLanguageModal, setShowLanguageModal] = useState(false);
-  const [currentLanguage, setCurrentLanguage] = useState("en");
+  const { t, currentLanguage, changeLanguage } = useLanguage();
 
-  useEffect(() => {
-    const loadLanguagePreference = async () => {
-      try {
-        const savedLanguage = await AsyncStorage.getItem("appLanguage");
-        if (savedLanguage) {
-          setCurrentLanguage(savedLanguage);
-        }
-      } catch (error) {
-        console.error("Error loading language preference:", error);
-      }
-    };
 
-    loadLanguagePreference();
-  }, []);
 
   const handleLogout = () => {
-    Alert.alert("Logout", "Are you sure you want to log out?", [
+    Alert.alert( t('settings.logout') , t('settings.confirmLogout') , [
       {
-        text: "Cancel",
+        text: t('settings.cancel'),
         style: "cancel",
       },
       {
-        text: "Logout",
+        text: t('settings.logout'),
         onPress: () => {
           logout();
           router.replace("/(auth)");
@@ -59,15 +49,15 @@ export default function SettingsScreen() {
 
   const showDeleteAccountConfirmation = () => {
     Alert.alert(
-      "Delete Account",
-      "Are you sure you want to delete your account? This action cannot be undone.",
+      t('settings.deleteAccount'),
+      t('settings.confirmDelete'),
       [
         {
-          text: "Cancel",
+          text: t('settings.cancel'),
           style: "cancel",
         },
         {
-          text: "Delete Account",
+          text: t('settings.deleteAccount'),
           onPress: () => router.push("/deleteaccount"),
           style: "destructive",
         },
@@ -85,13 +75,13 @@ export default function SettingsScreen() {
         >
           <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Settings</Text>
+        <Text style={styles.headerTitle}>{t('settings.title')}</Text>
       </View>
 
       <ScrollView style={styles.scrollContent}>
         {/* Account Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account</Text>
+          <Text style={styles.sectionTitle}>{t('settings.account')}</Text>
 
           <TouchableOpacity
             style={styles.settingItem}
@@ -105,7 +95,7 @@ export default function SettingsScreen() {
                   color={COLORS.primary}
                 />
               </View>
-              <Text style={styles.settingText}>Edit Profile</Text>
+              <Text style={styles.settingText}>{t('settings.editProfile')}</Text>
             </View>
             <Ionicons
               name="chevron-forward"
@@ -127,7 +117,7 @@ export default function SettingsScreen() {
                 />
               </View>
               <View style={styles.settingTextContainer}>
-                <Text style={styles.settingText}>Language</Text>
+                <Text style={styles.settingText}>{t('settings.language')}</Text>
                 <Text style={styles.settingSubtext}>
                   {currentLanguage === "en" ? "English" : "Tiếng Việt"}
                 </Text>
@@ -143,7 +133,7 @@ export default function SettingsScreen() {
 
         {/* Security Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Security</Text>
+          <Text style={styles.sectionTitle}>{t('settings.security')}</Text>
 
           <TouchableOpacity style={styles.settingItem} onPress={handleLogout}>
             <View style={styles.settingContent}>
@@ -154,14 +144,14 @@ export default function SettingsScreen() {
                   color={COLORS.primary}
                 />
               </View>
-              <Text style={styles.settingText}>Logout</Text>
+              <Text style={styles.settingText}>{t('settings.logout')}</Text>
             </View>
           </TouchableOpacity>
         </View>
 
         {/* Danger Zone */}
         <View style={[styles.section, styles.dangerSection]}>
-          <Text style={styles.sectionTitle}>Danger Zone</Text>
+          <Text style={styles.sectionTitle}>{t('settings.dangerZone')}</Text>
 
           <TouchableOpacity
             style={styles.settingItem}
@@ -172,7 +162,7 @@ export default function SettingsScreen() {
                 <Ionicons name="trash-outline" size={22} color={COLORS.red} />
               </View>
               <Text style={[styles.settingText, { color: COLORS.red }]}>
-                Delete Account
+                {t('settings.deleteAccount')}
               </Text>
             </View>
           </TouchableOpacity>
@@ -191,7 +181,7 @@ export default function SettingsScreen() {
             <TouchableWithoutFeedback>
               <View style={styles.languageModalContent}>
                 <View style={styles.languageModalHeader}>
-                  <Text style={styles.languageModalTitle}>Select Language</Text>
+                  <Text style={styles.languageModalTitle}>{t('settings.selectLanguage')}</Text>
                   <TouchableOpacity onPress={() => setShowLanguageModal(false)}>
                     <Ionicons
                       name="close"
@@ -208,10 +198,7 @@ export default function SettingsScreen() {
                     currentLanguage === "en" && styles.selectedLanguageOption,
                   ]}
                   onPress={() => {
-                    setCurrentLanguage("en");
-                    // Lưu vào AsyncStorage và cập nhật ngôn ngữ toàn app
-                    AsyncStorage.setItem("appLanguage", "en");
-                    // Đóng modal
+                    changeLanguage("en"); // Sử dụng hàm từ context thay vì setCurrentLanguage
                     setShowLanguageModal(false);
                   }}
                 >
@@ -235,12 +222,9 @@ export default function SettingsScreen() {
                     currentLanguage === "vi" && styles.selectedLanguageOption,
                   ]}
                   onPress={() => {
-                    setCurrentLanguage("vi");
-                    // Lưu vào AsyncStorage và cập nhật ngôn ngữ toàn app
-                    AsyncStorage.setItem("appLanguage", "vi");
-                    // Đóng modal
-                    setShowLanguageModal(false);
-                  }}
+                      changeLanguage("vi"); // Sử dụng hàm từ context thay vì setCurrentLanguage
+                      setShowLanguageModal(false);
+                    }}
                 >
                   <View style={styles.languageFlag}>
                     <Text style={styles.flagEmoji}>🇻🇳</Text>

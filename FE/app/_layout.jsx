@@ -6,6 +6,7 @@ import { useFonts } from "expo-font";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "../store/authStore";
 import { View, Text } from "react-native";
+import { LanguageProvider } from "../context/LanguageContext";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -76,12 +77,14 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <SafeScreen>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="(auth)" />
-          <Stack.Screen name="userprofile" />
-          <Stack.Screen name="bookdetail" />
-        </Stack>
+        <LanguageProvider>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="(auth)" />
+            <Stack.Screen name="userprofile" />
+            <Stack.Screen name="bookdetail" />
+          </Stack>
+        </LanguageProvider>
       </SafeScreen>
       <StatusBar style="dark" />
     </SafeAreaProvider>

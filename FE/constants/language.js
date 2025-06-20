@@ -1,0 +1,120 @@
+export const translations = {
+    en: {
+        Notification: {
+            mark: "Mark all as read",
+            noNotification: "No notifications yet...",
+            Tag: "Notifications",
+            user: "sent you a message",
+            group: "sent a message in group",
+        },
+        ChatBox: {  
+            noConversation: "Please select a conversation...",
+        },
+        Navbar: {
+            logout: "Logout",
+            notifications: "Notifications",
+            welcome: "Welcome",
+            login: "Login",
+            register: "Register",
+            loginname: "Welcome",
+        },
+        login: {
+            title: "Login",
+            email: "Email",
+            password: "Password",
+            button: "Login",
+            loading: "Getting you in...(My heart)",
+            changeavt:"Change Avatar",
+            changepass:"Change Password",
+            oldpassword:"Old password",
+            newpassword:"New password",
+            confirmpassword:"Confirm password",
+        },
+        chat: {
+            searchPlaceholder: "Search conversation",
+            loading: "Loading chats...",
+            noConversation: "No conversation selected yet..."
+        },
+        datetime: {
+            yesterday: "yesterday",
+            today: "today",
+            last: "last",
+            dayago: "day ago",
+            weekago: "week ago",
+            monthago: "month ago",
+        },
+        settings: {
+            title: "Settings",
+            account: "Account",
+            editProfile: "Edit Profile",
+            language: "Language",
+            security: "Security",
+            logout: "Logout",
+            dangerZone: "Danger Zone",
+            deleteAccount: "Delete Account",
+            selectLanguage: "Select Language",
+            confirmLogout: "Are you sure you want to log out?",
+            cancel: "Cancel",
+            confirmDelete: "Are you sure you want to delete your account? This action cannot be undone.",
+        }
+    },
+    vi: {
+        Notification: {
+            mark: "Đã đọc tất cả",
+            noNotification: "Không có thông báo mới",
+            Tag: "Thông báo",
+            user: "đã gửi tin nhắn đến bạn",
+            group: "đã gửi tin nhắn trong nhóm",
+        },
+        ChatBox:{
+            noConversation: "Vui lòng chọn cuộc trò chuyện...",
+        },
+        Navbar: {
+            logout: "Đăng xuất",
+            notifications: "Thông báo",
+            welcome: "Chào mừng",
+            login: "Đăng nhập",
+            register: "Đăng ký",
+            loginname: "Xin chào",
+        },
+        login: {
+            title: "Đăng nhập",
+            email: "Email",
+            password: "Mật khẩu",
+            button: "Đăng nhập",
+            loading: "Đang đăng nhập...",
+            changeavt:"Đổi Ảnh Đại Diện",
+            changepass:"Đổi Mật Khẩu",
+            oldpassword:"Nhập mật khẩu cũ",
+            newpassword:"Nhập mật khẩu mới",
+            confirmpassword:"Xác nhận mật khẩu mới",
+        },
+        chat: {
+            searchPlaceholder: "Tìm kiếm cuộc trò chuyện",
+            loading: "Đang tải...",
+            noConversation: "Vui lòng chọn cuộc trò chuyện..."
+        },
+        datetime: {
+            yesterday: "hôm qua",
+            today: "hôm nay",
+            last: "trước",
+            dayago: "ngày trước",
+            weekago: "tuần trước",
+            monthago: "tháng trước",
+        },
+        settings: {
+            title: "Cài đặt",
+            account: "Tài khoản",
+            editProfile: "Chỉnh sửa hồ sơ",
+            language: "Ngôn ngữ",
+            security: "Bảo mật",
+            logout: "Đăng xuất",
+            dangerZone: "Khu vực nguy hiểm",
+            deleteAccount: "Xóa tài khoản",
+            selectLanguage: "Chọn ngôn ngữ",
+            confirmLogout: "Bạn có chắc chắn muốn đăng xuất không?",
+            cancel: "Hủy",
+            confirmDelete: "Bạn có chắc chắn muốn xóa tài khoản? Hành động này không thể hoàn tác.",
+        }
+    }
+};
