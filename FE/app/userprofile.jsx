@@ -310,12 +310,7 @@ export default function UserProfile() {
       {/* Action Buttons */}
       <View style={styles.actionButtonsContainer}>
         {isOwnProfile ? (
-          <TouchableOpacity
-            style={styles.editButton}
-            onPress={() => router.push("/(tabs)/editprofile")}
-          >
-            <Text style={styles.editButtonText}>Edit Profile</Text>
-          </TouchableOpacity>
+          <TouchableOpacity></TouchableOpacity>
         ) : (
           <>
             <TouchableOpacity
@@ -348,8 +343,12 @@ export default function UserProfile() {
               onPress={() =>
                 router.push({
                   pathname: "/(tabs)/report",
-                  params: { id: userId, type: "User",
-                            source: "userprofile", userId: user._id },
+                  params: {
+                    id: userId,
+                    type: "User",
+                    source: "userprofile",
+                    userId: user._id,
+                  },
                 })
               }
             >

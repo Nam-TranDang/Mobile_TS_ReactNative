@@ -37,9 +37,11 @@ export default function Profile() {
   const [postsCount, setPostsCount] = useState(0);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [deleteBookId, setDeleteBookId] = useState(null);
-  const [isDeleteAccountModalVisible, setIsDeleteAccountModalVisible] = useState(false);
+  const [isDeleteAccountModalVisible, setIsDeleteAccountModalVisible] =
+    useState(false);
   const [confirmationText, setConfirmationText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showLanguageModal, setShowLanguageModal] = useState(false); // State for language modal
 
   const { token, user: currentUser, logout } = useAuthStore();
   const router = useRouter();
@@ -202,8 +204,9 @@ export default function Profile() {
 
       const data = await response.json();
       console.log("Delete account response:", data);
-      
-      if (!response.ok) throw new Error(data.message || "Failed to delete account");
+
+      if (!response.ok)
+        throw new Error(data.message || "Failed to delete account");
 
       // Đóng modal và đăng xuất
       setIsDeleteAccountModalVisible(false);
@@ -284,6 +287,23 @@ export default function Profile() {
                     Delete Account
                   </Text>
                 </TouchableOpacity>
+
+                <View style={styles.menuDivider} />
+
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => {
+                    setShowSettingsMenu(false); // Đóng menu settings hiện tại
+                    setShowLanguageModal(true); // Mở modal chọn ngôn ngữ
+                  }}
+                >
+                  <Ionicons
+                    name="language-outline" // Icon ngôn ngữ
+                    size={22}
+                    color={COLORS.textPrimary}
+                  />
+                  <Text style={styles.menuText}>Language</Text>
+                </TouchableOpacity>
               </View>
             </TouchableWithoutFeedback>
           </View>
@@ -293,7 +313,7 @@ export default function Profile() {
   };
 
   // Thêm menu tùy chọn cho sách
-  const BookOptionsMenu = ({visible, bookId, onClose}) => {
+  const BookOptionsMenu = ({ visible, bookId, onClose }) => {
     return (
       <Modal
         transparent={true}
@@ -304,7 +324,7 @@ export default function Profile() {
         <TouchableWithoutFeedback onPress={onClose}>
           <View style={styles.modalOverlay}>
             <TouchableWithoutFeedback>
-              <View style={[styles.menuContainer, {width: 200}]}>
+              <View style={[styles.menuContainer, { width: 200 }]}>
                 <TouchableOpacity
                   style={styles.menuItem}
                   onPress={() => {
@@ -312,7 +332,7 @@ export default function Profile() {
                     router.push({
                       pathname: "/(tabs)/editbook",
                       params: { bookId: bookId },
-                      source: "profile"
+                      source: "profile",
                     });
                   }}
                 >
@@ -323,9 +343,9 @@ export default function Profile() {
                   />
                   <Text style={styles.menuText}>Edit Book</Text>
                 </TouchableOpacity>
-                
+
                 <View style={styles.menuDivider} />
-                
+
                 <TouchableOpacity
                   style={styles.menuItem}
                   onPress={() => {
@@ -338,7 +358,9 @@ export default function Profile() {
                     size={22}
                     color={COLORS.danger}
                   />
-                  <Text style={[styles.menuText, {color: COLORS.danger}]}>Delete Book</Text>
+                  <Text style={[styles.menuText, { color: COLORS.danger }]}>
+                    Delete Book
+                  </Text>
                 </TouchableOpacity>
               </View>
             </TouchableWithoutFeedback>
@@ -428,20 +450,20 @@ export default function Profile() {
       </View>
 
       {/* Action Buttons */}
-      <View style={styles.actionButtonsContainer}>
+      {/* <View style={styles.actionButtonsContainer}>
         <TouchableOpacity
           style={styles.editButton}
           onPress={() => router.push("/(tabs)/editprofile")}
         >
           <Text style={styles.editButtonText}>Edit Profile</Text>
         </TouchableOpacity>
-      </View>
+      </View> */}
 
       {/* Books Grid Header */}
-      {/* <View style={styles.gridHeader}>
+      <View style={styles.gridHeader}>
         <Ionicons name="grid-outline" size={24} color={COLORS.textPrimary} />
         <Text style={styles.gridHeaderText}>Books</Text>
-      </View> */}
+      </View>
     </View>
   );
 
@@ -456,14 +478,14 @@ export default function Profile() {
   // Thêm style cho overlay khi đang xóa
   const additionalStyles = {
     deletingOverlay: {
-      position: 'absolute',
+      position: "absolute",
       top: 0,
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.7)',
-      justifyContent: 'center',
-      alignItems: 'center',
+      backgroundColor: "rgba(0, 0, 0, 0.7)",
+      justifyContent: "center",
+      alignItems: "center",
       borderRadius: 8,
     },
     deletingText: {
@@ -482,7 +504,7 @@ export default function Profile() {
         <Text style={styles.headerTitle}>Your Profile</Text>
         <TouchableOpacity
           style={styles.settingButton}
-          onPress={() => setShowSettingsMenu(true)}
+          onPress={() => router.push("/settings")}
         >
           <Ionicons
             name="settings-outline"
@@ -541,7 +563,8 @@ export default function Profile() {
               <Text style={styles.modalTitle}>Delete Account</Text>
 
               <Text style={styles.modalText}>
-                This action will permanently delete your account and all associated data. This action CANNOT be undone.
+                This action will permanently delete your account and all
+                associated data. This action CANNOT be undone.
               </Text>
 
               <Text style={styles.confirmInstructionText}>

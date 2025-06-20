@@ -39,7 +39,7 @@ export default function TabLayout() {
           ),
         }}
       />
-      
+
       {/* Search tab - only visible when authenticated */}
       <Tabs.Screen
         name="search"
@@ -51,7 +51,7 @@ export default function TabLayout() {
           href: isAuthenticated ? "/search" : null,
         }}
       />
-      
+
       {/* Notifications tab -  only visible when authenticated */}
       <Tabs.Screen
         name="notifications"
@@ -75,7 +75,7 @@ export default function TabLayout() {
           href: isAuthenticated ? "/profile" : null,
         }}
       />
-      
+
       {/* Login tab - only visible when NOT authenticated */}
       <Tabs.Screen
         name="login"
@@ -95,7 +95,7 @@ export default function TabLayout() {
           href: null,
         }}
       />
-      
+
       <Tabs.Screen
         name="report"
         options={{
@@ -103,7 +103,7 @@ export default function TabLayout() {
           title: "Báo cáo",
         }}
       />
-      
+
       <Tabs.Screen
         name="editbook"
         options={{
@@ -116,6 +116,14 @@ export default function TabLayout() {
         options={{
           href: null,
           title: "Create",
+        }}
+      />
+      {/* Settings Tab - Hide from tab bar but keep the page accessible */}
+      <Tabs.Screen
+        name="settings"
+        options={{
+          href: null, // This prevents the tab from showing in the tab bar
+          headerShown: false,
         }}
       />
     </Tabs>
