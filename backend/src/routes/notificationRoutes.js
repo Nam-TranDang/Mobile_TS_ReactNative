@@ -200,4 +200,21 @@ router.delete("/", protectRoute, async (req, res) => {
     }
 });
 
+// Thêm endpoint mới để chỉ lấy số lượng thông báo chưa đọc
+router.get("/count", protectRoute, async (req, res) => {
+    try {
+        const userId = req.user._id;
+        
+        // Đếm số lượng thông báo chưa đọc
+        const unreadCount = await Notification.countDocuments({ recipient: userId, isRead: false });
+        
+        res.status(200).json({
+            success: true,
+            unreadCount
+        });
+    } catch (error) {
+        console.error("Error counting unread notifications:", error);
+        res.status(500).json({ message: "Internal server error." });
+    }
+});
 export default router;

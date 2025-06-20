@@ -46,6 +46,23 @@ export const useAuthStore = create((set) => ({
             const user = userJson ? JSON.parse(userJson) : null;
             
             set({token, user});
+            // Nếu người dùng đã đăng nhập, lấy số lượng thông báo chưa đọc
+            if (token && user) {
+                try {
+                    const response = await fetch(`${API_URL}/notifications/count`, {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        set({ unreadNotificationsCount: data.unreadCount || 0 });
+                    }
+                } catch (err) {
+                    console.log("Error fetching unread notifications count", err);
+                }
+            }
         } catch(error){
             console.log("Auth check failed", error);
 
