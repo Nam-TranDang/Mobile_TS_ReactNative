@@ -56,9 +56,8 @@ export const useAuthStore = create((set) => ({
         }
     },
     
-    login: async(email, password) => {
+    login: async (email, password) => {
         set({isLoading: true});
-
         try{
             const response = await fetch(`${API_URL}/auth/login`, {
                 method: 'POST',
@@ -70,14 +69,37 @@ export const useAuthStore = create((set) => ({
             const data = await response.json();
 
             if(!response.ok){
+                set({isLoading: false});
+                
+                // Kiểm tra nếu tài khoản bị suspended
+                if (data.message.includes('suspended') || data.isSuspended) {
+                    // Trả về thông tin suspended thay vì redirect ngay
+                    return {
+                        success: false, 
+                        error: 'Account suspended', 
+                        isSuspended: true,
+                        suspensionInfo: {
+                            endDate: data.suspensionEndDate || data.endDate,
+                            reason: data.suspensionReason || data.reason || 'Không có thông tin cụ thể'
+                        }
+                    };
+                }
+                
                 throw new Error(data.message || 'Something went wrong');
             }
 
-            await AsyncStorage.setItem("user", JSON.stringify(data.user));
-            await AsyncStorage.setItem("token", data.token);
+            // Đăng nhập thành công
+            await AsyncStorage.setItem('token', data.token);
+            await AsyncStorage.setItem('user', JSON.stringify(data.user));
+            
+            set({
+                token: data.token,
+                user: data.user,
+                isAuthenticated: true,
+                isLoading: false,
+            });
 
-            set({user: data.user, token: data.token, isLoading: false});
-            return {success : true};
+            return {success: true, data: data.user};
         } catch(error){
             set({isLoading: false});
             return {success: false, error: error.message};

@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Link, useRouter } from "expo-router"; // Thêm useRouter
+import { Link, useRouter } from "expo-router";
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -15,19 +15,30 @@ import {
 import styles from "../../assets/styles/login.styles";
 import COLORS from "../../constants/colors";
 import { useAuthStore } from "./../../store/authStore";
-import ForgetPassword from "./forgetpassword";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const { isLoading, login, isCheckingAuth } = useAuthStore();
-  const router = useRouter(); // Khởi tạo router
+  const router = useRouter();
 
   const handleLogin = async () => {
     const result = await login(email, password);
 
-    if (!result.success) Alert.alert("Error", result.error);
+    if (!result.success) {
+      if (result.isSuspended) {
+        // Redirect đến trang suspended với thông tin
+        router.push({
+          pathname: '/(auth)/suspended',
+          params: {
+            suspensionInfo: JSON.stringify(result.suspensionInfo)
+          }
+        });
+      } else {
+        Alert.alert("Error", result.error);
+      }
+    }
   };
 
   if (isCheckingAuth) return null;
@@ -122,7 +133,7 @@ export default function Login() {
             <TouchableOpacity
               style={{ alignSelf: "flex-end", marginBottom: 16 }}
               onPress={() => {
-                router.push("/(auth)/forgetpassword"); // Điều hướng sang trang quên mật khẩu
+                router.push("/(auth)/forgetpassword");
               }}
             >
               <Text style={[styles.link, { fontSize: 14 }]}>

@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import COLORS from "../../constants/colors";
 import { useAuthStore } from "../../store/authStore";
 import { View, Text } from "react-native";
-import NotificationPopup from "../../components/Notificationpopup";
+
 
 export default function TabLayout() {
   const inset = useSafeAreaInsets();
