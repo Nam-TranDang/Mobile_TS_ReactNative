@@ -20,24 +20,20 @@ import { useAuthStore } from "../../store/authStore";
 import styles from "../../assets/styles/settings.styles";
 import { useLanguage } from "../../context/LanguageContext";
 
-
-
 export default function SettingsScreen() {
   const router = useRouter();
   const { logout } = useAuthStore();
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const { t, currentLanguage, changeLanguage } = useLanguage();
 
-
-
   const handleLogout = () => {
-    Alert.alert( t('settings.logout') , t('settings.confirmLogout') , [
+    Alert.alert(t("settings.logout"), t("settings.confirmLogout"), [
       {
-        text: t('settings.cancel'),
+        text: t("settings.cancel"),
         style: "cancel",
       },
       {
-        text: t('settings.logout'),
+        text: t("settings.logout"),
         onPress: () => {
           logout();
           router.replace("/(auth)");
@@ -48,21 +44,17 @@ export default function SettingsScreen() {
   };
 
   const showDeleteAccountConfirmation = () => {
-    Alert.alert(
-      t('settings.deleteAccount'),
-      t('settings.confirmDelete'),
-      [
-        {
-          text: t('settings.cancel'),
-          style: "cancel",
-        },
-        {
-          text: t('settings.deleteAccount'),
-          onPress: () => router.push("/deleteaccount"),
-          style: "destructive",
-        },
-      ]
-    );
+    Alert.alert(t("settings.deleteAccount"), t("settings.confirmDelete"), [
+      {
+        text: t("settings.cancel"),
+        style: "cancel",
+      },
+      {
+        text: t("settings.deleteAccount"),
+        onPress: () => router.push("/deleteaccount"),
+        style: "destructive",
+      },
+    ]);
   };
 
   return (
@@ -71,17 +63,17 @@ export default function SettingsScreen() {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => router.back()}
+          onPress={() => router.push("/(tabs)/profile")}
         >
           <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('settings.title')}</Text>
+        <Text style={styles.headerTitle}>{t("settings.title")}</Text>
       </View>
 
       <ScrollView style={styles.scrollContent}>
         {/* Account Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('settings.account')}</Text>
+          <Text style={styles.sectionTitle}>{t("settings.account")}</Text>
 
           <TouchableOpacity
             style={styles.settingItem}
@@ -95,7 +87,9 @@ export default function SettingsScreen() {
                   color={COLORS.primary}
                 />
               </View>
-              <Text style={styles.settingText}>{t('settings.editProfile')}</Text>
+              <Text style={styles.settingText}>
+                {t("settings.editProfile")}
+              </Text>
             </View>
             <Ionicons
               name="chevron-forward"
@@ -117,7 +111,7 @@ export default function SettingsScreen() {
                 />
               </View>
               <View style={styles.settingTextContainer}>
-                <Text style={styles.settingText}>{t('settings.language')}</Text>
+                <Text style={styles.settingText}>{t("settings.language")}</Text>
                 <Text style={styles.settingSubtext}>
                   {currentLanguage === "en" ? "English" : "Tiếng Việt"}
                 </Text>
@@ -133,7 +127,7 @@ export default function SettingsScreen() {
 
         {/* Security Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('settings.security')}</Text>
+          <Text style={styles.sectionTitle}>{t("settings.security")}</Text>
 
           <TouchableOpacity style={styles.settingItem} onPress={handleLogout}>
             <View style={styles.settingContent}>
@@ -144,14 +138,14 @@ export default function SettingsScreen() {
                   color={COLORS.primary}
                 />
               </View>
-              <Text style={styles.settingText}>{t('settings.logout')}</Text>
+              <Text style={styles.settingText}>{t("settings.logout")}</Text>
             </View>
           </TouchableOpacity>
         </View>
 
         {/* Danger Zone */}
         <View style={[styles.section, styles.dangerSection]}>
-          <Text style={styles.sectionTitle}>{t('settings.dangerZone')}</Text>
+          <Text style={styles.sectionTitle}>{t("settings.dangerZone")}</Text>
 
           <TouchableOpacity
             style={styles.settingItem}
@@ -162,7 +156,7 @@ export default function SettingsScreen() {
                 <Ionicons name="trash-outline" size={22} color={COLORS.red} />
               </View>
               <Text style={[styles.settingText, { color: COLORS.red }]}>
-                {t('settings.deleteAccount')}
+                {t("settings.deleteAccount")}
               </Text>
             </View>
           </TouchableOpacity>
@@ -181,7 +175,9 @@ export default function SettingsScreen() {
             <TouchableWithoutFeedback>
               <View style={styles.languageModalContent}>
                 <View style={styles.languageModalHeader}>
-                  <Text style={styles.languageModalTitle}>{t('settings.selectLanguage')}</Text>
+                  <Text style={styles.languageModalTitle}>
+                    {t("settings.selectLanguage")}
+                  </Text>
                   <TouchableOpacity onPress={() => setShowLanguageModal(false)}>
                     <Ionicons
                       name="close"
@@ -222,9 +218,9 @@ export default function SettingsScreen() {
                     currentLanguage === "vi" && styles.selectedLanguageOption,
                   ]}
                   onPress={() => {
-                      changeLanguage("vi"); // Sử dụng hàm từ context thay vì setCurrentLanguage
-                      setShowLanguageModal(false);
-                    }}
+                    changeLanguage("vi"); // Sử dụng hàm từ context thay vì setCurrentLanguage
+                    setShowLanguageModal(false);
+                  }}
                 >
                   <View style={styles.languageFlag}>
                     <Text style={styles.flagEmoji}>🇻🇳</Text>
