@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -14,9 +14,10 @@ import {
   // Keyboard,
 } from "react-native";
 import { useRouter } from "expo-router"; // Add this import
+import { io } from "socket.io-client";
 import styles from "../../assets/styles/home.styles";
 import Loader from "../../components/Loader";
-import { API_URL } from "../../constants/api";
+import { API_URL, SOCKET_URL } from "../../constants/api";
 import COLORS from "../../constants/colors";
 import { formatPublishDate } from "../../lib/utils";
 import { useAuthStore } from "../../store/authStore";
@@ -50,6 +51,27 @@ export default function Home() {
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
   const [showSortOptionPicker, setShowSortOptionPicker] = useState(false);
   const [showSortDirectionPicker, setShowSortDirectionPicker] = useState(false);
+
+  const socketRef = useRef(null);
+
+  useEffect(() => {
+    // Khởi tạo socket chỉ 1 lần
+    if (!socketRef.current) {
+      socketRef.current = io(SOCKET_URL);
+    }
+    const socket = socketRef.current;
+
+    // Lắng nghe sự kiện khi có sách mới
+    socket.on("newBookCreated", (data) => {
+      // Gọi lại hàm fetchBooks hoặc setRefreshFlag để reload danh sách
+      fetchBooks(1, true); // hoặc setRefreshFlag(Date.now())
+    });
+
+    // Cleanup khi unmount
+    return () => {
+      socket.off("newBookCreated");
+    };
+  }, []);
 
   const fetchBooks = async (pageNum = 1, refresh = false) => {
     try {

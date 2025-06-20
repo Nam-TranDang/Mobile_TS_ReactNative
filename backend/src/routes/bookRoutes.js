@@ -76,6 +76,14 @@ router.post("/", protectRoute, async (req, res) => {
       });
     }
 
+    // Emit cho tất cả client FE (user app) để tự động reload
+    if (req.io) {
+      req.io.emit("newBookCreated", {
+        book: newBook,
+        user: req.user,
+      });
+    }
+
     res.status(201).json(newBook);
   } catch (error) {
     console.error(error);
@@ -363,21 +371,21 @@ router.post("/:bookId/comments", protectRoute, async (req, res) => {
         "Socket.io instance (req.io) not found. Cannot emit 'newComment'."
       );
     }
-     // Gửi newComment đã populate và transform
-      if (book.user.toString() !== currentUser._id.toString()) {
-        const notificationMessage = `${currentUser.username} đã bình luận về sách "${book.title}".`;
-        // Link đến comment cụ thể có thể phức tạp, tạm thời link đến sách
-        const notificationLink = `/books/${bookId}?commentId=${newComment._id}`; // Ví dụ link
-        await createAndSendNotification(
-            io,
-            book.user, // Người nhận là chủ sở hữu sách
-            currentUser._id,
-            "new_comment",
-            notificationMessage,
-            notificationLink,
-            "Comment",     // relatedItemType là Comment
-            newComment._id // relatedItemId là ID của comment mới
-        );
+    // Gửi newComment đã populate và transform
+    if (book.user.toString() !== currentUser._id.toString()) {
+      const notificationMessage = `${currentUser.username} đã bình luận về sách "${book.title}".`;
+      // Link đến comment cụ thể có thể phức tạp, tạm thời link đến sách
+      const notificationLink = `/books/${bookId}?commentId=${newComment._id}`; // Ví dụ link
+      await createAndSendNotification(
+        io,
+        book.user, // Người nhận là chủ sở hữu sách
+        currentUser._id,
+        "new_comment",
+        notificationMessage,
+        notificationLink,
+        "Comment", // relatedItemType là Comment
+        newComment._id // relatedItemId là ID của comment mới
+      );
     }
     res.status(201).json(newComment.toJSON());
   } catch (error) {
@@ -585,22 +593,23 @@ router.put("/:id/like", protectRoute, async (req, res) => {
         book.dislikedBy.pull(userId);
         book.dislike_count -= 1;
       }
-      if (updated && book.user.toString() !== userId.toString()) { // Chỉ gửi nếu có thay đổi và không phải tự like
+      if (updated && book.user.toString() !== userId.toString()) {
+        // Chỉ gửi nếu có thay đổi và không phải tự like
         const notificationMessage = `${currentUser.username} đã thích sách "${book.title}".`;
         const notificationLink = `/books/${book._id}`;
         await createAndSendNotification(
-            io,
-            book.user, // Người nhận là chủ sở hữu sách
-            userId,    // Người gửi là currentUser
-            "new_like_on_book",
-            notificationMessage,
-            notificationLink,
-            "Book",      // relatedItemType là Book
-            book._id     // relatedItemId là ID của sách được like
+          io,
+          book.user, // Người nhận là chủ sở hữu sách
+          userId, // Người gửi là currentUser
+          "new_like_on_book",
+          notificationMessage,
+          notificationLink,
+          "Book", // relatedItemType là Book
+          book._id // relatedItemId là ID của sách được like
         );
       }
     }
-    
+
     if (updated) {
       await book.save();
       emitBookUpdate(req, book); // <--- THÊM: Emit sự kiện
