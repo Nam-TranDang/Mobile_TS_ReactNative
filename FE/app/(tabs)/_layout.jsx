@@ -3,11 +3,15 @@ import { Tabs } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import COLORS from "../../constants/colors";
 import { useAuthStore } from "../../store/authStore";
+import { View, Text } from "react-native";
 
 export default function TabLayout() {
   const inset = useSafeAreaInsets();
-  const { token, user } = useAuthStore();
+  const { token, user, unreadNotificationsCount = 0 } = useAuthStore();
   const isAuthenticated = !!token && !!user;
+
+  // Chỉ hiển thị badge khi có thông báo chưa đọc
+  const showBadge = unreadNotificationsCount > 0;
 
   return (
     <Tabs
@@ -58,7 +62,26 @@ export default function TabLayout() {
         options={{
           title: "Notifications",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="notifications-outline" size={size} color={color} />
+             <View>
+              <Ionicons name="notifications-outline" size={size} color={color} />
+              {showBadge && (
+                <View style={{
+                  position: 'absolute',
+                  right: -3,
+                  top: -3,
+                  backgroundColor: 'red',
+                  borderRadius: 9,
+                  width: 15,
+                  height: 15,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}>
+                  <Text style={{ color: 'white', fontSize: 11, fontWeight: 'bold' }}>
+                    {unreadNotificationsCount > 99 ? '99+' : unreadNotificationsCount}
+                  </Text>
+                </View>
+              )}
+            </View>
           ),
           href: isAuthenticated ? "/notifications" : null,
         }}

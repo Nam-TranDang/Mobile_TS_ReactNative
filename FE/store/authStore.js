@@ -9,6 +9,10 @@ export const useAuthStore = create((set) => ({
     isLoading: false,
     isCheckingAuth: true,
 
+    // Thêm state cho số lượng thông báo chưa đọc
+    unreadNotificationsCount: 0,
+  
+
     
     register: async (username, email, password) => {
         set({isLoading: true});
@@ -91,4 +95,11 @@ export const useAuthStore = create((set) => ({
         console.error('Error during logout:', error);
         }
     },
+    // Thêm actions để quản lý số thông báo
+  setUnreadNotificationsCount: (count) => set({ unreadNotificationsCount: count }),
+  incrementUnreadNotificationsCount: () => set((state) => ({ 
+    unreadNotificationsCount: state.unreadNotificationsCount + 1 
+  })),
+  resetUnreadNotificationsCount: () => set({ unreadNotificationsCount: 0 }),
+
 }));

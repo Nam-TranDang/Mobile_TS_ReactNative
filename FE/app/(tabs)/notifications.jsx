@@ -29,8 +29,16 @@ export default function Notifications() {
   const [filterType, setFilterType] = useState('all');
   const [unreadCount, setUnreadCount] = useState(0);
   const router = useRouter();
-  const { token, user } = useAuthStore();
+  const { token, user, setUnreadNotificationsCount, resetUnreadNotificationsCount } = useAuthStore();
   const socketRef = useRef(null);
+
+
+ // Reset badge khi vào màn hình thông báo
+  useEffect(() => {
+    if (token && user) {
+      resetUnreadNotificationsCount();
+    }
+  }, [token, user, resetUnreadNotificationsCount]);
 
   useEffect(() => {
     if (!token || !user) return;
@@ -50,17 +58,22 @@ export default function Notifications() {
       console.log('Received new notification:', notification);
       setNotifications(prev => [notification, ...prev]);
       setUnreadCount(prev => prev + 1);
+      // Cập nhật badge count
+      useAuthStore.getState().incrementUnreadNotificationsCount();
+
     });
     
     // Listen for notification status changes
-    socket.on('notificationStatusChanged', ({ notificationId, isRead, unreadCount: newUnreadCount }) => {
+    socket.on('notificationStatusChanged', ({ notificationId, isRead, unreadCount }) => {
       console.log(`Notification ${notificationId} marked as ${isRead ? 'read' : 'unread'}`);
       setNotifications(prev => 
         prev.map(item => 
           item._id === notificationId ? { ...item, isRead } : item
         )
       );
-      setUnreadCount(newUnreadCount);
+      setUnreadCount(unreadCount);
+      // Cập nhật badge count
+      setUnreadNotificationsCount(unreadCount);
     });
     
     // Listen for notifications marked as read
@@ -70,6 +83,8 @@ export default function Notifications() {
         prev.map(item => ({ ...item, isRead: true }))
       );
       setUnreadCount(newUnreadCount);
+      // Cập nhật badge count
+      setUnreadNotificationsCount(newUnreadCount);
     });
     
     // Listen for notification deletion
@@ -143,6 +158,8 @@ export default function Notifications() {
       const data = await response.json();
       setNotifications(data.notifications || []);
       setUnreadCount(data.unreadCount || 0);
+      // Cập nhật badge count
+      setUnreadNotificationsCount(data.unreadCount || 0);
     } catch (error) {
       console.error("Error fetching notifications:", error);
       Alert.alert("Error", "Failed to load notifications: " + error.message);
@@ -193,7 +210,11 @@ export default function Notifications() {
           }
           return item;
         }));
-        setUnreadCount(prev => Math.max(0, prev - 1));
+        // Tính toán giá trị mới cho unreadCount và lưu vào biến
+        const updatedUnreadCount = Math.max(0, unreadCount - 1);
+        setUnreadCount(updatedUnreadCount);
+        // Đồng bộ với badge count
+        setUnreadNotificationsCount(updatedUnreadCount);
       } 
       else if (actionType === 'mark_unread') {
         setNotifications(notifications.map(item => {
@@ -202,13 +223,20 @@ export default function Notifications() {
           }
           return item;
         }));
-        setUnreadCount(prev => prev + 1);
+        // Tính toán giá trị mới cho unreadCount và lưu vào biến
+        const updatedUnreadCount = unreadCount + 1;
+        setUnreadCount(updatedUnreadCount);
+        // Đồng bộ với badge count
+        setUnreadNotificationsCount(updatedUnreadCount);
       } 
       else if (actionType === 'delete') {
         const notificationToDelete = notifications.find(n => n._id === notificationId);
         setNotifications(notifications.filter(item => item._id !== notificationId));
         if (notificationToDelete && !notificationToDelete.isRead) {
-          setUnreadCount(prev => Math.max(0, prev - 1));
+          const updatedUnreadCount = Math.max(0, unreadCount - 1);
+          setUnreadCount(updatedUnreadCount);
+          // Đồng bộ với badge count
+          setUnreadNotificationsCount(updatedUnreadCount);
         }
       }
     } catch (error) {
@@ -280,10 +308,15 @@ export default function Notifications() {
       if (endpoint.includes('mark-as-read')) {
         setNotifications(notifications.map(item => ({ ...item, isRead: true })));
         setUnreadCount(0);
+        // Reset badge count
+      resetUnreadNotificationsCount();
         Alert.alert("Success", "All notifications marked as read");
       } else if (method === 'DELETE') {
         setNotifications([]);
         setUnreadCount(0);
+        // Reset badge count
+      resetUnreadNotificationsCount();
+
         Alert.alert("Success", "All notifications deleted");
       }
     } catch (error) {
@@ -346,7 +379,8 @@ export default function Notifications() {
             onLongPress={handleItemLongPress}
             onNotificationRead={(notificationId) => handleNotificationAction('mark_read', notificationId)}
           />
-        )}
+        )
+        }
         keyExtractor={(item) => item._id}
         contentContainerStyle={styles.listContainer}
         ListEmptyComponent={renderEmptyComponent}
