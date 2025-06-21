@@ -21,7 +21,7 @@ import {
 import styles from "../assets/styles/bookdetail.styles";
 import COLORS from "../constants/colors";
 import { API_URL, SOCKET_URL } from "../constants/api";
-import { formatMemberSince, formatPublishDate } from "../lib/utils";
+import { formatMemberSince, formatRelativeTime } from "../lib/utils";
 import { useAuthStore } from "../store/authStore";
 import { useLanguage } from "../context/LanguageContext";
 
@@ -46,13 +46,13 @@ export default function BookDetail() {
   const { t, currentLanguage, changeLanguage } = useLanguage();
 
   const handleReportComment = (comment) => {
-    Alert.alert(t('settings.rpcmt'),t('settings.rcmttitle'), [
+    Alert.alert(t("settings.rpcmt"), t("settings.rcmttitle"), [
       {
-        text: t('settings.cancel'),
+        text: t("settings.cancel"),
         style: "cancel",
       },
       {
-        text: t('settings.rp'),
+        text: t("settings.rp"),
         style: "destructive",
         onPress: () => {
           router.push({
@@ -285,7 +285,7 @@ export default function BookDetail() {
             <Text style={styles.commentUsername}>{item.user.username}</Text>
           </TouchableOpacity>
           <Text style={styles.commentDate}>
-            {formatPublishDate(item.createdAt)}
+            {formatRelativeTime(item.createdAt)}
           </Text>
         </View>
         <Text style={styles.commentText}>{item.text}</Text>
@@ -369,13 +369,13 @@ export default function BookDetail() {
 
   const handleDeleteConfirm = () => {
     setShowBookOptionsMenu(false);
-    Alert.alert(t('book.delete'), t('book.aldelete'), [
+    Alert.alert(t("book.delete"), t("book.aldelete"), [
       {
-        text: t('book.cancel'),
+        text: t("book.cancel"),
         style: "cancel",
       },
       {
-        text: t('book.delete'),
+        text: t("book.delete"),
         onPress: handleDeleteBook,
         style: "destructive",
       },
@@ -394,7 +394,7 @@ export default function BookDetail() {
       });
 
       if (response.ok) {
-        Alert.alert(t('book.sus'), t('book.susdel'), [
+        Alert.alert(t("book.sus"), t("book.susdel"), [
           {
             text: "OK",
             onPress: () => router.back(),
@@ -425,7 +425,7 @@ export default function BookDetail() {
         >
           <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('book.detail')}</Text>
+        <Text style={styles.headerTitle}>{t("book.detail")}</Text>
       </View>
 
       <ScrollView
@@ -451,9 +451,9 @@ export default function BookDetail() {
               />
               <View style={styles.userInfo}>
                 <Text style={styles.username}>{book.user.username}</Text>
-                <Text style={styles.joinDate}>
+                {/* <Text style={styles.joinDate}>
                   Joined {formatMemberSince(book.user.createdAt)}
-                </Text>
+                </Text> */}
               </View>
               {user && book && book.user && book.user._id === user.id && (
                 <TouchableOpacity
@@ -477,14 +477,14 @@ export default function BookDetail() {
             {/* Book Info */}
             <Text style={styles.bookTitle}>{book.title}</Text>
             <Text style={styles.bookAuthor}>
-              {t('book.author')} : {book.author || "Không có thông tin"}
+              {t("book.author")} : {book.author || "Không có thông tin"}
             </Text>
             <View style={styles.ratingContainer}>
               {renderRatingStars(book.rating)}
             </View>
             <Text style={styles.caption}>{book.caption}</Text>
             <Text style={styles.publishDate}>
-              Published on {formatPublishDate(book.createdAt)}
+              {formatRelativeTime(book.createdAt)}
             </Text>
 
             {/* Like/Dislike Buttons */}
@@ -570,7 +570,7 @@ export default function BookDetail() {
                       size={18}
                       color={COLORS.red}
                     />
-                    <Text style={styles.reportText}>{t('settings.rp')}</Text>
+                    <Text style={styles.reportText}>{t("settings.rp")}</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -586,7 +586,7 @@ export default function BookDetail() {
           <View style={styles.commentInputContainer}>
             <TextInput
               style={styles.commentInput}
-              placeholder= {t('book.cmtsth')} 
+              placeholder={t("book.cmtsth")}
               placeholderTextColor={COLORS.placeholderText}
               value={commentText}
               onChangeText={setCommentText}
@@ -625,15 +625,13 @@ export default function BookDetail() {
                   {loadingMoreComments ? (
                     <ActivityIndicator size="small" color={COLORS.white} />
                   ) : (
-                    <Text style={styles.loadMoreText}>{t('book.morecmt')}</Text>
+                    <Text style={styles.loadMoreText}>{t("book.morecmt")}</Text>
                   )}
                 </TouchableOpacity>
               )}
             </>
           ) : (
-            <Text style={styles.emptyComments}>
-             {t('book.nocmt')}
-            </Text>
+            <Text style={styles.emptyComments}>{t("book.nocmt")}</Text>
           )}
         </View>
 
@@ -658,7 +656,7 @@ export default function BookDetail() {
                     size={22}
                     color={COLORS.textPrimary}
                   />
-                  <Text style={styles.menuText}>{t('book.edit')}</Text>
+                  <Text style={styles.menuText}>{t("book.edit")}</Text>
                 </TouchableOpacity>
 
                 <View style={styles.menuDivider} />
@@ -669,7 +667,7 @@ export default function BookDetail() {
                 >
                   <Ionicons name="trash-outline" size={22} color={COLORS.red} />
                   <Text style={[styles.menuText, { color: COLORS.red }]}>
-                    {t('book.delete')}
+                    {t("book.delete")}
                   </Text>
                 </TouchableOpacity>
               </View>

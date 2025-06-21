@@ -19,9 +19,9 @@ import styles from "../../assets/styles/home.styles";
 import Loader from "../../components/Loader";
 import { API_URL, SOCKET_URL } from "../../constants/api";
 import COLORS from "../../constants/colors";
-import { formatPublishDate } from "../../lib/utils";
+import { formatRelativeTime } from "../../lib/utils";
 import { useAuthStore } from "../../store/authStore";
-import logo from "../../assets/images/logo.png"
+import logo from "../../assets/images/logo.png";
 import { useLanguage } from "../../context/LanguageContext";
 
 export const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -309,8 +309,8 @@ export default function Home() {
           {renderRatingStars(item.rating)}
         </View>
         <Text style={styles.caption}>{item.caption}</Text>
-        <Text style={styles.date}>
-          Shared on {formatPublishDate(item.createdAt)}
+        <Text style={styles.timeText}>
+          {formatRelativeTime(item.createdAt)}
         </Text>
       </View>
     </TouchableOpacity>
@@ -378,7 +378,7 @@ export default function Home() {
           color={COLORS.textSecondary}
           style={styles.searchIcon}
         />
-        <Text style={styles.searchPlaceholder}>{t('Notification.whb')}</Text>
+        <Text style={styles.searchPlaceholder}>{t("Notification.whb")}</Text>
       </TouchableOpacity>
       <TouchableOpacity
         style={styles.sortButton}
@@ -412,7 +412,7 @@ export default function Home() {
 
             {/* Last updated section */}
             <View style={styles.filterSection}>
-              <Text style={styles.filterSectionLabel}>{t('filter.anyt')}:</Text>
+              <Text style={styles.filterSectionLabel}>{t("filter.anyt")}:</Text>
               <TouchableOpacity
                 style={styles.dropdown}
                 onPress={() => {
@@ -433,11 +433,11 @@ export default function Home() {
               {showTimePicker && (
                 <View style={styles.dropdownMenu}>
                   {[
-                    t('filter.anyt'),
-                    t('filter.tday'),
-                    t('filter.thweek'),
-                    t('filter.thmonth'),
-                    t('filter.thyear'),
+                    t("filter.anyt"),
+                    t("filter.tday"),
+                    t("filter.thweek"),
+                    t("filter.thmonth"),
+                    t("filter.thyear"),
                   ].map((option) => (
                     <TouchableOpacity
                       key={option}
@@ -471,7 +471,9 @@ export default function Home() {
 
             {/* Book category section */}
             <View style={styles.filterSection}>
-              <Text style={styles.filterSectionLabel}>{t('filter.category')}:</Text>
+              <Text style={styles.filterSectionLabel}>
+                {t("filter.category")}:
+              </Text>
               <TouchableOpacity
                 style={styles.dropdown}
                 onPress={() => {
@@ -526,7 +528,10 @@ export default function Home() {
 
             {/* Sort by section */}
             <View style={styles.filterSection}>
-              <Text style={styles.filterSectionLabel}> {t('filter.sortBy')}:</Text>
+              <Text style={styles.filterSectionLabel}>
+                {" "}
+                {t("filter.sortBy")}:
+              </Text>
               <View style={styles.sortByRow}>
                 <TouchableOpacity
                   style={[styles.dropdown, styles.sortDropdown]}
@@ -585,10 +590,10 @@ export default function Home() {
                   ]}
                 >
                   {[
-                    { value: "newest", label: t('filter.time') },
-                    { value: "title", label: t('filter.title') },
-                    { value: "author", label: t('filter.author') },
-                    { value: "rating", label: t('filter.rating') },
+                    { value: "newest", label: t("filter.time") },
+                    { value: "title", label: t("filter.title") },
+                    { value: "author", label: t("filter.author") },
+                    { value: "rating", label: t("filter.rating") },
                   ].map((option) => (
                     <TouchableOpacity
                       key={option.value}
@@ -629,8 +634,8 @@ export default function Home() {
                   ]}
                 >
                   {[
-                    { value: "asc", label: t('filter.as') },
-                    { value: "desc", label: t('filter.de') },
+                    { value: "asc", label: t("filter.as") },
+                    { value: "desc", label: t("filter.de") },
                   ].map((option) => (
                     <TouchableOpacity
                       key={option.value}
@@ -667,7 +672,7 @@ export default function Home() {
               style={styles.filterButton}
               onPress={applyFilters}
             >
-              <Text style={styles.filterButtonText}>{t('filter.fil')}</Text>
+              <Text style={styles.filterButtonText}>{t("filter.fil")}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -697,7 +702,7 @@ export default function Home() {
   return (
     <View style={styles.container}>
       {/* {renderSearchBar()} */}
-      
+
       {renderFilterModal()}
       <FlatList
         data={filteredBooks}
@@ -717,13 +722,18 @@ export default function Home() {
         onEndReachedThreshold={0.1}
         ListHeaderComponent={
           <View style={styles.header}>
-            <Text style={styles.headerTitle}>{t('Notification.wlc1')}</Text>
-          <Image 
-            source={logo} 
-            style={{ width: 120, height: 110 ,position: "absolute" ,right: 0,}}
-            resizeMode="contain"
-          />
-            <Text style={styles.headerTitle2 }>{t('Notification.wlc2')}</Text>
+            <Text style={styles.headerTitle}>{t("Notification.wlc1")}</Text>
+            <Image
+              source={logo}
+              style={{
+                width: 120,
+                height: 110,
+                position: "absolute",
+                right: 0,
+              }}
+              resizeMode="contain"
+            />
+            <Text style={styles.headerTitle2}>{t("Notification.wlc2")}</Text>
             {renderRecommendationBar()}
           </View>
         }
@@ -742,7 +752,7 @@ export default function Home() {
                 />
               )}
           </>
-        }        
+        }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Ionicons
@@ -751,13 +761,11 @@ export default function Home() {
               color={COLORS.textSecondary}
             />
             <Text style={styles.emptyText}>
-              {timeFilter !== "Any time" ||
-              categoryFilter !== "Any"
+              {timeFilter !== "Any time" || categoryFilter !== "Any"
                 ? "No results found"
                 : "No recommendations yet"}
             </Text>
-            {timeFilter !== "Any time" ||
-            categoryFilter !== "Any" ? (
+            {timeFilter !== "Any time" || categoryFilter !== "Any" ? (
               <Text style={styles.emptySubtext}>Try different filters</Text>
             ) : (
               <Text style={styles.emptySubtext}>
