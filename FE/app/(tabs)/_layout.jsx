@@ -4,11 +4,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import COLORS from "../../constants/colors";
 import { useAuthStore } from "../../store/authStore";
 import { View, Text } from "react-native";
+import { useLanguage } from "../../context/LanguageContext";
 
 export default function TabLayout() {
   const inset = useSafeAreaInsets();
   const { token, user, unreadNotificationsCount = 0 } = useAuthStore();
   const isAuthenticated = !!token && !!user;
+  const { t, currentLanguage, changeLanguage } = useLanguage();
 
   // Chỉ hiển thị badge khi có thông báo chưa đọc
   const showBadge = unreadNotificationsCount > 0;
@@ -37,7 +39,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Home",
+          title: t("Navbar.home") ,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home-outline" size={size} color={color} />
           ),
@@ -48,7 +50,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="search"
         options={{
-          title: "Search",
+          title: t("Navbar.search"),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="search" size={size} color={color} />
           ),
@@ -60,7 +62,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="notifications"
         options={{
-          title: "Notifications",
+          title: t("Navbar.noti"), 
           tabBarIcon: ({ color, size }) => (
              <View>
               <Ionicons name="notifications-outline" size={size} color={color} />
@@ -91,7 +93,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: "Profile",
+          title: t("Navbar.profile"),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="person-outline" size={size} color={color} />
           ),
@@ -103,7 +105,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="login"
         options={{
-          title: "Login",
+          title: t("login.title"),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="log-in-outline" size={size} color={color} />
           ),
@@ -115,7 +117,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="signup"
         options={{
-          title: "Sign Up",
+          title: t("login.signup"),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="person-add-outline" size={size} color={color} />
           ),

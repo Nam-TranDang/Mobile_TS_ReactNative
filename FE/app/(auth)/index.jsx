@@ -15,6 +15,7 @@ import {
 import styles from "../../assets/styles/login.styles";
 import COLORS from "../../constants/colors";
 import { useAuthStore } from "./../../store/authStore";
+import { useLanguage } from "../../context/LanguageContext";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -22,6 +23,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const { isLoading, login, isCheckingAuth } = useAuthStore();
   const router = useRouter();
+  const { t, currentLanguage, changeLanguage } = useLanguage();
 
   const handleLogin = async () => {
     const result = await login(email, password);
@@ -63,7 +65,7 @@ export default function Login() {
         <View style={styles.topIllustration}>
           <View style={styles.cardHeader}>
             <Text style={styles.illustrationText}>
-              Bạn cần đăng nhập để được trải nghiệm đầy đủ các tính năng!
+              {t("login.p15")}
             </Text>
           </View>
           <Image
@@ -88,7 +90,7 @@ export default function Login() {
                 />
                 <TextInput
                   style={styles.input}
-                  placeholder="Enter your email"
+                  placeholder={t("login.p1")}
                   placeholderTextColor={COLORS.placeholderText}
                   value={email}
                   onChangeText={setEmail}
@@ -100,7 +102,7 @@ export default function Login() {
 
             {/*Password */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Password</Text>
+              <Text style={styles.label}>{t("login.password")}</Text>
               <View style={styles.inputContainer}>
                 {/*Left icon */}
                 <Ionicons
@@ -112,7 +114,7 @@ export default function Login() {
                 {/*Input */}
                 <TextInput
                   style={styles.input}
-                  placeholder="Enter your password"
+                  placeholder={t("login.p2")}
                   placeholderTextColor={COLORS.placeholderText}
                   value={password}
                   onChangeText={setPassword}
@@ -137,7 +139,7 @@ export default function Login() {
               }}
             >
               <Text style={[styles.link, { fontSize: 14 }]}>
-                Forget Password?
+                {t("login.fp")}
               </Text>
             </TouchableOpacity>
 
@@ -149,16 +151,16 @@ export default function Login() {
               {isLoading ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.buttonText}>Login</Text>
+                <Text style={styles.buttonText}>{t("login.title")}</Text>
               )}
             </TouchableOpacity>
 
             {/*Footer */}
             <View style={styles.footer}>
-              <Text style={styles.footerText}>Don&apos;t have an account?</Text>
+              <Text style={styles.footerText}>{t("login.p10")}</Text>
               <Link href="../(auth)/signup" asChild>
                 <TouchableOpacity>
-                  <Text style={styles.link}>Sign Up</Text>
+                  <Text style={styles.link}>{t("login.signup")}</Text>
                 </TouchableOpacity>
               </Link>
             </View>

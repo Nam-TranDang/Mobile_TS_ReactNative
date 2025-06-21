@@ -20,6 +20,7 @@ import COLORS from "../../constants/colors";
 import { useAuthStore } from "../../store/authStore";
 import { API_URL } from "../../constants/api";
 import style from "../../assets/styles/create.styles"; // Tái sử dụng style từ trang create
+import { useLanguage } from "../../context/LanguageContext";
 
 const MAX_IMAGE_SIZE = 6 * 1024 * 1024; // 6MB
 
@@ -45,6 +46,7 @@ export default function EditBook() {
   const [loadingGenres, setLoadingGenres] = useState(false);
 
   const params = useLocalSearchParams();
+  const { t, currentLanguage, changeLanguage } = useLanguage();
   
   // Fetch book details and genres when component mounts
   useEffect(() => {
@@ -147,8 +149,8 @@ export default function EditBook() {
         const fileInfo = await FileSystem.getInfoAsync(result.assets[0].uri);
         if (fileInfo.size > MAX_IMAGE_SIZE) {
           Alert.alert(
-            "Image is too large!",
-            "Please select an image smaller than 6MB."
+            t("profile.im1"),
+            t("profile.im2")
           );
           return;
         }
@@ -175,7 +177,7 @@ export default function EditBook() {
   // Submit form function
   const handleSubmit = async () => {
     if (!title || !caption || !author || !selectedGenre) {
-      Alert.alert("Please fill in all required fields");
+      Alert.alert(t("create.fill"));
       return;
     }
 
@@ -186,7 +188,7 @@ export default function EditBook() {
         publishedYear < 0 ||
         publishedYear > new Date().getFullYear())
     ) {
-      Alert.alert("Error", "Invalid published year");
+      Alert.alert("Error",t("create.alertyear"));
       return;
     }
 
@@ -234,7 +236,7 @@ export default function EditBook() {
         console.log("Cache clearing error:", cacheError);
       }
 
-      Alert.alert("Success", "Book recommendation updated successfully", [
+      Alert.alert(t("profile.done"), t("create.upa"), [
         {
           text: "OK",
           onPress: () => {
@@ -305,7 +307,7 @@ export default function EditBook() {
         onPress={() => setShowGenreModal(false)}
       >
         <View style={style.modalContent}>
-          <Text style={style.modalTitle}>Choose Book Genre</Text>
+          <Text style={style.modalTitle}>{t("create.genreplaceholder")}</Text>
 
           {loadingGenres ? (
             <ActivityIndicator size="small" color={COLORS.primary} />
@@ -344,7 +346,7 @@ export default function EditBook() {
             style={style.closeModalButton}
             onPress={() => setShowGenreModal(false)}
           >
-            <Text style={style.closeModalButtonText}>Close</Text>
+            <Text style={style.closeModalButtonText}>{t("create.close")}</Text>
           </TouchableOpacity>
         </View>
       </TouchableOpacity>
@@ -355,7 +357,7 @@ export default function EditBook() {
     return (
       <View style={style.loadingContainer}>
         <ActivityIndicator size="large" color={COLORS.primary} />
-        <Text style={style.loadingText}>Loading book details...</Text>
+        <Text style={style.loadingText}>{t("create.loading1")}</Text>
       </View>
     );
   }
@@ -372,14 +374,14 @@ export default function EditBook() {
         <View style={style.card}>
           {/* Header */}
           <View style={style.header}>
-            <Text style={style.title}>Edit Book</Text>
-            <Text style={style.subtitle}>Update your book recommendation</Text>
+            <Text style={style.title}>{t("create.uedit")}</Text>
+            <Text style={style.subtitle}>{t("create.uplace")}</Text>
           </View>
 
           <View style={style.form}>
             {/* Book Title */}
             <View style={style.formGroup}>
-              <Text style={style.label}>Book Title</Text>
+              <Text style={style.label}>{t("create.title3")}</Text>
               <View style={style.inputContainer}>
                 <Ionicons
                   name="book-outline"
@@ -389,7 +391,7 @@ export default function EditBook() {
                 />
                 <TextInput
                   style={style.input}
-                  placeholder="Enter book title"
+                  placeholder={t("create.title3placeholder")}
                   placeholderTextColor={COLORS.placeholderText}
                   value={title}
                   onChangeText={setTitle}
@@ -399,7 +401,7 @@ export default function EditBook() {
 
             {/* Author */}
             <View style={style.formGroup}>
-              <Text style={style.label}>Author</Text>
+              <Text style={style.label}>{t("create.author")}</Text>
               <View style={style.inputContainer}>
                 <Ionicons
                   name="person-outline"
@@ -409,7 +411,7 @@ export default function EditBook() {
                 />
                 <TextInput
                   style={style.input}
-                  placeholder="Enter author's name"
+                  placeholder={t("create.authorplaceholder")}
                   placeholderTextColor={COLORS.placeholderText}
                   value={author}
                   onChangeText={setAuthor}
@@ -419,7 +421,7 @@ export default function EditBook() {
 
             {/* Published Year */}
             <View style={style.formGroup}>
-              <Text style={style.label}>Published Year (Optional)</Text>
+              <Text style={style.label}>{t("create.year")}</Text>
               <View style={style.inputContainer}>
                 <Ionicons
                   name="calendar-outline"
@@ -429,7 +431,7 @@ export default function EditBook() {
                 />
                 <TextInput
                   style={style.input}
-                  placeholder="Enter published year"
+                  placeholder={t("create.yearplaceholder")}
                   placeholderTextColor={COLORS.placeholderText}
                   value={publishedYear}
                   onChangeText={setPublishedYear}
@@ -440,7 +442,7 @@ export default function EditBook() {
 
             {/* Genre Selection */}
             <View style={style.formGroup}>
-              <Text style={style.label}>Genre</Text>
+              <Text style={style.label}>{t("create.genre")}</Text>
               <TouchableOpacity
                 style={style.genreSelector}
                 onPress={() => setShowGenreModal(true)}
@@ -464,13 +466,13 @@ export default function EditBook() {
 
             {/* Rating */}
             <View style={style.formGroup}>
-              <Text style={style.label}>Rating</Text>
+              <Text style={style.label}>{t("create.rating")}</Text>
               {renderRatingPicker()}
             </View>
 
             {/* Image Picker */}
             <View style={style.formGroup}>
-              <Text style={style.label}>Book Image</Text>
+              <Text style={style.label}>{t("create.bimg")}</Text>
               <TouchableOpacity style={style.imagePicker} onPress={pickImage}>
                 {image ? (
                   <Image source={{ uri: image }} style={style.previewImage} />
@@ -481,7 +483,7 @@ export default function EditBook() {
                       size={40}
                       color={COLORS.textSecondary}
                     />
-                    <Text style={style.placeholderText}>Select Image</Text>
+                    <Text style={style.placeholderText}>{t("create.selectimg")}</Text>
                   </View>
                 )}
               </TouchableOpacity>
@@ -489,10 +491,10 @@ export default function EditBook() {
 
             {/* Caption */}
             <View style={style.formGroup}>
-              <Text style={style.label}>Caption</Text>
+              <Text style={style.label}>{t("create.cap")}</Text>
               <TextInput
                 style={style.textArea}
-                placeholder="Write a caption..."
+                placeholder= {t("create.capplaceholder")}
                 placeholderTextColor={COLORS.placeholderText}
                 value={caption}
                 onChangeText={setCaption}
@@ -529,7 +531,7 @@ export default function EditBook() {
                 }}
                 disabled={loading}
               >
-                <Text style={style.buttonText1}>Cancel</Text>
+                <Text style={style.buttonText1}>{t("create.cancel")}</Text>
               </TouchableOpacity>
 
               {/* Update Button */}
@@ -541,7 +543,7 @@ export default function EditBook() {
                 {loading ? (
                   <ActivityIndicator size="small" color={COLORS.white} />
                 ) : (
-                  <Text style={style.buttonText}>Update Book</Text>
+                  <Text style={style.buttonText}>{t("create.uedit")}</Text>
                 )}
               </TouchableOpacity>
 

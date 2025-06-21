@@ -16,6 +16,7 @@ import { useAuthStore } from '../../store/authStore';
 import { API_URL } from '../../constants/api';
 import COLORS from '../../constants/colors';
 import styles from "../../assets/styles/reportBook.styles";
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function ReportScreen() {
   const router = useRouter();
@@ -29,30 +30,31 @@ export default function ReportScreen() {
   // Lấy thông tin từ params URL
   const reportedItemType = params.type || 'Book'; // Mặc định là Book
   const reportedItemId = params.id; // ID của sách hoặc bình luận hoặc người dùng cần báo cáo
+  const { t, currentLanguage, changeLanguage } = useLanguage();
   
   // Các lý do báo cáo dựa trên loại item
   const getReasonOptions = () => {
     if (reportedItemType === 'Book') {
       return [
-        { value: 'Nội dung không phù hợp'},
-        { value: 'Vi phạm bản quyền'},
-        { value: 'Thông tin sai lệch'},
-        { value: 'Spam hoặc quảng cáo' },
-        { value: 'Lý do khác'},
+        { value: t("report.content") },
+        { value: t("report.copyright") },
+        { value: t("report.misleading") },
+        { value: t("report.spam") },
+        { value: t("report.other") },
       ];
     } else if (reportedItemType === 'Comment') {
       return [
-        { value: 'Quấy rối hoặc bắt nạt'},
-        { value: 'Ngôn từ thù hận' },
-        { value: 'Spam hoặc quảng cáo'},
-        { value: 'Lý do khác'},
+        { value: t("report.qr")},
+        { value: t("report.nnt") },
+        { value: t("report.spam")},
+        { value: t("report.other") },
       ];
     } else if (reportedItemType === 'User') {
       return [
-        { value: 'Tài khoản giả mạo'},
-        { value: 'Hành vi không phù hợp'},
-        { value: 'Spam hoặc quảng cáo' },
-        { value: 'Lý do khác'},
+        { value: t("report.fake")},
+        { value: t("report.nvkph")},
+        { value: t("report.spam") },
+        { value: t("report.other") },
       ];
     }
     return [];
@@ -130,7 +132,7 @@ useEffect(() => {
   // Gửi báo cáo
   const handleSubmitReport = async () => {
     if (!reasonType) {
-      Alert.alert("Thông báo", "Vui lòng chọn lý do báo cáo");
+      Alert.alert("Thông báo", t("report.sltrp"));
       return;
     }
 
@@ -159,8 +161,8 @@ useEffect(() => {
 
       // Báo cáo thành công
       Alert.alert(
-        "Thành công",
-        "Báo cáo của bạn đã được gửi thành công. Chúng tôi sẽ xem xét sớm nhất có thể.",
+        t("report.success"),
+        t("report.successmsg"),
         [{ text: "OK", onPress: navigateBack }]
       );
     } catch (error) {
@@ -184,7 +186,7 @@ useEffect(() => {
           <Text style={styles.detailLabel}>Sách:</Text>
           <Text style={styles.detailTitle}>{itemDetails.title}</Text>
           <Text style={styles.detailAuthor}>
-            Tác giả: {itemDetails.user?.username || "Không xác định"}
+            Tác giả: {itemDetails.user?.username || t("report.unknow")}
           </Text>
         </View>
       );
@@ -194,14 +196,14 @@ useEffect(() => {
           <Text style={styles.detailLabel}>Bình luận:</Text>
           <Text style={styles.detailComment}>{itemDetails.text}</Text>
           <Text style={styles.detailAuthor}>
-            Người viết: {itemDetails.user?.username || "Không xác định"}
+            Người viết: {itemDetails.user?.username || t("report.unknow")}
           </Text>
         </View>
       );
     } else if (reportedItemType === 'User') {
       return (
         <View style={styles.itemDetailsContainer}>
-          <Text style={styles.detailLabel}>Người dùng:</Text>
+          <Text style={styles.detailLabel}>{t("report.user")}:</Text>
           <Text style={styles.detailTitle}>{itemDetails.username}</Text>
           <Text style={styles.detailAuthor}>{itemDetails.email}</Text>
         </View>
@@ -250,7 +252,7 @@ useEffect(() => {
           >
             <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Báo cáo nội dung</Text>
+          <Text style={styles.headerTitle}>{t("report.rpcontent")}</Text>
           <View style={styles.placeholder} />
         </View>
 
@@ -264,7 +266,7 @@ useEffect(() => {
 
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>
-                Vui lòng chọn lý do báo cáo:
+                {t("report.sltrp")}:
               </Text>
               
               {getReasonOptions().map((option) => (
@@ -288,13 +290,13 @@ useEffect(() => {
 
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>
-                Mô tả chi tiết (không bắt buộc):
+                {t("report.des")}:
               </Text>
               <TextInput
                 style={styles.descriptionInput}
                 multiline
                 numberOfLines={5}
-                placeholder="Nhập thông tin chi tiết về vấn đề bạn gặp phải..."
+                placeholder= {t("report.desplaceholder")}
                 placeholderTextColor={COLORS.textSecondary}
                 value={description}
                 onChangeText={setDescription}
@@ -309,7 +311,7 @@ useEffect(() => {
               {isLoading ? (
                 <ActivityIndicator size="small" color={COLORS.white} />
               ) : (
-                <Text style={styles.submitButtonText}>Gửi báo cáo</Text>
+                <Text style={styles.submitButtonText}>{t("report.submit")}</Text>
               )}
             </TouchableOpacity>
             

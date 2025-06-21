@@ -21,6 +21,7 @@ import * as FileSystem from "expo-file-system"; // npx expo install expo-file-sy
 import * as ImagePicker from "expo-image-picker"; // npx expo install expo-image-picker
 import { API_URL } from "../../constants/api";
 import { useAuthStore } from "../../store/authStore";
+import { useLanguage } from "../../context/LanguageContext";
 
 export default function Create() {
   const [title, setTitle] = useState("");
@@ -34,6 +35,7 @@ export default function Create() {
   const [selectedGenre, setSelectedGenre] = useState(null);
   const [showGenreModal, setShowGenreModal] = useState(false);
   const [loadingGenres, setLoadingGenres] = useState(false);
+  const { t, currentLanguage, changeLanguage } = useLanguage();
 
   const [loading, setLoading] = useState(false);
 
@@ -86,7 +88,7 @@ export default function Create() {
       if (!result.canceled) {
         const fileInfo = await FileSystem.getInfoAsync(result.assets[0].uri);
         if (fileInfo.size > MAX_IMAGE_SIZE) {
-          Alert.alert("Ảnh vượt quá 7MB!", "Vui lòng chọn ảnh nhỏ hơn 6MB.");
+          Alert.alert(t("create.alertimg"));
           return;
         }
         setImage(result.assets[0].uri);
@@ -113,12 +115,12 @@ export default function Create() {
 
   const handleSubmit = async () => {
     if (!title || !caption || !imageBase64 || !rating|| !author || !selectedGenre) {
-      Alert.alert("Please fill in all fields and select an image");
+      Alert.alert(t("create.alimgae"));
       return;
     }
     // Validate published year if provided
     if (publishedYear && (isNaN(publishedYear) || publishedYear < 0 || publishedYear > new Date().getFullYear())) {
-      Alert.alert("Lỗi", "Năm xuất bản không hợp lệ");
+      Alert.alert(t("create.error"), t("create.aleryear"));
       return;
     }
 
@@ -151,9 +153,9 @@ export default function Create() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Something went wrong");
 
-      Alert.alert("Success", "Book recommendation submitted successfully", [
+      Alert.alert(t("create.success"), t("create.done"), [
         {
-          text: "OK",
+          text:t("create.done"),
           onPress: () => {
             // Reset form
             setTitle("");
@@ -250,7 +252,7 @@ export default function Create() {
             style={style.closeModalButton}
             onPress={() => setShowGenreModal(false)}
           >
-            <Text style={style.closeModalButtonText}>Đóng</Text>
+            <Text style={style.closeModalButtonText}>{t("create.close")}</Text>
           </TouchableOpacity>
         </View>
       </TouchableOpacity>
@@ -269,16 +271,16 @@ export default function Create() {
         <View style={style.card}>
           {/* Header */}
           <View style={style.header}>
-            <Text style={style.title}>Add Book Recommendation</Text>
+            <Text style={style.title}>{t("create.title")}</Text>
             <Text style={style.subtitle}>
-              Share your favorite reads with others
+              {t("create.title2")}
             </Text>
           </View>
 
           <View style={style.form}>
             {/* Book Title */}
             <View style={style.formGroup}>
-              <Text style={style.label}>Book Title</Text>
+              <Text style={style.label}>{t("create.title3")}</Text>
               <View style={style.inputContainer}>
                 <Ionicons
                   name="book-outline"
@@ -288,7 +290,7 @@ export default function Create() {
                 />
                 <TextInput
                   style={style.input}
-                  placeholder="Enter book title"
+                  placeholder= {t("create.title3placeholder")}
                   placeholderTextColor={COLORS.placeholderText}
                   value={title}
                   onChangeText={setTitle}
@@ -298,7 +300,7 @@ export default function Create() {
             
               {/* Author */}
               <View style={style.formGroup}>
-                <Text style={style.label}>Author</Text>
+                <Text style={style.label}>{t("create.author")}</Text>
                 <View style={style.inputContainer}>
                   <Ionicons
                     name="person-outline"
@@ -308,7 +310,7 @@ export default function Create() {
                   />
                   <TextInput
                     style={style.input}
-                    placeholder="Enter author name"
+                    placeholder={t("create.authorplaceholder")}
                     placeholderTextColor={COLORS.placeholderText}
                     value={author}
                     onChangeText={setAuthor}
@@ -318,7 +320,7 @@ export default function Create() {
 
               {/* Published Year */}
               <View style={style.formGroup}>
-                <Text style={style.label}>Published Year</Text>
+                <Text style={style.label}>{t("create.year")}</Text>
                 <View style={style.inputContainer}>
                   <Ionicons
                     name="calendar-outline"
@@ -328,7 +330,7 @@ export default function Create() {
                   />
                   <TextInput
                     style={style.input}
-                    placeholder="Enter published year (optional)"
+                    placeholder= {t("create.yearplaceholder")}
                     placeholderTextColor={COLORS.placeholderText}
                     value={publishedYear}
                     onChangeText={setPublishedYear}
@@ -340,7 +342,7 @@ export default function Create() {
 
               {/* Genre */}
               <View style={style.formGroup}>
-                <Text style={style.label}>Genre</Text>
+                <Text style={style.label}>{t("create.genre")}</Text>
                 <TouchableOpacity 
                   style={style.genreSelector}
                   onPress={() => setShowGenreModal(true)}
@@ -352,7 +354,7 @@ export default function Create() {
                     style={style.genreSelectorIcon}
                   />
                   <Text style={selectedGenre ? style.selectedGenreName : style.genrePlaceholder}>
-                    {selectedGenre ? selectedGenre.genre_name : "Select a genre"}
+                    {selectedGenre ? selectedGenre.genre_name : t("create.genreplaceholder") }
                   </Text>
                   <Ionicons
                     name="chevron-down"
@@ -364,13 +366,13 @@ export default function Create() {
 
               {/* Rating */}
               <View style={style.formGroup}>
-                <Text style={style.label}>Your Rating</Text>
+                <Text style={style.label}>{t("create.rating")}</Text>
                 {renderRatingPicker()}
               </View>
 
               {/* Image */}
               <View style={style.formGroup}></View>
-                <Text style={style.label}>Book Image</Text>
+                <Text style={style.label}>{t("create.bimg")}</Text>
                 <TouchableOpacity style={style.imagePicker} onPress={pickImage}>
                   {image ? (
                     <Image source={{ uri: image }} style={style.previewImage} />
@@ -381,7 +383,7 @@ export default function Create() {
                         size={40}
                         color={COLORS.textSecondary}
                       />
-                      <Text style={style.placeholderText}>Select Image</Text>
+                      <Text style={style.placeholderText}>{t("create.selectimg")}</Text>
                     </View>
                   )}
                 </TouchableOpacity>
@@ -389,10 +391,10 @@ export default function Create() {
               
               {/* Caption */}
               <View style={style.formGroup}>
-                <Text style={style.label}>Caption</Text>
+                <Text style={style.label}>{t("create.cap")}</Text>
                 <TextInput
                   style={style.textArea}
-                  placeholder="Write a caption..."
+                  placeholder={t("create.capplaceholder")}
                   placeholderTextColor={COLORS.placeholderText}
                   value={caption}
                   onChangeText={setCaption}
@@ -415,7 +417,7 @@ export default function Create() {
                       color={COLORS.white}
                       style={style.buttonIcon}
                     />
-                    <Text style={style.buttonText}>Submit</Text>
+                    <Text style={style.buttonText}>{t("create.sub")}</Text>
                   </>
                 )}
               </TouchableOpacity>

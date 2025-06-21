@@ -14,6 +14,7 @@ import {
 import styles from "../../assets/styles/forgetpassword.styles";
 import COLORS from "../../constants/colors";
 import { API_URL } from "../../constants/api";
+import { useLanguage } from "../../context/LanguageContext";
 
 export default function ForgetPassword() {
   const [email, setEmail] = useState("");
@@ -26,33 +27,34 @@ export default function ForgetPassword() {
   const [isSendingCode, setIsSendingCode] = useState(false);
   const [codeSent, setCodeSent] = useState(false);
   const router = useRouter();
+  const { t, currentLanguage, changeLanguage } = useLanguage();
 
   // Function to handle resetting password
   const handleSend = async () => {
     // Validation
     if (!email.trim()) {
-      Alert.alert("Error", "Please enter your email!");
+      Alert.alert(t("login.erro"), t("login.p1"));
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      Alert.alert("Error", "Invalid email format!");
+      Alert.alert(t("login.erro"),t("login.valid"));
       return;
     }
 
     if (!verifyCode || !newPassword || !confirmNewPassword) {
-      Alert.alert("Error", "Please enter verification code and new password!");
+      Alert.alert(t("login.erro"), t("login.erro16"));
       return;
     }
 
     if (newPassword !== confirmNewPassword) {
-      Alert.alert("Error", "Passwords don't match!");
+      Alert.alert(t("login.erro"), t("login.p8"));
       return;
     }
 
     if (newPassword.length < 6) {
-      Alert.alert("Error", "Password must be at least 6 characters!");
+      Alert.alert(t("login.erro"), t("login.erro7"));
       return;
     }
 
@@ -72,7 +74,7 @@ export default function ForgetPassword() {
       const data = await response.json();
 
       if (response.ok) {
-        Alert.alert("Success", "Your password has been successfully changed!", [
+        Alert.alert(t("login.sus"),t("login.p19"), [
           {
             text: "Login",
             onPress: () => router.back(),
@@ -92,13 +94,13 @@ export default function ForgetPassword() {
   // Function to send verification code
   const handleSendVerifyCode = async () => {
     if (!email.trim()) {
-      Alert.alert("Error", "Please enter your email first!");
+      Alert.alert(t("login.erro"), t("login.p1"));
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      Alert.alert("Error", "Invalid email format!");
+      Alert.alert("Error", t("login.p20"));
       return;
     }
 
@@ -116,15 +118,15 @@ export default function ForgetPassword() {
       if (response.ok) {
         setCodeSent(true);
         Alert.alert(
-          "Success",
-          "If your email exists in our system, a verification code has been sent to your email."
+          t("login.sus"),
+          t("login.p21")
         );
       } else {
-        Alert.alert("Error", data.message || "Could not send verification code!");
+        Alert.alert(t("login.erro"), data.message || t("login.p22"));
       }
     } catch (error) {
       console.error("Send code error:", error);
-      Alert.alert("Error", "Something went wrong. Please try again later!");
+      Alert.alert(t("login.erro"), t("login.p23"));
     } finally {
       setIsSendingCode(false);
     }
@@ -139,9 +141,9 @@ export default function ForgetPassword() {
         <View style={styles.card}>
           {/* HEADER */}
           <View style={styles.header}>
-            <Text style={styles.title}>Forgot Password</Text>
+            <Text style={styles.title}>{t("login.fp")}</Text>
             <Text style={styles.subtitle}>
-              Enter your email to receive a verification code
+              {t("login.p13")}
             </Text>
           </View>
           {/* FORM */}
@@ -158,7 +160,7 @@ export default function ForgetPassword() {
                 />
                 <TextInput
                   style={styles.input}
-                  placeholder="Enter your email"
+                  placeholder={t("login.p1")}
                   placeholderTextColor={COLORS.placeholderText}
                   value={email}
                   onChangeText={setEmail}
@@ -171,7 +173,7 @@ export default function ForgetPassword() {
 
             {/* VERIFY CODE INPUT + SEND BUTTON */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Verification code</Text>
+              <Text style={styles.label}>{t("login.code")}</Text>
               <View style={{ flexDirection: "row", alignItems: "center" }}>
                 {/* Ô nhập mã xác thực */}
                 <View
@@ -185,7 +187,7 @@ export default function ForgetPassword() {
                   />
                   <TextInput
                     style={styles.input}
-                    placeholder="Enter verification code"
+                    placeholder={t("login.p11")}
                     placeholderTextColor={COLORS.placeholderText}
                     value={verifyCode}
                     onChangeText={setVerifyCode}
@@ -202,7 +204,7 @@ export default function ForgetPassword() {
                   {isSendingCode ? (
                     <ActivityIndicator color="#fff" />
                   ) : (
-                    <Text style={styles.buttonText}>Send</Text>
+                    <Text style={styles.buttonText}>{t("login.send")}</Text>
                   )}
                 </TouchableOpacity>
               </View>
@@ -210,7 +212,7 @@ export default function ForgetPassword() {
 
             {/* NEW PASSWORD INPUT */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>New password</Text>
+              <Text style={styles.label}>{t("login.newpassword")}</Text>
               <View style={styles.inputContainer}>
                 <Ionicons
                   name="lock-closed-outline"
@@ -220,7 +222,7 @@ export default function ForgetPassword() {
                 />
                 <TextInput
                   style={styles.input}
-                  placeholder="Enter new password"
+                  placeholder={t("login.p4")}
                   placeholderTextColor={COLORS.placeholderText}
                   value={newPassword}
                   onChangeText={setNewPassword}
@@ -242,7 +244,7 @@ export default function ForgetPassword() {
 
             {/* CONFIRM NEW PASSWORD INPUT */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Confirm new password</Text>
+              <Text style={styles.label}>{t("login.p5")}</Text>
               <View style={styles.inputContainer}>
                 <Ionicons
                   name="lock-closed-outline"
@@ -252,7 +254,7 @@ export default function ForgetPassword() {
                 />
                 <TextInput
                   style={styles.input}
-                  placeholder="Enter new password again"
+                  placeholder={t("login.p24")}
                   placeholderTextColor={COLORS.placeholderText}
                   value={confirmNewPassword}
                   onChangeText={setConfirmNewPassword}
@@ -287,15 +289,15 @@ export default function ForgetPassword() {
               {isLoading ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.buttonText}>Reset Password</Text>
+                <Text style={styles.buttonText}>{t("login.rsp")}</Text>
               )}
             </TouchableOpacity>
 
             {/* FOOTER */}
             <View style={styles.footer}>
-              <Text style={styles.footerText}>Remember your password?</Text>
+              <Text style={styles.footerText}>{t("login.p12")}</Text>
               <TouchableOpacity onPress={() => router.back()}>
-                <Text style={styles.link}>Login</Text>
+                <Text style={styles.link}>{t("login.title")}</Text>
               </TouchableOpacity>
             </View>
           </View>

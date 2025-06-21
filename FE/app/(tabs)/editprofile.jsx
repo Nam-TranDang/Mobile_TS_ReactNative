@@ -19,6 +19,7 @@ import styles from "../../assets/styles/editprofile.styles";
 import COLORS from "../../constants/colors";
 import { API_URL } from "../../constants/api";
 import { useAuthStore } from "../../store/authStore";
+import { useLanguage } from "../../context/LanguageContext";
 
 export default function EditProfile() {
   const router = useRouter();
@@ -34,6 +35,7 @@ export default function EditProfile() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const { t, currentLanguage, changeLanguage } = useLanguage();
   useEffect(() => {
     if (user) {
       setUsername(user.username || "");
@@ -49,7 +51,7 @@ export default function EditProfile() {
         const { status } =
           await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== "granted") {
-          Alert.alert("Permission to access camera roll is required!");
+          Alert.alert(t("profile.p1"));
           return;
         }
       }
@@ -64,8 +66,8 @@ export default function EditProfile() {
         const fileInfo = await FileSystem.getInfoAsync(result.assets[0].uri);
         if (fileInfo.size > MAX_IMAGE_SIZE) {
           Alert.alert(
-            "Image is too large!",
-            "Please select an image smaller than 7MB."
+            t("profile.im1"),
+            t("profile.im2")
           );
           return;
         }
@@ -93,33 +95,33 @@ export default function EditProfile() {
 
   const handleUpdateProfile = async () => {
     if (!username.trim()) {
-      Alert.alert("Error", "Username cannot be empty");
+      Alert.alert("Error",t("profile.a1"));
       return;
     }
 
     if (showPasswordSection) {
       if (!currentPassword) {
-        Alert.alert("Error", "Current password is required");
+        Alert.alert("Error", t("profile.a2"));
         return;
       }
       if (!password) {
-        Alert.alert("Error", "New password is required");
+        Alert.alert("Error", t("profile.a3"));
         return;
       }
       if (!confirmPassword) {
-        Alert.alert("Error", "Confirm new password is required");
+        Alert.alert("Error", t("profile.a4"));
         return;
       }
       if (password !== confirmPassword) {
         Alert.alert(
-          "Error",
-          "New password and confirmation password do not match"
+          t("profile.error"),
+          t("profile.a5")
         );
         return;
       }
       //Tránh chờ BE phản hồi lỗi này, giảm tải server
       if (password.length < 6) {
-        Alert.alert("Error", "Password must be at least 6 characters");
+        Alert.alert(t("profile.error"), t("profile.a6"));
         return;
       }
     }
@@ -162,12 +164,12 @@ export default function EditProfile() {
 
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.message || "Failed to update profile");
+        throw new Error(data.message || t("profile.a7"));
       }
 
       Alert.alert(
-        "Success",
-        "Profile updated successfully. You will be logged out for security reasons.",
+        t("profile.success"),
+        t("profile.a8"),
         [
           {
             text: "OK",
@@ -180,7 +182,7 @@ export default function EditProfile() {
       );
     } catch (error) {
       console.error("Error updating profile:", error);
-      Alert.alert("Error", error.message || "Something went wrong");
+      Alert.alert("Error", error.message || t("profile.a9"));
     } finally {
       setIsLoading(false);
     }
@@ -211,7 +213,7 @@ export default function EditProfile() {
           >
             <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Edit Profile</Text>
+          <Text style={styles.headerTitle}>{t("profile.editprofile")}</Text>
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false}>
@@ -231,7 +233,7 @@ export default function EditProfile() {
 
             {/* Username field */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Username</Text>
+              <Text style={styles.label}>{t("profile.username")}</Text>
               <View style={styles.inputContainer}>
                 <Ionicons
                   name="person-outline"
@@ -241,7 +243,7 @@ export default function EditProfile() {
                 />
                 <TextInput
                   style={styles.input}
-                  placeholder="Enter username"
+                  placeholder= {t("profile.usernameplaceholder")}
                   placeholderTextColor={COLORS.placeholderText}
                   value={username}
                   onChangeText={setUsername}
@@ -276,8 +278,8 @@ export default function EditProfile() {
             >
               <Text style={styles.changePasswordButtonText}>
                 {showPasswordSection
-                  ? "Hide Password Change"
-                  : "Change Password"}
+                  ? t("profile.changep")
+                  : t("profile.changep")}
               </Text>
               <Ionicons
                 name={
@@ -294,7 +296,7 @@ export default function EditProfile() {
               <>
                 {/* Current Password field */}
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Current Password</Text>
+                  <Text style={styles.label}>{t("profile.currentp")}</Text>
                   <View style={styles.inputContainer}>
                     <Ionicons
                       name="lock-closed-outline"
@@ -304,7 +306,7 @@ export default function EditProfile() {
                     />
                     <TextInput
                       style={styles.input}
-                      placeholder="Enter current password"
+                      placeholder={t("profile.p4")}
                       placeholderTextColor={COLORS.placeholderText}
                       value={currentPassword}
                       onChangeText={setCurrentPassword}
@@ -332,7 +334,7 @@ export default function EditProfile() {
 
                 {/* New Password field */}
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>New Password</Text>
+                  <Text style={styles.label}>{t("profile.newp")}</Text>
                   <View style={styles.inputContainer}>
                     <Ionicons
                       name="lock-closed-outline"
@@ -342,7 +344,7 @@ export default function EditProfile() {
                     />
                     <TextInput
                       style={styles.input}
-                      placeholder="Enter new password"
+                      placeholder={t("profile.p5")}
                       placeholderTextColor={COLORS.placeholderText}
                       value={password}
                       onChangeText={setPassword}
@@ -366,7 +368,7 @@ export default function EditProfile() {
 
                 {/* Confirm New Password field */}
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Confirm New Password</Text>
+                  <Text style={styles.label}>{t("profile.cnfp")}</Text>
                   <View style={styles.inputContainer}>
                     <Ionicons
                       name="lock-closed-outline"
@@ -376,7 +378,7 @@ export default function EditProfile() {
                     />
                     <TextInput
                       style={styles.input}
-                      placeholder="Confirm new password"
+                      placeholder={t("profile.p6")}
                       placeholderTextColor={COLORS.placeholderText}
                       value={confirmPassword}
                       onChangeText={setConfirmPassword}
@@ -412,7 +414,7 @@ export default function EditProfile() {
               {isLoading ? (
                 <ActivityIndicator color={COLORS.white} />
               ) : (
-                <Text style={styles.buttonText}>Save Changes</Text>
+                <Text style={styles.buttonText}>{t("profile.save")}</Text>
               )}
             </TouchableOpacity>
           </View>

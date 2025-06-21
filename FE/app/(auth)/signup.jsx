@@ -15,6 +15,7 @@ import {
 import styles from "../../assets/styles/signup.styles";
 import COLORS from "../../constants/colors";
 import { useAuthStore } from "../../store/authStore";
+import { useLanguage } from "../../context/LanguageContext";
 
 export default function Signup() {
     const [username, setUsername] = useState("");
@@ -23,13 +24,14 @@ export default function Signup() {
     const [showPassword, setShowPassword] = useState(false);
     const { user, isLoading, register, token } = useAuthStore();
     const router = useRouter();
+    const { t, currentLanguage, changeLanguage } = useLanguage();
     
     const handleSignUp = async() => {
         const result = await register(username, email, password);
         if(result.success) {
             Alert.alert(
-                "Đăng ký thành công", 
-                "Tài khoản của bạn đã được tạo. Vui lòng đăng nhập để tiếp tục.",
+                t("login.p18"), 
+                t("login.p25"),
                 [
                     { 
                         text: "OK", 
@@ -38,7 +40,7 @@ export default function Signup() {
                 ]
             );
         } else {
-            Alert.alert("Lỗi", result.error);
+            Alert.alert(t("login.erro"), result.error);
         }
     };
 
@@ -69,17 +71,17 @@ export default function Signup() {
                     {/* HEADER */}
                     <View style={styles.header}>
                         <Text style={styles.title}>
-                            Sign Up
+                            {t("login.signup")}
                         </Text>
                         <Text style={styles.subtitle}>
-                            Share your favorite reads
+                            {t("login.p14")}
                         </Text>
                     </View>
                     {/* FORM */}
                     <View style={styles.formContainer}>
                         {/* USERNAME INPUT */}
                         <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Username</Text>
+                            <Text style={styles.label}>{t("login.username")}</Text>
                             <View style={styles.inputContainer}>
                                 <Ionicons
                                 name="person-outline"
@@ -89,7 +91,7 @@ export default function Signup() {
                                 />
                                 <TextInput
                                 style={styles.input}
-                                placeholder="John Doe"
+                                placeholder="Níng Yìzhuó"
                                 placeholderTextColor={COLORS.placeholderText}
                                 value={username}
                                 onChangeText={setUsername}
@@ -110,7 +112,7 @@ export default function Signup() {
                             />
                             <TextInput
                                 style={styles.input}
-                                placeholder="johndoe@gmail.com"
+                                placeholder="thuvientanvo@gmail.com"
                                 placeholderTextColor={COLORS.placeholderText}
                                 value={email}
                                 onChangeText={setEmail}
@@ -122,7 +124,7 @@ export default function Signup() {
 
                         {/* PASSWORD INPUT */}
                         <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Password</Text>
+                            <Text style={styles.label}>{t("login.password")}</Text>
                             <View style={styles.inputContainer}>
                             {/*Left icon */}
                             <Ionicons
@@ -162,15 +164,15 @@ export default function Signup() {
                             {isLoading ? (
                             <ActivityIndicator color="#fff" />
                             ) : (
-                            <Text style={styles.buttonText}>Sign Up</Text>
+                            <Text style={styles.buttonText}>{t("login.signup")}</Text>
                             )}
                         </TouchableOpacity>
                         
                         {/* FOOTER */}
                         <View style={styles.footer}>
-                            <Text style={styles.footerText}>Already have an account?</Text>
+                            <Text style={styles.footerText}>{t("login.p26")}</Text>
                             <TouchableOpacity onPress={() => router.replace("(auth)")}>
-                                <Text style={styles.link}>Login</Text>
+                                <Text style={styles.link}>{t("login.title")}</Text>
                             </TouchableOpacity>
                         </View>
 

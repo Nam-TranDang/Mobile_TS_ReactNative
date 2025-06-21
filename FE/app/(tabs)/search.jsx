@@ -16,6 +16,7 @@ import { router } from "expo-router";
 import { useAuthStore } from "../../store/authStore";
 import { API_URL } from "../../constants/api";
 import styles from "../../assets/styles/search.styles";
+import { useLanguage } from "../../context/LanguageContext";
 
 export default function SearchScreen() {
   const { token } = useAuthStore();
@@ -30,6 +31,8 @@ export default function SearchScreen() {
   const [userDetails, setUserDetails] = useState({});
   const searchInputRef = useRef(null);
   const searchTimeoutRef = useRef(null);
+  const { t, currentLanguage, changeLanguage } = useLanguage();
+  
 
   // Focus vào input khi vào màn hình
   useEffect(() => {
@@ -200,16 +203,16 @@ export default function SearchScreen() {
             <Text style={styles.resultUsername}>{item.username}</Text>
 
             <View style={styles.userStats}>
-              <Text style={styles.userStat}>{item.bookCount || 0} sách</Text>
+              <Text style={styles.userStat}>{item.bookCount || 0} {t("profile.book")} </Text>
               {userDetails[item._id] && (
                 <>
                   <Text style={styles.userStatDot}>•</Text>
                   <Text style={styles.userStat}>
-                    {userDetails[item._id].followersCount} người theo dõi
+                    {userDetails[item._id].followersCount} {t("profile.followers")}
                   </Text>
                   <Text style={styles.userStatDot}>•</Text>
                   <Text style={styles.userStat}>
-                    {userDetails[item._id].followingCount} đang theo dõi
+                    {userDetails[item._id].followingCount} {t("profile.following")}
                   </Text>
                 </>
               )}
@@ -222,11 +225,11 @@ export default function SearchScreen() {
         {loadingUserBooks && !userBooks[item._id] ? (
           <View style={styles.userBooksLoading}>
             <ActivityIndicator size="small" color={styles.loading.color} />
-            <Text style={styles.userBooksLoadingText}>Đang tải sách...</Text>
+            <Text style={styles.userBooksLoadingText}>{t("profile.bookload")}</Text>
           </View>
         ) : userBooks[item._id] && userBooks[item._id].length > 0 ? (
           <View style={styles.userBooksContainer}>
-            <Text style={styles.userBooksTitle}>Sách đã đăng</Text>
+            <Text style={styles.userBooksTitle}>{t("profile.booked")}</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -260,7 +263,7 @@ export default function SearchScreen() {
                     color={styles.iconColor}
                   />
                 </View>
-                <Text style={styles.viewAllBooksText}>Xem tất cả</Text>
+                <Text style={styles.viewAllBooksText}>{t("profile.seeall")}</Text>
               </TouchableOpacity>
             </ScrollView>
           </View>
@@ -282,7 +285,7 @@ export default function SearchScreen() {
       <View style={styles.resultBookInfo}>
         <Text style={styles.resultBookTitle}>{item.title}</Text>
         <Text style={styles.resultBookAuthor}>
-          Tác giả: {item.author ? item.author : "Không có thông tin"}
+          {t("book.author")}: {item.author ? item.author : t("profile.noin4")}
         </Text>
         <View style={styles.resultBookRating}>
           {[1, 2, 3, 4, 5].map((star) => (
@@ -297,7 +300,7 @@ export default function SearchScreen() {
         </View>
         {item.user && (
           <Text style={styles.postedByText}>
-            Đăng bởi: {item.user.username || "---"}
+            {t("profile.postedBy")}: {item.user.username || "---"}
           </Text>
         )}
       </View>
@@ -311,7 +314,7 @@ export default function SearchScreen() {
       return (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={styles.loading.color} />
-          <Text style={styles.loadingText}>Đang tìm kiếm...</Text>
+          <Text style={styles.loadingText}>{t("profile.searching")}</Text>
         </View>
       );
     }
@@ -322,7 +325,7 @@ export default function SearchScreen() {
         <View style={styles.emptyStateContainer}>
           <Ionicons name="search-outline" size={80} color={styles.iconColor} />
           <Text style={styles.emptyStateText}>
-            Nhập từ khóa để tìm kiếm người dùng và sách
+            {t("profile.searchPlaceholder")}
           </Text>
         </View>
       );
@@ -336,7 +339,7 @@ export default function SearchScreen() {
         <View style={styles.emptyResultContainer}>
           <Ionicons name="search-outline" size={50} color={styles.iconColor} />
           <Text style={styles.emptyResultText}>
-            Không tìm thấy kết quả cho {searchText}
+            {t("profile.searchno")} {searchText}
           </Text>
         </View>
       );
@@ -347,7 +350,7 @@ export default function SearchScreen() {
         {/* Phần kết quả người dùng */}
         {users.length > 0 && (
           <View style={styles.resultSection}>
-            <Text style={styles.sectionTitle}>Người dùng</Text>
+            <Text style={styles.sectionTitle}>{t("profile.user")}</Text>
             {users.map((user) => (
               <View key={`user-${user._id}`}>
                 {renderUserResult({ item: user })}
@@ -359,7 +362,7 @@ export default function SearchScreen() {
         {/* Phần kết quả sách */}
         {books.length > 0 && (
           <View style={styles.resultSection}>
-            <Text style={styles.sectionTitle}>Sách</Text>
+            <Text style={styles.sectionTitle}>{t("profile.book")}</Text>
             {books.map((book) => (
               <View key={`book-${book._id}`}>
                 {renderBookResult({ item: book })}
@@ -397,7 +400,7 @@ export default function SearchScreen() {
           <TextInput
             ref={searchInputRef}
             style={styles.searchInput}
-            placeholder="Tìm kiếm người dùng, sách..."
+            placeholder= {t("profile.searchPlaceholder")}
             placeholderTextColor={styles.placeholderColor}
             value={searchText}
             onChangeText={handleSearch}

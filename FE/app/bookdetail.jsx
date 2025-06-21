@@ -580,7 +580,7 @@ export default function BookDetail() {
 
         {/* Comments Section */}
         <View style={styles.commentsSection}>
-          <Text style={styles.commentsTitle}>Comments ({comments.length})</Text>
+          <Text style={styles.commentsTitle}> {t("book.comment")}({comments.length})</Text>
 
           {/* Comment Input */}
           <View style={styles.commentInputContainer}>
