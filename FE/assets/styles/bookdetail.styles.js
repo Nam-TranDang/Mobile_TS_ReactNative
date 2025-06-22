@@ -405,6 +405,31 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.border,
     marginVertical: 4,
   },
+  imageZoomOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.9)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  imageZoomContainer: {
+    width: "100%",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    position: "relative",
+  },
+  imageZoomCloseButton: {
+    position: "absolute",
+    top: 50,
+    right: 20,
+    zIndex: 1,
+    padding: 10,
+  },
+  zoomedImage: {
+    width: "90%",
+    height: "80%",
+    borderRadius: 10,
+  },
 });
 
 export default styles;

@@ -42,6 +42,7 @@ export default function BookDetail() {
   const [isDisliking, setIsDisliking] = useState(false);
   const [newCommentId, setNewCommentId] = useState(null);
   const [showBookOptionsMenu, setShowBookOptionsMenu] = useState(false);
+  const [showImageZoom, setShowImageZoom] = useState(false);
   const socketRef = useRef(null);
   const { t, currentLanguage, changeLanguage } = useLanguage();
 
@@ -471,7 +472,12 @@ export default function BookDetail() {
 
             {/* Book Image */}
             <View style={styles.bookImageContainer}>
-              <Image source={{ uri: book.image }} style={styles.bookImage} />
+              <TouchableOpacity
+                onPress={() => setShowImageZoom(true)}
+                activeOpacity={0.8}
+              >
+                <Image source={{ uri: book.image }} style={styles.bookImage} />
+              </TouchableOpacity>
             </View>
 
             {/* Book Info */}
@@ -580,7 +586,7 @@ export default function BookDetail() {
 
         {/* Comments Section */}
         <View style={styles.commentsSection}>
-          <Text style={styles.commentsTitle}> {t("book.comment")}({comments.length})</Text>
+          <Text style={styles.commentsTitle}>Comments ({comments.length})</Text>
 
           {/* Comment Input */}
           <View style={styles.commentInputContainer}>
@@ -671,6 +677,34 @@ export default function BookDetail() {
                   </Text>
                 </TouchableOpacity>
               </View>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
+
+        {/* Image Zoom Modal */}
+        <Modal
+          visible={showImageZoom}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowImageZoom(false)}
+        >
+          <TouchableWithoutFeedback onPress={() => setShowImageZoom(false)}>
+            <View style={styles.imageZoomOverlay}>
+              <TouchableWithoutFeedback>
+                <View style={styles.imageZoomContainer}>
+                  <TouchableOpacity
+                    style={styles.imageZoomCloseButton}
+                    onPress={() => setShowImageZoom(false)}
+                  >
+                    <Ionicons name="close" size={30} color={COLORS.white} />
+                  </TouchableOpacity>
+                  <Image
+                    source={{ uri: book?.image }}
+                    style={styles.zoomedImage}
+                    contentFit="contain"
+                  />
+                </View>
+              </TouchableWithoutFeedback>
             </View>
           </TouchableWithoutFeedback>
         </Modal>
