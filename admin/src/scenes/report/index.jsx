@@ -73,7 +73,6 @@ const handleViewBookDetail = () => {
   }
 };
 
-
   // Neumorphism styles
   const getNeumorphicShadow = () => {
     return isDark
@@ -699,7 +698,7 @@ const handleViewBookDetail = () => {
                         👤 Người viết: {selectedReport.reportedItemObject.user?.username || "Unknown"}
                       </Typography>
                       <Typography>
-                        📚 Sách: {selectedReport.reportedItemObject.book.title || "Không xác định"}
+                        📚 Sách: {selectedReport.reportedItemObject.book?.title || "Không xác định"}
                       </Typography>
                     </div>
                   ) : (

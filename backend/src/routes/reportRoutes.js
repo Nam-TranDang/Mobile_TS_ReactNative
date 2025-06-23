@@ -79,12 +79,19 @@ router.get("/", protectRoute, isAdmin, async (req, res) => {
         if (statusFilter && ["pending", "resolved", "rejected"].includes(statusFilter)) {
             queryConditions.status = statusFilter;
         }
+        
         const reports = await Report.find(queryConditions)
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit)
             .populate("reporter", "username email profileImage")
-            .populate("reportedItemId"); 
+            .populate({
+                path: "reportedItemId",
+                populate: [
+                { path: "user", select: "username email", strictPopulate: false },
+                { path: "book", select: "title", strictPopulate: false }
+                ]
+            });           
         const totalReports = await Report.countDocuments(queryConditions);
         res.json({
             reports,
