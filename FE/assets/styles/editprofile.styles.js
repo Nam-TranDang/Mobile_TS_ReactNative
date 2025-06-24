@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
     color: COLORS.textDark,
   },
   saveButton: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: "#4CAF50",
     borderRadius: 12,
     height: 50,
     justifyContent: "center",
@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   changePasswordButton: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.red,
     borderRadius: 12,
     height: 48,
     flexDirection: "row",
