@@ -380,12 +380,12 @@ export default function Home() {
         />
         <Text style={styles.searchPlaceholder}>{t("Notification.whb")}</Text>
       </TouchableOpacity>
-      <TouchableOpacity
+      {/* <TouchableOpacity
         style={styles.sortButton}
         onPress={() => setShowFilterModal(true)}
       >
         <Ionicons name="filter" size={20} color={COLORS.white} />
-      </TouchableOpacity>
+      </TouchableOpacity> */}
     </View>
   );
 
@@ -703,7 +703,7 @@ export default function Home() {
     <View style={styles.container}>
       {/* {renderSearchBar()} */}
 
-      {renderFilterModal()}
+      {/* {renderFilterModal()} */}
       <FlatList
         data={filteredBooks}
         renderItem={renderItem}
