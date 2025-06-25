@@ -34,9 +34,10 @@ const useAdminSocket = (onNewReport, onNewBook, onNewUser, onOnlineUsersUpdate) 
         // Connection events
         socket.on('connect', () => {
             console.log('Socket connected:', socket.id);
-            socket.emit('joinAdminRoom');
-            socket.emit("onlineUsersUpdate", onlineUsers.size);
-
+            // Get admin user from localStorage
+            const adminUser = JSON.parse(localStorage.getItem("admin-user") || "{}");
+            // Send userId when joining admin room
+            socket.emit('joinAdminRoom', adminUser.id || adminUser._id);
         });
 
         socket.on('disconnect', (reason) => {
