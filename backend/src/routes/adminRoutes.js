@@ -638,8 +638,35 @@ router.delete("/books/:bookId", protectRoute, isAdmin, async (req, res) => {
       // Xóa ảnh của sách trên Cloudinary
       if (bookToDelete.image && bookToDelete.image.includes("cloudinary")) {
           try {
-              const publicId = bookToDelete.image.split("/").pop().split(".")[0];
+              // const publicId = bookToDelete.image.split("/").pop().split(".")[0];
+              // await cloudinary.uploader.destroy(publicId);
+              
+              // const parts = book.image.split("/"); // cắt ra thành các phần từ dấu "/"
+
+              const parts = bookToDelete.image.split("/"); // cắt ra thành các phần từ dấu "/"
+
+              const publicIdWithVersionAndExtension = parts
+                .slice(parts.indexOf("upload") + 2)
+                .join("/"); //bắt đầu đi từ index "upload" trong đoạn parts, và bỏ 2 phần tử đầu là upload và id và nối lại các phần còn lại
+              console.log(
+                "Public ID with version and extension:",
+                publicIdWithVersionAndExtension
+              );
+              // Và join laị sẽ được: "Book_Forum/Book_Review/your_image_unique_id.png"
+
+              const publicId = publicIdWithVersionAndExtension.split(".")[0];
+              // Tách ra sẽ được "Book_Forum/Book_Review/your_image_unique_id"
+
+              console.log("Extracted Public ID for Cloudinary deletion:", publicId);
+
               await cloudinary.uploader.destroy(publicId);
+              console.log("Image deleted from Cloudinary successfully.");
+
+              await Comment.deleteMany({ bookToDelete: bookId });
+              // Nếu đó là user đã review sách -> thực hiện xóa trên MongoDB
+              await bookToDelete.deleteOne();
+              res.json({ message: "Book deleted successfully" });
+              
               console.log(`Cloudinary image for book ${bookToDelete._id} deleted by admin.`);
           } catch (cloudError) {
               console.error(`Error deleting Cloudinary image for book ${bookToDelete._id} by admin:`, cloudError);

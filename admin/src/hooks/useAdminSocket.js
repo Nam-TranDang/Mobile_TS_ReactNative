@@ -35,6 +35,8 @@ const useAdminSocket = (onNewReport, onNewBook, onNewUser, onOnlineUsersUpdate) 
         socket.on('connect', () => {
             console.log('Socket connected:', socket.id);
             socket.emit('joinAdminRoom');
+            socket.emit("onlineUsersUpdate", onlineUsers.size);
+
         });
 
         socket.on('disconnect', (reason) => {
