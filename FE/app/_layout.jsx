@@ -42,10 +42,10 @@ export default function RootLayout() {
     prepare();
   }, [fontsLoaded]);
 
-   // Thiết lập kết nối socket khi đăng nhập
+  // Thiết lập kết nối socket khi đăng nhập
   useEffect(() => {
     if (appIsReady && token && user && !socketRef.current) {
-      // Khởi tạo socket
+      // Only connect if authenticated
       const socket = io(SOCKET_URL);
       socketRef.current = socket;
 

@@ -11,6 +11,7 @@ const initializeSocketIO = (httpServer) => {
     const io = new Server(httpServer, {
         cors: {
             origin: "*", 
+            origin: "*", 
             methods: ["GET", "POST"]
         }
     });
