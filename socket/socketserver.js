@@ -1,41 +1,50 @@
-
 import { Server } from "socket.io";
 
 const bookRooms = {};
 const userRooms = {};
-const adminClients = new Set(); // Track admin clients
-let onlineUsersCount = 0; // Track online users
+const adminClients = new Set(); // Track admin client socket IDs
+const authenticatedUserIds = new Set(); // Track unique authenticated user IDs
+const socketToUserMap = new Map(); // Map socket IDs to user IDs
 
 // Hàm để khởi tạo và quản lý Socket.IO server
 const initializeSocketIO = (httpServer) => {
     const io = new Server(httpServer, {
         cors: {
-            origin: "*", // Cho phép tất cả các origin, hoặc chỉ định origin của client (ví dụ: "http://localhost:3001" nếu client chạy ở port đó)
+            origin: "*", 
             methods: ["GET", "POST"]
         }
     });
 
     console.log("Socket.IO server initialized and listening...");
 
+    // Function to get current online users count
+    const getOnlineUsersCount = () => {
+        return authenticatedUserIds.size;
+    };
+
     io.on("connection", (socket) => {
         console.log(`New client connected: ${socket.id}`);
-
-        // Increment online users count
-        onlineUsersCount++;
-
-        // Emit updated count to all admin clients
-        io.to("admin-room").emit("onlineUsersUpdate", onlineUsersCount);
-         
+        
         // Admin joins admin room
-        socket.on("joinAdminRoom", () => {
+        socket.on("joinAdminRoom", (userId) => {
             socket.join("admin-room");
             adminClients.add(socket.id);
-            console.log(`Admin client ${socket.id} joined admin room`);
+            console.log(`Admin client ${socket.id} joined admin room with userId: ${userId}`);
+            
+            // If admin is authenticated with userId, track them
+            if (userId) {
+                socket.userId = userId;
+                socketToUserMap.set(socket.id, userId);
+                authenticatedUserIds.add(userId);
+            }
             
             // Send current stats to new admin
             socket.emit("currentStats", {
-                onlineUsers: onlineUsersCount
+                onlineUsers: getOnlineUsersCount()
             });
+            
+            // Broadcast updated count to all admins
+            io.to("admin-room").emit("onlineUsersUpdate", getOnlineUsersCount());
         });
 
         // Khi client tham gia vào một "phòng" của sách để nhận comment
@@ -44,13 +53,12 @@ const initializeSocketIO = (httpServer) => {
                 console.warn(`Client ${socket.id} tried to join a room without a bookId.`);
                 return;
             }
-            socket.join(bookId); // Client tham gia vào phòng có tên là bookId
+            socket.join(bookId);
             if (!bookRooms[bookId]) {
                 bookRooms[bookId] = new Set();
             }
             bookRooms[bookId].add(socket.id);
             console.log(`Client ${socket.id} joined room for book: ${bookId}`);
-            // console.log("Current book rooms:", bookRooms);
         });
 
         // Khi client rời khỏi một "phòng" của sách
@@ -63,11 +71,10 @@ const initializeSocketIO = (httpServer) => {
             if (bookRooms[bookId]) {
                 bookRooms[bookId].delete(socket.id);
                 if (bookRooms[bookId].size === 0) {
-                    delete bookRooms[bookId]; // Xóa phòng nếu không còn ai
+                    delete bookRooms[bookId];
                 }
             }
             console.log(`Client ${socket.id} left room for book: ${bookId}`);
-            // console.log("Current book rooms:", bookRooms);
         });
 
         // Khi client tham gia vào một "phòng" của người dùng để nhận thông báo cá nhân
@@ -76,6 +83,17 @@ const initializeSocketIO = (httpServer) => {
                 console.warn(`Client ${socket.id} tried to join user room without a userId.`);
                 return;
             }
+            
+            // Store userId in socket and map
+            socket.userId = userId;
+            socketToUserMap.set(socket.id, userId);
+            
+            // Add to set of authenticated users
+            authenticatedUserIds.add(userId);
+            
+            // Update all admin clients with new count
+            io.to("admin-room").emit("onlineUsersUpdate", getOnlineUsersCount());
+            
             const roomName = `userRoom_${userId}`;
             socket.join(roomName);
             if (!userRooms[userId]) {
@@ -105,15 +123,26 @@ const initializeSocketIO = (httpServer) => {
         socket.on("disconnect", () => {
             console.log(`Client disconnected: ${socket.id}`);
 
-            // Decrement online users count
-            onlineUsersCount--;
-
             // Remove from admin clients if it was an admin
             if (adminClients.has(socket.id)) {
                 adminClients.delete(socket.id);
             }
 
-            // Xóa client khỏi tất cả các phòng mà nó đã tham gia
+            // Check if this was an authenticated user
+            const userId = socketToUserMap.get(socket.id);
+            if (userId) {
+                socketToUserMap.delete(socket.id);
+                
+                // Only remove from authenticatedUserIds if no other sockets have this userId
+                const hasOtherSockets = Array.from(socketToUserMap.values()).includes(userId);
+                if (!hasOtherSockets) {
+                    authenticatedUserIds.delete(userId);
+                    // Update all admin clients with new count
+                    io.to("admin-room").emit("onlineUsersUpdate", getOnlineUsersCount());
+                }
+            }
+
+            // Xóa client khỏi tất cả các phòng sách
             for (const bookId in bookRooms) {
                 if (bookRooms[bookId].has(socket.id)) {
                     bookRooms[bookId].delete(socket.id);
@@ -123,16 +152,12 @@ const initializeSocketIO = (httpServer) => {
                     console.log(`Client ${socket.id} removed from room for book: ${bookId} due to disconnect.`);
                 }
             }
-            // console.log("Current book rooms after disconnect:", bookRooms);
-            io.to("admin-room").emit("onlineUsersUpdate", onlineUsersCount);
         });
 
         // (Tùy chọn) Lắng nghe các sự kiện lỗi từ client
         socket.on("error", (err) => {
             console.error(`Socket Error from ${socket.id}:`, err);
         });
-
-
     });
 
     // Helper functions to emit to admin clients

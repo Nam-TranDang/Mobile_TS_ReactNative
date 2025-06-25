@@ -57,23 +57,31 @@ export default function Home() {
   const socketRef = useRef(null);
 
   useEffect(() => {
-    // Khởi tạo socket chỉ 1 lần
-    if (!socketRef.current) {
+    // Only initialize socket if user is authenticated
+    if (!socketRef.current && isAuthenticated && user) {
       socketRef.current = io(SOCKET_URL);
+      const socket = socketRef.current;
+
+      // Join user room with user ID on connect
+      socket.on("connect", () => {
+        if (user?.id) {
+          socket.emit("joinUserRoom", user.id);
+        }
+      });
+
+      socket.on("newBookCreated", (data) => {
+        fetchBooks(1, true);
+      });
+
+      // Cleanup on unmount
+      return () => {
+        socket.off("connect");
+        socket.off("newBookCreated");
+        socket.disconnect();
+        socketRef.current = null;
+      };
     }
-    const socket = socketRef.current;
-
-    // Lắng nghe sự kiện khi có sách mới
-    socket.on("newBookCreated", (data) => {
-      // Gọi lại hàm fetchBooks hoặc setRefreshFlag để reload danh sách
-      fetchBooks(1, true); // hoặc setRefreshFlag(Date.now())
-    });
-
-    // Cleanup khi unmount
-    return () => {
-      socket.off("newBookCreated");
-    };
-  }, []);
+  }, [isAuthenticated, user]);
 
   const fetchBooks = async (pageNum = 1, refresh = false) => {
     try {
