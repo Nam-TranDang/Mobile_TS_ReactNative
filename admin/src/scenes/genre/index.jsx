@@ -38,6 +38,7 @@ const Genre = () => {
   const [editingRowId, setEditingRowId] = useState(null)
   const [tempEditValue, setTempEditValue] = useState("")
   const [successMessage, setSuccessMessage] = useState("")
+  const [isEditing, setIsEditing] = useState(false)
 
   // Neumorphism styles
   const getNeumorphicShadow = () => {
@@ -220,53 +221,58 @@ const handleCellDoubleClick = (params) => {
   if (params.field === "genre_name" && !params.row.soft_delete) {
     setEditingRowId(params.id)
     setTempEditValue(params.value)
+    setIsEditing(true)
   }
 }
 
+const handleEditSave = async (genreId) => {
+  if (!tempEditValue.trim()) {
+    alert("Tên thể loại không được để trống")
+    return
+  }
 
-  const handleEditSave = async (genreId) => {
-    if (!tempEditValue.trim()) {
-      alert("Tên thể loại không được để trống")
+  try {
+    setIsEditing(false)
+    const token = localStorage.getItem("admin-token")
+    if (!token) {
+      alert("Không tìm thấy token xác thực")
+      setIsEditing(true) // Khôi phục trạng thái chỉnh sửa nếu lỗi
       return
     }
 
-    try {
-      const token = localStorage.getItem("admin-token")
-      if (!token) {
-        alert("Không tìm thấy token xác thực")
-        return
-      }
+    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000"
+    const response = await fetch(`${API_URL}/api/admin/genres/${genreId}`, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ genre_name: tempEditValue.trim() }),
+    })
 
-      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000"
-      const response = await fetch(`${API_URL}/api/admin/genres/${genreId}`, {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ genre_name: tempEditValue.trim() }),
-      })
-
-      if (response.ok) {
-        setSuccessMessage("Cập nhật tên thể loại thành công!")
-        setTimeout(() => setSuccessMessage(""), 3000)
-        await fetchGenres()
-        setEditingRowId(null)
-        setTempEditValue("")
-      } else {
-        const errorData = await response.json()
-        alert("Lỗi khi cập nhật tên thể loại: " + errorData.message)
-      }
-    } catch (error) {
-      console.error("Error updating genre name:", error)
-      alert("Lỗi khi cập nhật tên thể loại: " + error.message)
+    if (response.ok) {
+      setSuccessMessage("Cập nhật tên thể loại thành công!")
+      setTimeout(() => setSuccessMessage(""), 3000)
+      await fetchGenres()
+      setEditingRowId(null)
+      setTempEditValue("")
+    } else {
+      const errorData = await response.json()
+      alert("Lỗi khi cập nhật tên thể loại: " + errorData.message)
+      setIsEditing(true) // Khôi phục trạng thái chỉnh sửa nếu lỗi
     }
+  } catch (error) {
+    console.error("Error updating genre name:", error)
+    alert("Lỗi khi cập nhật tên thể loại: " + error.message)
+    setIsEditing(true) // Khôi phục trạng thái chỉnh sửa nếu lỗi
   }
+}
 
-  const handleEditCancel = () => {
-    setEditingRowId(null)
-    setTempEditValue("")
-  }
+const handleEditCancel = () => {
+  setIsEditing(false)
+  setEditingRowId(null)
+  setTempEditValue("")
+}
 
 const columns = [
   { field: "stt", headerName: "STT", flex: 0.5 },
@@ -282,13 +288,36 @@ const columns = [
               value={tempEditValue}
               onChange={(e) => setTempEditValue(e.target.value)}
               onKeyDown={(e) => {
+                e.stopPropagation() // Ngăn chặn event bubbling
                 if (e.key === "Enter") {
+                  e.preventDefault()
                   handleEditSave(row.id)
                 } else if (e.key === "Escape") {
+                  e.preventDefault()
                   handleEditCancel()
                 }
+                // Không xử lý gì cho phím space, để TextField xử lý bình thường
               }}
-              onBlur={() => handleEditCancel()}
+              onBlur={(e) => {
+                // Chỉ lưu khi thực sự click ra ngoài TextField
+                const currentTarget = e.currentTarget
+                const relatedTarget = e.relatedTarget
+
+                // Kiểm tra xem có phải đang click vào element khác không
+                if (relatedTarget && !currentTarget.contains(relatedTarget)) {
+                  // Delay để tránh xung đột với các event khác
+                  setTimeout(() => {
+                    // Kiểm tra lại xem có còn đang trong chế độ chỉnh sửa không
+                    if (editingRowId === row.id && isEditing) {
+                      handleEditSave(row.id)
+                    }
+                  }, 200)
+                }
+              }}
+              onFocus={(e) => {
+                // Đảm bảo TextField không bị mất focus khi đang nhập
+                e.stopPropagation()
+              }}
               autoFocus
               size="small"
               sx={{
@@ -312,13 +341,13 @@ const columns = [
       return (
         <Box
           sx={{
-            opacity: row.soft_delete ? 0.5 : 1, // Giảm opacity khi bị ẩn
+            opacity: row.soft_delete ? 0.5 : 1,
             cursor: !row.soft_delete ? "pointer" : "not-allowed",
             display: "flex",
             alignItems: "center",
             padding: "8px 12px",
             borderRadius: "8px",
-            backgroundColor: row.soft_delete ? colors.primary[500] : colors.primary[500], // Đổi màu nền khi bị ẩn
+            backgroundColor: row.soft_delete ? colors.primary[500] : colors.primary[500],
             boxShadow: getNeumorphicInsetShadow(),
             transition: "all 0.2s ease",
             "&:hover": {
@@ -329,10 +358,10 @@ const columns = [
         >
           <span 
             style={{ 
-              color: row.soft_delete ? colors.gray[400] : colors.gray[100], // Đổi màu text khi bị ẩn
+              color: row.soft_delete ? colors.gray[400] : colors.gray[100],
               fontSize: "14px", 
               fontWeight: "500",
-              textDecoration: row.soft_delete ? "line-through" : "none" // Gạch ngang khi bị ẩn
+              textDecoration: row.soft_delete ? "line-through" : "none"
             }}
           >
             {value}
