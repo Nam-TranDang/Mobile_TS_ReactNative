@@ -11,6 +11,7 @@ import NotificationPopup from "../components/NotificationPopup";
 import { io } from "socket.io-client"; // Thêm import socket
 import { SOCKET_URL } from "../constants/api"; // Thêm import URL socket
 
+
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {

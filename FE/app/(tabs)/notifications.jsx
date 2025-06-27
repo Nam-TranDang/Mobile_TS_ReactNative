@@ -17,6 +17,7 @@ import COLORS from '../../constants/colors';
 import NotificationItem from '../../components/NotificationItem';
 import { NotificationOptionsMenu, NotificationItemMenu, FilterOptionsModal } from '../../components/NotificationOptionsMenu';
 import styles from '../../assets/styles/notifications.styles';
+import { useLanguage } from '../../context/LanguageContext'; // Import useLanguage hook
 
 export default function Notifications() {
   const [notifications, setNotifications] = useState([]);
@@ -38,6 +39,7 @@ export default function Notifications() {
     decrementUnreadNotificationsCount 
   } = useAuthStore();
   const socketRef = useRef(null);
+  const { t, currentLanguage, changeLanguage } = useLanguage(); // Sử dụng useLanguage hook
 
   // Reset badge khi vào màn hình thông báo
   useEffect(() => {
@@ -380,8 +382,8 @@ export default function Notifications() {
   const renderEmptyComponent = () => (
     <View style={styles.emptyContainer}>
       <Ionicons name="notifications-off-outline" size={60} color={COLORS.textSecondary} />
-      <Text style={styles.emptyText}>No notifications yet</Text>
-      <Text style={styles.emptySubtext}>When you receive notifications, they&apos;ll appear here</Text>
+      <Text style={styles.emptyText}>{t("Notification.no")}</Text>
+      <Text style={styles.emptySubtext}>{t("Notification.p1")}</Text>
     </View>
   );
 
@@ -396,7 +398,7 @@ export default function Notifications() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Notifications</Text>
+        <Text style={styles.headerTitle}>{t("Notification.p2")}</Text>
         <TouchableOpacity 
           style={styles.menuButton} 
           onPress={() => setMenuVisible(true)}

@@ -40,6 +40,8 @@ export const translations = {
         },
         Notification: {
             mark: "Mark all as read",
+            marku: "Mark as unread",
+            del:"Delete notification",
             noNotification: "No notifications yet...",
             Tag: "Notifications",
             user: "sent you a message",
@@ -47,6 +49,22 @@ export const translations = {
             wlc1: "Welcome",
             wlc2: "to our library",
             whb: "What book are you reading?",
+            newn: "You have a new notification",
+            new: "New Notification",
+            notiall: "All Notifications",
+            td: "Today",
+            ytd: "Yesterday",
+            thisw: "This Week",
+            thism: "This Month",
+            filter: "Filter Notifications",
+            apply: "Apply Filter",
+            no:"No notifications yet",
+            p1:"When you receive a notification, it will appear here",
+            p2:"Notifications",
+            commentOnBook: '{username} commented on book "{bookTitle}".',
+            likeOnBook: '{username} liked book "{bookTitle}".'
+
+
         },
         ChatBox: {  
             noConversation: "Please select a conversation...",
@@ -265,6 +283,8 @@ export const translations = {
 
 
         }
+        
+
     },  
     vi: {
         create: {
@@ -312,6 +332,24 @@ export const translations = {
             wlc1: "Chào mừng",
             wlc2: "bạn đã đến với",
             whb: "Bạn đang đọc cuốn sách nào ?",
+            newn: "Bạn có thông báo mới",
+            new: "Thông báo mới",
+            notiall: "Tất cả thông báo",
+            td: "Hôm nay",
+            ytd: "Hôm qua",
+            thisw: "Tuần này",
+            thism: "Tháng này",
+            filter: "Lọc thông báo",
+            apply: "Áp dụng bộ lọc",
+            marku: "Đánh dấu là chưa đọc",
+            del: "Xóa thông báo",
+            no: "Chưa có thông báo nào",
+            p1: "Khi bạn nhận được thông báo, nó sẽ xuất hiện ở đây",
+            p2: "Thông báo",
+            commentOnBook: '{username} đã bình luận về sách "{bookTitle}".',
+            likeOnBook: '{username} đã thích sách "{bookTitle}".'
+
+
         },
         ChatBox:{
             noConversation: "Vui lòng chọn cuộc trò chuyện...",
@@ -379,9 +417,6 @@ export const translations = {
             p24: "Nhập lại mật khẩu",
             p25:"Tài khoản của bạn đã được tạo. Vui lòng đăng nhập để tiếp tục.",
             p26: "Đã có tài khoản?",
-
-
-
         },
         chat: {
             searchPlaceholder: "Tìm kiếm cuộc trò chuyện",
@@ -429,7 +464,7 @@ export const translations = {
             seeall: "Xem tất cả sách",
             noin4: "Không có thông tin nào",
             searching: "Đang tìm kiếm...",
-            searchPlaceholder: "Tìm kiếm sách theo người dùng, tiêu đề hoặc tác giả",
+            searchPlaceholder: "Tìm kiếm sách, người dùng hoặc tác giả",
             searchno: "Không tìm thấy sách nào",
             username: "Tên người dùng",
             usernameplaceholder: "Nhập tên người dùng",

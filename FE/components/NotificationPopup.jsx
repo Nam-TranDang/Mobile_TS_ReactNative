@@ -7,6 +7,7 @@ import { useAuthStore } from '../store/authStore';
 import { SOCKET_URL, API_URL } from '../constants/api'; // Thêm API_URL vào đây
 import COLORS from '../constants/colors';
 
+
 const { width } = Dimensions.get('window');
 
 const NotificationPopup = () => {
@@ -18,6 +19,7 @@ const NotificationPopup = () => {
   const notificationUpdateRef = useRef(null); // Thêm ref mới để theo dõi cập nhật
   const router = useRouter();
   const { token, user, incrementUnreadNotificationsCount } = useAuthStore();
+ 
   
   useEffect(() => {
     // Chỉ khởi tạo socket khi component mount và user đã đăng nhập

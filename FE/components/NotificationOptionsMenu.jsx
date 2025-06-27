@@ -2,21 +2,23 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, TouchableWithoutFeedback } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import COLORS from '../constants/colors';
+import { useLanguage } from '../context/LanguageContext';
 
 const NotificationOptionsMenu = ({ visible, onClose, onAction }) => {
-  // Bổ sung thêm tùy chọn Delete All
+  const { t } = useLanguage(); // Di chuyển vào trong component
+  
   const options = [
-    { id: 'filter', label: 'Filter notifications', icon: 'filter' },
-    { id: 'mark_all_read', label: 'Mark all as read', icon: 'checkmark-done-circle' },
-    { id: 'delete_all', label: 'Delete all notifications', icon: 'trash-outline', danger: true },
+    { id: 'filter', label: t("Notification.filter"), icon: 'filter' },
+    { id: 'mark_all_read', label: t("Notification.mark"), icon: 'checkmark-done-circle' },
+    { id: 'delete_all', label: t("Notification.del"), icon: 'trash-outline', danger: true },
   ];
   
   return (
     <Modal
-      transparent={true}
-      visible={visible}
-      animationType="fade"
-      onRequestClose={onClose}
+    transparent={true}
+    visible={visible}
+    animationType="fade"
+    onRequestClose={onClose}
     >
       <TouchableWithoutFeedback onPress={onClose}>
         <View style={styles.overlay}>
@@ -24,18 +26,18 @@ const NotificationOptionsMenu = ({ visible, onClose, onAction }) => {
             <View style={styles.menuContainer}>
               {options.map(option => (
                 <TouchableOpacity 
-                  key={option.id}
-                  style={styles.menuItem}
-                  onPress={() => {
-                    onAction(option.id);
-                    onClose();
-                  }}
+                key={option.id}
+                style={styles.menuItem}
+                onPress={() => {
+                  onAction(option.id);
+                  onClose();
+                }}
                 >
                   <Ionicons 
                     name={option.icon} 
                     size={20} 
                     color={option.danger ? COLORS.red : COLORS.textPrimary} 
-                  />
+                    />
                   <Text style={[
                     styles.menuItemText,
                     option.danger && styles.dangerText
@@ -53,22 +55,36 @@ const NotificationOptionsMenu = ({ visible, onClose, onAction }) => {
 };
 
 const NotificationItemMenu = ({ visible, onClose, onAction, notification }) => {
-  // Bổ sung thêm delete option
+  const { t } = useLanguage(); // Thêm hook này
+  
   const getOptions = () => {
     const baseOptions = [];
     
     if (notification && !notification.isRead) {
-      baseOptions.push({ id: 'mark_read', label: 'Mark as read', icon: 'checkmark-circle' });
+      baseOptions.push({ 
+        id: 'mark_read', 
+        label: t("Notification.markRead"), // Sử dụng t() thay vì hardcode
+        icon: 'checkmark-circle' 
+      });
     }
     
     // Thêm tùy chọn mark as unread nếu notification đã đọc
     if (notification && notification.isRead) {
-      baseOptions.push({ id: 'mark_unread', label: 'Mark as unread', icon: 'eye-off-outline' });
+      baseOptions.push({ 
+        id: 'mark_unread', 
+        label: t("Notification.marku"), // Sử dụng t() thay vì hardcode
+        icon: 'eye-off-outline' 
+      });
     }
     
     // Thêm tùy chọn delete cho tất cả notification
     if (notification) {
-      baseOptions.push({ id: 'delete', label: 'Delete notification', icon: 'trash-outline', danger: true });
+      baseOptions.push({ 
+        id: 'delete', 
+        label: t("Notification.del"), // Sử dụng t() thay vì hardcode
+        icon: 'trash-outline', 
+        danger: true 
+      });
     }
     
     return baseOptions;
@@ -127,14 +143,15 @@ const NotificationItemMenu = ({ visible, onClose, onAction, notification }) => {
 
 // Filter options modal stays the same
 const FilterOptionsModal = ({ visible, onClose, onFilter }) => {
+  const { t } = useLanguage(); // Thêm hook này
   const [selectedFilter, setSelectedFilter] = useState('all');
   
   const filters = [
-    { id: 'all', label: 'All notifications' },
-    { id: 'today', label: 'Today' },
-    { id: 'yesterday', label: 'Yesterday' },
-    { id: 'week', label: 'This week' },
-    { id: 'month', label: 'This month' },
+    { id: 'all', label: t("Notification.notiall") },
+    { id: 'today', label: t("Notification.td") },
+    { id: 'yesterday', label: t("Notification.ytd") },
+    { id: 'week', label: t("Notification.thisw") },
+    { id: 'month', label: t("Notification.thism") },
   ];
   
   return (
@@ -148,7 +165,7 @@ const FilterOptionsModal = ({ visible, onClose, onFilter }) => {
         <View style={styles.filterOverlay}>
           <View style={styles.filterContainer}>
             <View style={styles.filterHeader}>
-              <Text style={styles.filterTitle}>Filter Notifications</Text>
+              <Text style={styles.filterTitle}>{t("Notification.filter")}</Text>
               <TouchableOpacity onPress={onClose}>
                 <Ionicons name="close" size={24} color={COLORS.textPrimary} />
               </TouchableOpacity>
@@ -184,7 +201,7 @@ const FilterOptionsModal = ({ visible, onClose, onFilter }) => {
                 onClose();
               }}
             >
-              <Text style={styles.applyButtonText}>Apply Filter</Text>
+              <Text style={styles.applyButtonText}>{t("Notification.apply")}</Text>
             </TouchableOpacity>
           </View>
         </View>
