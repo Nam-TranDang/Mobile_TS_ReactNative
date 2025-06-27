@@ -1,2 +1,2 @@
-export const API_URL = "http://192.168.2.16:3000/api"; // Replace with your actual IP address
-export const SOCKET_URL = "http://192.168.2.16:3000"; // Replace with your actual IP address
+export const API_URL = "https://mobile-ts-reactnative-1.onrender.com/api"; // Replace with your actual IP address
+export const SOCKET_URL = "https://mobile-ts-reactnative-1.onrender.com"; // Replace with your actual IP address
