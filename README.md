@@ -1,32 +1,122 @@
-# Mobile_TS_ReactNative
+# 📚 MERN BOOKSTORE APP
 
-# 1. Nguyên tắc commit & tạo nhánh (mục đích: tránh conflict và dễ merge):
+A full-stack bookstore application using MERN stack with mobile (Expo), web admin panel, and socket integration.
 
-## Commit Convention (Quy ước khi commit code lên GitHub):
+---
 
-- `feat:` thêm một feature mới
-- `fix:` sửa lỗi trong hệ thống
-- `refactor:` sửa code mà không thay đổi tính năng
-- `docs:` cập nhật hoặc thêm tài liệu
-- `chore:` thay đổi không ảnh hưởng đến logic code
-- `style:` thay đổi về giao diện, CSS/UI
-- `perf:` cải thiện hiệu năng xử lý
-- `vendor:` cập nhật phiên bản dependencies, packages
+## 🚀 Manual Project Run Guide
 
-## Branch Naming Conventions (Quy ước đặt tên nhánh):
+> ⚠️ **Note:** Expo CLI works best on Windows OS.
 
-- `feature/:` nhánh cho phát triển tính năng mới
-- `bugfix/:` nhánh cho sửa lỗi
+<details>
+<summary><strong>🔧 Run Backend Server</strong></summary>
 
-### Quy ước:
-- Tên nhánh ngắn gọn, rõ ràng, khống chế ký tự dùng để đặt biệt hay viết hoa.
-- Ví dụ: `feature/login`, `bugfix/chat-not-loading`
+```bash
+cd backend
+npm install
+npm run dev
+```
 
-# 2. Standard response của API: 
+</details>
 
-## **Format Response**
+<details>
+<summary><strong>📱 Run Frontend (Mobile App)</strong></summary>
 
-### **1. Thành công**
+```bash
+cd FE
+npm install
+# Optional: Install this if socket-related errors occur
+npm install socket.io-client
+
+# Update API endpoint:
+# Edit FE/constants/api.js and replace the base URL with your local IP address
+
+npx expo
+```
+
+</details>
+
+<details>
+<summary><strong>📡 Run Socket Server</strong></summary>
+
+```bash
+cd socket
+npm install
+npm run dev
+```
+
+</details>
+
+<details>
+<summary><strong>🖥️ Run Admin Web</strong></summary>
+
+```bash
+cd admin
+npm install
+npm run dev
+```
+
+</details>
+
+---
+
+## 🌐 Deployment
+
+- **Frontend (Admin website):** using **Vercel** & **Jamstack**[Vercel](https://mobile-ts-react-native.vercel.app/login)  
+- **Mobile App:** Developed using **Expo Application Services (EAS Build)**  
+- **APK for Android:** using **Render** [Download APK](https://drive.google.com/drive/u/0/folders/1vkefZtDQg6AyEZWCnVEFv7sa0YBBGEVG)
+- **Storing:** using  **Mongo DB Atlas** & **Cloudinary**
+
+---
+
+## 👥 User Roles
+
+| Role    | Access via Mobile | Access via Admin Web |
+|---------|------------------ |----------------------|
+| Admin   | ✅ Yes            | ✅ Yes              |
+| User    | ✅ Yes            | ❌ No               |
+| Guest   | ✅ Yes            | ❌ No               |
+
+---
+
+## 🧑‍💻 Developed By
+
+- Trần Đăng Nam  
+- Huỳnh Nguyễn Quốc Bảo  
+- Nguyễn Hoàng Gia Huy  
+- Phạm Vũ Minh Huy  
+- Phan Ngọc Thạch  
+- From UTH - Vietnam
+
+---
+
+## 📝 Git Commit & Branching Guidelines
+
+### ✅ Commit Message Convention
+
+| Type       | Description                             |
+|------------|-----------------------------------------|
+| `feat:`    | New feature                             |
+| `fix:`     | Bug fix                                 |
+| `refactor:`| Code restructuring (no feature changes) |
+| `docs:`    | Documentation updates                   |
+| `chore:`   | Routine tasks (no logic impact)         |
+| `style:`   | UI/CSS changes                          |
+| `perf:`    | Performance improvements                |
+| `vendor:`  | Dependency/package version updates      |
+
+### 🌿 Branch Naming Convention
+
+- Use lowercase and hyphens. Avoid special characters or uppercase.
+- Examples:  
+  - `feature/login`  
+  - `bugfix/chat-not-loading`
+
+---
+
+## 🔁 API Response Standard
+
+### ✅ Success Response
 
 ```json
 {
@@ -44,7 +134,7 @@
 }
 ```
 
-### **2. Lỗi từ Service**
+### ❌ Error Response
 
 ```json
 {
@@ -62,27 +152,26 @@
 }
 ```
 
-### **Giải thích các trường trong response:**
+#### 📌 Field Explanation
 
-- `success`: Boolean, xác định request thành công hay thất bại.
-- `message`: Mô tả ngắn gọn khi `success = true`, dùng cho thông báo frontend.
-- `data`: Payload trả về từ server khi request thành công.
-- `errors`: Danh sách lỗi trả về khi request thất bại. Có thể là lỗi DTO hoặc lỗi service.
-   - `resource`: Tên entity bị lỗi (chỉ áp dụng với lỗi DTO).
-   - `field`: Tên trường cụ thể gây lỗi (chỉ áp dụng với lỗi DTO).
-   - `code`: Mã lỗi nội bộ giúp frontend xử lý logic.
-   - `message`: Mô tả chi tiết lỗi để hiển thị cho người dùng hoặc debug.
-- `meta`: Thông tin bổ sung cho phản hồi.
-   - `timestamp`: Thời điểm server xử lý response (ISO-8601).
-   - `instance`: API endpoint tương ứng với request.
+| Field     | Description                        |
+|-----------|------------------------------------|
+| `success` | Boolean indicating request success |
+| `message` | Short message (used on frontend)   |
+| `data`    | Data payload (on success)          |
+| `errors`  | List of error details (on failure) |
+| `code`    | Internal error code                |
+| `meta`    | Metadata (timestamp, endpoint info)|
 
 ---
 
+## 📊 REST API Status Codes
 
-# 3. Các trạng thái trong REST API:
-- `200 OK`: Yêu cầu thành công (ví dụ: GET users).
-- `201 Created`: Tài nguyên được tạo (ví dụ: Tạo sự kiện mới - POST event).
-- `400 Bad Request`: Dữ liệu đầu vào không hợp lệ (ví dụ: Thiếu email- missing email).
-- `401 Unauthorized`: Xác thực thất bại (ví dụ: Token không hợp lệ - invalid token).
-- `404 Not Found`: Không tìm thấy tài nguyên (ví dụ: Lấy người dùng theo ID - GET user by ID).
-- `500 Internal Server Error`: Lỗi phía máy chủ (ví dụ: Lỗi cơ sở dữ liệu).
+| Status | Meaning                           |
+|--------|-----------------------------------|
+| `200`  | OK – Request succeeded            |
+| `201`  | Created – New resource added      |
+| `400`  | Bad Request – Invalid input       |
+| `401`  | Unauthorized – Invalid token      |
+| `404`  | Not Found – Resource not found    |
+| `500`  | Internal Server Error             |
