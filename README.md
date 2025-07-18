@@ -1,6 +1,6 @@
-# 📚 MERN BOOKSTORE APP
+# 📚 MERN Book Forum APP Mobile
 
-A full-stack bookstore application using MERN stack with mobile (Expo), web admin panel, and socket integration.
+A full-stack book forum application using MERN stack with mobile (Expo), web admin panel, and socket integration.
 
 ---
 
