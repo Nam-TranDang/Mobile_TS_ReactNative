@@ -62,7 +62,7 @@ npm run dev
 
 ## 🌐 Deployment
 
-- **Frontend (Admin website):** using **Vercel** & **Jamstack**[Vercel](https://mobile-ts-react-native.vercel.app/login)  
+- **Frontend (Admin website):** using **Vercel** & **Jamstack** [Admin Panel Website](https://mobile-ts-react-native.vercel.app)  
 - **Mobile App:** Developed using **Expo Application Services (EAS Build)**  
 - **APK for Android:** using **Render** [Download APK](https://drive.google.com/drive/u/0/folders/1vkefZtDQg6AyEZWCnVEFv7sa0YBBGEVG)
 - **Storing:** using  **Mongo DB Atlas** & **Cloudinary**
@@ -86,9 +86,15 @@ npm run dev
 - Nguyễn Hoàng Gia Huy  
 - Phạm Vũ Minh Huy  
 - Phan Ngọc Thạch  
-- From UTH - Vietnam
+**From UTH - Vietnam**
 
 ---
+
+## 🔁 API Response Standard
+
+
+<details>
+<summary><strong>🖥️ Run Admin Web</strong></summary>
 
 ## 📝 Git Commit & Branching Guidelines
 
@@ -113,8 +119,6 @@ npm run dev
   - `bugfix/chat-not-loading`
 
 ---
-
-## 🔁 API Response Standard
 
 ### ✅ Success Response
 
@@ -175,3 +179,5 @@ npm run dev
 | `401`  | Unauthorized – Invalid token      |
 | `404`  | Not Found – Resource not found    |
 | `500`  | Internal Server Error             |
+
+</details>
