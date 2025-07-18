@@ -90,13 +90,12 @@ npm run dev
 
 ---
 
-## 🔁 API Response Standard
+## 🔁 API Response Standard & Workflow
 
 
 <details>
-<summary><strong>🖥️ Run Admin Web</strong></summary>
+<summary><strong>📝 Git Commit & Branching Guidelines</strong></summary>
 
-## 📝 Git Commit & Branching Guidelines
 
 ### ✅ Commit Message Convention
 
